@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cashboard • ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์</title>
+
+  <!-- Chart.js (works on GitHub Pages) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#f4f7fb; --card:#fff; --line:#dde5f2; --text:#24364c; --muted:#6a7f9a;
+      --brand:#1e5aaa; --brand2:#2f7de1;
+      --shadow:0 10px 28px rgba(20,40,80,.08);
+      --r:18px;
+      --ok:#1f7a3b; --warn:#8a5a00; --bad:#b13b3b; --info:#0b5aa6;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Thai","Noto Sans";background:var(--bg);color:var(--text)}
+    header{
+      position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);
+      padding:14px 18px;display:flex;align-items:center;gap:12px
+    }
+    .title{display:flex;flex-direction:column;line-height:1.05}
+    .title h1{margin:0;font-size:18px}
+    .title small{color:var(--muted)}
+    .spacer{flex:1}
+    .badge{border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa;padding:8px 12px;border-radius:14px;font-weight:900}
+
+    .wrap{max-width:1400px;margin:18px auto;padding:0 18px}
+    .grid{display:grid;grid-template-columns:420px 1fr;gap:14px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;min-width:0}
+    h2{margin:0 0 10px;font-size:16px}
+    h3{margin:12px 0 8px;font-size:14px}
+    .muted{color:var(--muted);font-size:13px}
+
+    input,select,textarea{
+      width:100%;padding:10px 12px;border-radius:14px;border:1px solid var(--line);
+      background:#fff;font-size:14px;outline:none
+    }
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row>*{flex:1;min-width:140px}
+    .btn{
+      border:1px solid var(--line); background:#fff; border-radius:14px;
+      padding:10px 12px; cursor:pointer; font-weight:900; color:var(--text);
+    }
+    .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;border-color:transparent}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+
+    .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+    .kpi{border:1px solid #e6ecf6;border-radius:16px;padding:10px;background:#f7f9fc}
+    .kpi b{display:block;font-size:12px;color:#4a6281}
+    .kpi .v{font-size:22px;font-weight:1000;margin-top:6px}
+    .kpi .s{font-size:12px;color:var(--muted)}
+
+    .hr{height:1px;background:#eef2f7;margin:12px 0}
+
+    .charts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .chartBox{border:1px solid #e6ecf6;border-radius:16px;padding:10px;background:#f7f9fc;min-height:260px}
+    .chartBox canvas{width:100%;height:220px}
+    .chartBox .cap{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .cap b{font-size:13px}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa}
+    .pill.ok{border-color:#c8f2d6;background:#effaf3;color:var(--ok)}
+    .pill.warn{border-color:#ffe7b8;background:#fff7e6;color:var(--warn)}
+    .pill.bad{border-color:#ffd2d2;background:#fff0f0;color:var(--bad)}
+    .pill.info{border-color:#cfe2ff;background:#eef6ff;color:var(--info)}
+
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid #eef2f7;padding:8px 6px;text-align:left;font-size:13px;vertical-align:top}
+    th{color:#4a5f7d}
+    .tiny{font-size:12px;color:var(--muted)}
+    .right{text-align:right}
+    .nowrap{white-space:nowrap}
+
+    @media (max-width:1200px){ .grid{grid-template-columns:1fr} }
+    @media (max-width:1100px){ .kpis{grid-template-columns:repeat(3,1fr)} }
+    @media (max-width:700px){ .kpis{grid-template-columns:repeat(2,1fr)} .charts{grid-template-columns:1fr} }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="title">
+    <h1>Cashboard (ภาพรวมสถานะ FA 2.1.7–2.1.20)</h1>
+    <small>ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์ • รวมทุกงวด/ทุกหน่วย</small>
+  </div>
+  <div class="spacer"></div>
+  <div class="badge" id="userBadge">กำลังตรวจสอบผู้ใช้…</div>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+
+    <!-- LEFT: FILTERS -->
+    <aside class="card">
+      <h2>ตัวกรอง (Filters)</h2>
+      <div class="muted">เลือก “งวดเวลา + พื้นที่ + ประเภทหน่วย + หน่วยเฉพาะ + เฉพาะหัวข้อ” ได้ตามต้องการ</div>
+
+      <div class="hr"></div>
+
+      <h3>ช่วงเวลา</h3>
+      <div class="row">
+        <select id="timeMode">
+          <option value="ALL">ภาพรวมทั้งหมด</option>
+          <option value="YEAR">รายปี</option>
+          <option value="QUARTER">รายไตรมาส</option>
+          <option value="MONTH">รายเดือน</option>
+          <option value="DAY">รายวัน</option>
+        </select>
+        <select id="fiscalYear">
+          <option value="">ทุกปีงบฯ</option>
+        </select>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <select id="periodValue">
+          <option value="">ทุกงวด</option>
+        </select>
+        <select id="onlySubmitted">
+          <option value="Y">แสดงเฉพาะ “ส่งข้อมูลแล้ว”</option>
+          <option value="N">แสดงทั้งหมด (รวมยังไม่ส่ง)</option>
+        </select>
+      </div>
+
+      <div class="hr"></div>
+
+      <h3>พื้นที่</h3>
+      <div class="row">
+        <select id="province"><option value="">ทุกจังหวัด</option></select>
+        <select id="district"><option value="">ทุกอำเภอ</option></select>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <select id="subdistrict"><option value="">ทุกตำบล</option></select>
+        <input id="qEntity" placeholder="ค้นหาชื่อหน่วย (พิมพ์คำค้น)" />
+      </div>
+
+      <div class="hr"></div>
+
+      <h3>ประเภทหน่วย/หน่วยเฉพาะ</h3>
+      <div class="row">
+        <select id="entityType">
+          <option value="">ทุกประเภท</option>
+          <option value="อบจ">อบจ</option>
+          <option value="ทม">ทม</option>
+          <option value="ทน">ทน</option>
+          <option value="ทต">ทต</option>
+          <option value="อบต">อบต</option>
+        </select>
+        <select id="entityName">
+          <option value="">ทุกหน่วย</option>
+        </select>
+      </div>
+
+      <div class="hr"></div>
+
+      <h3>เลือกดู “เฉพาะข้อ”</h3>
+      <div class="row">
+        <select id="metric">
+          <option value="ALL">ทั้งหมด (2.1.7–2.1.20)</option>
+          <option value="2.1.7">2.1.7 สถานะการตรวจสอบ FA</option>
+          <option value="2.1.8">2.1.8 สถานะปิดงบ</option>
+          <option value="2.1.9">2.1.9 สถานะส่งรายงานการเงิน</option>
+          <option value="2.1.10">2.1.10 สถานะหนังสือติดตาม</option>
+          <option value="2.1.12">2.1.12 ประชุมปิดตรวจ</option>
+          <option value="2.1.14">2.1.14 ผลการตรวจสอบ</option>
+          <option value="2.1.15">2.1.15 ข้อสังเกต</option>
+          <option value="2.1.16">2.1.16 การปรับปรุงบัญชี</option>
+          <option value="2.1.17">2.1.17 เงินขาดบัญชี</option>
+          <option value="2.1.19">2.1.19 ปัญหาการตรวจ</option>
+          <option value="2.1.20">2.1.20 ข้อเสนอแนะ</option>
+        </select>
+        <select id="topN">
+          <option value="8">Top 8</option>
+          <option value="10" selected>Top 10</option>
+          <option value="12">Top 12</option>
+          <option value="15">Top 15</option>
+        </select>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="btnApply">ประมวลผล</button>
+        <button class="btn" id="btnReset">รีเซ็ต</button>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="btnHome">กลับหน้าแรก</button>
+        <button class="btn" id="btnData">ไปหน้าคลังข้อมูล (Data Hub)</button>
+      </div>
+
+      <div class="hr"></div>
+      <div class="tiny" id="dataHint">—</div>
+    </aside>
+
+    <!-- RIGHT: DASHBOARD -->
+    <main class="card">
+      <h2>ผลลัพธ์สรุป (Dashboard)</h2>
+      <div class="muted">
+        แสดงจากชุดข้อมูลที่ผ่านตัวกรอง • อัปเดตผลแบบทันทีหลังบันทึก/ส่งข้อมูล (ในเครื่องเดียวกัน)
+      </div>
+
+      <div class="hr"></div>
+
+      <section class="kpis">
+        <div class="kpi">
+          <b>จำนวนเรคคอร์ด</b>
+          <div class="v" id="k_total">0</div>
+          <div class="s" id="k_total_s">-</div>
+        </div>
+        <div class="kpi">
+          <b>ส่งข้อมูลแล้ว</b>
+          <div class="v" id="k_submitted">0</div>
+          <div class="s" id="k_submitted_s">-</div>
+        </div>
+        <div class="kpi">
+          <b>ล็อกเกิน 356 วัน</b>
+          <div class="v" id="k_locked">0</div>
+          <div class="s" id="k_locked_s">-</div>
+        </div>
+        <div class="kpi">
+          <b>พบ “เงินขาดบัญชี”</b>
+          <div class="v" id="k_cashshort">0</div>
+          <div class="s" id="k_cashshort_s">2.1.17 = มี</div>
+        </div>
+        <div class="kpi">
+          <b>มี “ข้อสังเกต”</b>
+          <div class="v" id="k_findings">0</div>
+          <div class="s" id="k_findings_s">2.1.15 = มีข้อสังเกต</div>
+        </div>
+        <div class="kpi">
+          <b>ยังไม่ตรวจ/ไม่ทราบ</b>
+          <div class="v" id="k_unknown">0</div>
+          <div class="s" id="k_unknown_s">จาก 2.1.7</div>
+        </div>
+      </section>
+
+      <div class="hr"></div>
+
+      <section class="charts">
+        <div class="chartBox">
+          <div class="cap">
+            <b id="c1_title">2.1.7 สถานะการตรวจสอบ FA</b>
+            <span class="pill info" id="c1_pill">ตามตัวกรอง</span>
+          </div>
+          <canvas id="chart1"></canvas>
+          <div class="tiny" id="c1_note">—</div>
+        </div>
+
+        <div class="chartBox">
+          <div class="cap">
+            <b id="c2_title">แนวโน้มตามงวด (Trend)</b>
+            <span class="pill info" id="c2_pill">Top categories</span>
+          </div>
+          <canvas id="chart2"></canvas>
+          <div class="tiny" id="c2_note">—</div>
+        </div>
+      </section>
+
+      <div class="hr"></div>
+
+      <section class="chartBox" style="min-height:320px">
+        <div class="cap">
+          <b>Action List (ปัญหา/ข้อเสนอแนะ) — จาก 2.1.19–2.1.20</b>
+          <span class="pill" id="a_pill">0 รายการ</span>
+        </div>
+
+        <div style="overflow:auto">
+          <table>
+            <thead>
+              <tr>
+                <th class="nowrap">หน่วย</th>
+                <th class="nowrap">ปี/งวด</th>
+                <th>สถานะ FA (2.1.7)</th>
+                <th>ปัญหา (2.1.19)</th>
+                <th>ข้อเสนอแนะ (2.1.20)</th>
+                <th class="nowrap">อัปเดตล่าสุด</th>
+              </tr>
+            </thead>
+            <tbody id="actionRows"></tbody>
+          </table>
+        </div>
+        <div class="tiny">* แสดงเฉพาะรายการที่มี “ปัญหา” หรือมี “ข้อเสนอแนะ” ตามตัวกรอง</div>
+      </section>
+    </main>
+
+  </div>
+</div>
+
+<script>
+/* =========================
+   0) Session guard
+   ========================= */
+const SESSION_KEY = "fa_session_v1";
+const session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+if(!session){ location.href="login.html"; }
+document.getElementById("userBadge").textContent =
+  "ผู้ใช้: " + (session.fullname || session.username) + " • บทบาท: " + (session.role || "USER");
+
+/* =========================
+   1) Storage keys
+   ========================= */
+const RECORDS_KEY = "fa_manual_records_v1";
+
+/* =========================
+   2) Helpers
+   ========================= */
+const $ = (id)=>document.getElementById(id);
+function safe(v){ return (v===null||v===undefined||v==="") ? "" : String(v); }
+function ymd(ts){ return ts ? new Date(ts).toLocaleString() : "-"; }
+function isLocked(created_at){
+  if(!created_at) return false;
+  const days = (Date.now() - created_at)/86400000;
+  return days >= 356;
+}
+function getRecords(){ return JSON.parse(localStorage.getItem(RECORDS_KEY) || "[]"); }
+function uniq(arr){ return [...new Set(arr.filter(x=>x!=="" && x!==null && x!==undefined))]; }
+function contains(hay, q){
+  if(!q) return true;
+  return String(hay||"").toLowerCase().includes(q.toLowerCase());
+}
+function fmtPeriod(p){
+  if(!p) return "-";
+  const type = p.periodType;
+  const val  = p.periodValue;
+  const label = type==="YEAR"?"ปี":type==="QUARTER"?"ไตรมาส":type==="MONTH"?"เดือน":"วัน";
+  return `ปีงบฯ ${p.fiscalYear} • ${label} ${val}`;
+}
+function periodKey(p){
+  if(!p) return "NA";
+  return `${p.fiscalYear}|${p.periodType}|${p.periodValue}`;
+}
+function comparePeriodKey(a,b){
+  // a/b: "FY|TYPE|VAL"
+  const pa=a.split("|"), pb=b.split("|");
+  const fyA=Number(pa[0]||0), fyB=Number(pb[0]||0);
+  if(fyA!==fyB) return fyA-fyB;
+  const order={YEAR:1,QUARTER:2,MONTH:3,DAY:4};
+  const tA=order[pa[1]]||9, tB=order[pb[1]]||9;
+  if(tA!==tB) return tA-tB;
+  // value as number when possible
+  const vA = isNaN(Number(pa[2])) ? pa[2] : Number(pa[2]);
+  const vB = isNaN(Number(pb[2])) ? pb[2] : Number(pb[2]);
+  return (vA>vB)?1:(vA<vB)?-1:0;
+}
+
+/* =========================
+   3) Bootstrap dropdowns
+   ========================= */
+(function initYear(){
+  for(let y=2560;y<=2580;y++){
+    const op=document.createElement("option");
+    op.value=String(y); op.textContent="ปีงบฯ "+y;
+    $("fiscalYear").appendChild(op);
+  }
+})();
+
+function fillPeriodValue(){
+  const mode = $("timeMode").value;
+  const sel = $("periodValue");
+  sel.innerHTML = `<option value="">ทุกงวด</option>`;
+
+  if(mode==="ALL") return;
+
+  const values = [];
+  if(mode==="YEAR"){
+    values.push("ทั้งปี");
+  }else if(mode==="QUARTER"){
+    values.push("Q1","Q2","Q3","Q4");
+  }else if(mode==="MONTH"){
+    for(let m=1;m<=12;m++) values.push(String(m).padStart(2,"0"));
+  }else if(mode==="DAY"){
+    // DAY: ให้เลือกเป็น “วันนี้ / 7 วันล่าสุด / 30 วันล่าสุด” (ช่วยให้ใช้งานจริงได้)
+    // (การคัดกรองจะเทียบกับ updated_at เป็นหลัก)
+    values.push("วันนี้","7 วันล่าสุด","30 วันล่าสุด");
+  }
+
+  values.forEach(v=>{
+    const op=document.createElement("option");
+    op.value=v; op.textContent=v;
+    sel.appendChild(op);
+  });
+}
+
+/* =========================
+   4) Cascading geo/entity lists
+   ========================= */
+function rebuildGeoEntityOptions(records){
+  const provs = uniq(records.map(r=>safe(r.entity?.province))).sort();
+  const pSel = $("province");
+  pSel.innerHTML = `<option value="">ทุกจังหวัด</option>`;
+  provs.forEach(p=>{
+    const op=document.createElement("option");
+    op.value=p; op.textContent=p;
+    pSel.appendChild(op);
+  });
+
+  // district/subdistrict updated later based on selected province
+  $("district").innerHTML = `<option value="">ทุกอำเภอ</option>`;
+  $("subdistrict").innerHTML = `<option value="">ทุกตำบล</option>`;
+
+  // entityName options updated based on selected type/geo
+  $("entityName").innerHTML = `<option value="">ทุกหน่วย</option>`;
+}
+
+function updateDistrictSubdistrict(records){
+  const prov = $("province").value;
+  const distSel = $("district");
+  const subSel  = $("subdistrict");
+
+  const inProv = prov ? records.filter(r=>safe(r.entity?.province)===prov) : records;
+  const dists = uniq(inProv.map(r=>safe(r.entity?.district))).sort();
+
+  const currDist = distSel.value;
+  distSel.innerHTML = `<option value="">ทุกอำเภอ</option>`;
+  dists.forEach(d=>{
+    const op=document.createElement("option");
+    op.value=d; op.textContent=d;
+    distSel.appendChild(op);
+  });
+  if(dists.includes(currDist)) distSel.value = currDist;
+
+  const dist = distSel.value;
+  const inDist = dist ? inProv.filter(r=>safe(r.entity?.district)===dist) : inProv;
+  const subs = uniq(inDist.map(r=>safe(r.entity?.subdistrict))).sort();
+
+  const currSub = subSel.value;
+  subSel.innerHTML = `<option value="">ทุกตำบล</option>`;
+  subs.forEach(s=>{
+    const op=document.createElement("option");
+    op.value=s; op.textContent=s;
+    subSel.appendChild(op);
+  });
+  if(subs.includes(currSub)) subSel.value = currSub;
+}
+
+function updateEntityNames(records){
+  const type = $("entityType").value;
+  const prov = $("province").value;
+  const dist = $("district").value;
+  const subd = $("subdistrict").value;
+  const q = $("qEntity").value.trim();
+
+  let arr = records.slice();
+  if(prov) arr = arr.filter(r=>safe(r.entity?.province)===prov);
+  if(dist) arr = arr.filter(r=>safe(r.entity?.district)===dist);
+  if(subd) arr = arr.filter(r=>safe(r.entity?.subdistrict)===subd);
+  if(type) arr = arr.filter(r=>safe(r.entity?.type)===type);
+  if(q)    arr = arr.filter(r=>contains(safe(r.entity?.name), q));
+
+  const names = uniq(arr.map(r=>safe(r.entity?.name))).sort();
+
+  const sel = $("entityName");
+  const curr = sel.value;
+  sel.innerHTML = `<option value="">ทุกหน่วย</option>`;
+  names.forEach(n=>{
+    const op=document.createElement("option");
+    op.value=n; op.textContent=n;
+    sel.appendChild(op);
+  });
+  if(names.includes(curr)) sel.value = curr;
+}
+
+/* =========================
+   5) Filtering
+   ========================= */
+function applyFilters(all){
+  let arr = all.slice();
+
+  // submitted filter
+  const onlySub = $("onlySubmitted").value;
+  if(onlySub==="Y") arr = arr.filter(r=>!!r.submitted);
+
+  // time filters (by rec.period + for DAY use updated_at windows)
+  const mode = $("timeMode").value;
+  const fy   = $("fiscalYear").value;
+  const pv   = $("periodValue").value;
+
+  if(fy){
+    arr = arr.filter(r => String(r.period?.fiscalYear||"") === String(fy));
+  }
+
+  if(mode!=="ALL"){
+    // match periodType
+    arr = arr.filter(r => String(r.period?.periodType||"") === mode);
+    if(pv){
+      if(mode==="YEAR"){
+        // pv=ทั้งปี : no extra
+      } else if(mode==="DAY"){
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        if(pv==="วันนี้"){
+          arr = arr.filter(r => (r.updated_at||0) >= startOfToday);
+        }else if(pv==="7 วันล่าสุด"){
+          arr = arr.filter(r => (Date.now() - (r.updated_at||0)) <= 7*86400000);
+        }else if(pv==="30 วันล่าสุด"){
+          arr = arr.filter(r => (Date.now() - (r.updated_at||0)) <= 30*86400000);
+        }
+      } else {
+        // QUARTER/MONTH: compare periodValue
+        arr = arr.filter(r => String(r.period?.periodValue||"") === String(pv));
+      }
+    }
+  }
+
+  // geo filters
+  const prov = $("province").value;
+  const dist = $("district").value;
+  const subd = $("subdistrict").value;
+  if(prov) arr = arr.filter(r => safe(r.entity?.province)===prov);
+  if(dist) arr = arr.filter(r => safe(r.entity?.district)===dist);
+  if(subd) arr = arr.filter(r => safe(r.entity?.subdistrict)===subd);
+
+  // entity type/name + search
+  const type = $("entityType").value;
+  const name = $("entityName").value;
+  const q = $("qEntity").value.trim();
+  if(type) arr = arr.filter(r => safe(r.entity?.type)===type);
+  if(name) arr = arr.filter(r => safe(r.entity?.name)===name);
+  if(q)    arr = arr.filter(r => contains(safe(r.entity?.name), q));
+
+  return arr;
+}
+
+/* =========================
+   6) Aggregations
+   ========================= */
+function countBy(arr, getter){
+  const m = new Map();
+  arr.forEach(r=>{
+    const k = safe(getter(r)) || "ไม่ระบุ";
+    m.set(k, (m.get(k)||0) + 1);
+  });
+  return [...m.entries()].sort((a,b)=>b[1]-a[1]); // desc
+}
+function topN(entries, n){ return entries.slice(0, n); }
+
+function metricValue(rec, metric){
+  switch(metric){
+    case "2.1.7":  return rec.s217;
+    case "2.1.8":  return rec.s218;
+    case "2.1.9":  return rec.s219;
+    case "2.1.10": return rec.s2110;
+    case "2.1.12": return rec.s212;
+    case "2.1.14": return rec.s214;
+    case "2.1.15": return rec.s215;
+    case "2.1.16": return rec.s216;
+    case "2.1.17": return rec.s217_cash;
+    case "2.1.19": return rec.s219_problem;
+    case "2.1.20": return rec.s220_rec_type;
+    default:       return rec.s217;
+  }
+}
+
+function trendByPeriod(arr, metric){
+  // group by periodKey -> counts of metric (top categories later)
+  const groups = new Map();
+  arr.forEach(r=>{
+    const pk = periodKey(r.period);
+    if(!groups.has(pk)) groups.set(pk, []);
+    groups.get(pk).push(r);
+  });
+  const keys = [...groups.keys()].sort(comparePeriodKey);
+
+  // build per period counts (Map category->count)
+  const periodMaps = keys.map(pk=>{
+    const recs = groups.get(pk) || [];
+    const m = new Map();
+    recs.forEach(r=>{
+      const v = safe(metricValue(r, metric)) || "ไม่ระบุ";
+      m.set(v, (m.get(v)||0)+1);
+    });
+    return m;
+  });
+
+  return { keys, periodMaps };
+}
+
+/* =========================
+   7) Charts
+   ========================= */
+let chart1=null, chart2=null;
+function destroyCharts(){
+  if(chart1){ chart1.destroy(); chart1=null; }
+  if(chart2){ chart2.destroy(); chart2=null; }
+}
+
+function makeDoughnut(ctx, labels, data){
+  return new Chart(ctx,{
+    type:"doughnut",
+    data:{ labels, datasets:[{ data }]},
+    options:{
+      responsive:true,
+      plugins:{ legend:{ position:"right" } },
+      cutout:"62%"
+    }
+  });
+}
+
+function makeLine(ctx, labels, datasets){
+  return new Chart(ctx,{
+    type:"line",
+    data:{ labels, datasets },
+    options:{
+      responsive:true,
+      plugins:{ legend:{ position:"bottom" } },
+      scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } }
+    }
+  });
+}
+
+/* =========================
+   8) Render dashboard
+   ========================= */
+function render(all, filtered){
+  // KPIs
+  const total = filtered.length;
+  const submitted = filtered.filter(r=>!!r.submitted).length;
+  const locked = filtered.filter(r=>isLocked(r.created_at)).length;
+
+  const cashshort = filtered.filter(r=>String(r.s217_cash||"").includes("มี")).length; // "มี"
+  const findings  = filtered.filter(r=>String(r.s215||"").includes("มี")).length; // "มีข้อสังเกต"
+  const unknown   = filtered.filter(r=>{
+    const v = String(r.s217||"");
+    return v.includes("ยังไม่ตรวจ") || v.includes("ไม่ทราบ");
+  }).length;
+
+  $("k_total").textContent = total;
+  $("k_submitted").textContent = submitted;
+  $("k_locked").textContent = locked;
+  $("k_cashshort").textContent = cashshort;
+  $("k_findings").textContent = findings;
+  $("k_unknown").textContent = unknown;
+
+  $("k_total_s").textContent = `จากเงื่อนไขที่เลือก`;
+  $("k_submitted_s").textContent = `ภายในชุดที่เลือก`;
+  $("k_locked_s").textContent = `ยังแสดงผลได้ แต่ห้ามแก้ไข`;
+  $("k_cashshort_s").textContent = `2.1.17 = “มี”`;
+  $("k_findings_s").textContent = `2.1.15 = “มีข้อสังเกต”`;
+  $("k_unknown_s").textContent = `2.1.7 = ยังไม่ตรวจ/ไม่ทราบ`;
+
+  // Notes
+  const mode = $("timeMode").value;
+  const fy   = $("fiscalYear").value || "ทุกปี";
+  const pv   = $("periodValue").value || "ทุกงวด";
+  const prov = $("province").value || "ทุกจังหวัด";
+  const dist = $("district").value || "ทุกอำเภอ";
+  const subd = $("subdistrict").value || "ทุกตำบล";
+  const type = $("entityType").value || "ทุกประเภท";
+  const name = $("entityName").value || "ทุกหน่วย";
+  const onlySub = $("onlySubmitted").value==="Y" ? "เฉพาะส่งแล้ว" : "ทั้งหมด";
+
+  $("dataHint").textContent =
+    `ฐานข้อมูลทั้งหมด: ${all.length} เรคคอร์ด • ชุดที่ใช้แสดงผล: ${filtered.length} • เงื่อนไข: ${onlySub} | ${mode} | ปีงบฯ ${fy} | งวด ${pv} | ${prov}/${dist}/${subd} | ${type} | ${name}`;
+
+  // Chart 1: depends on metric
+  const metric = $("metric").value;
+  const top = Number($("topN").value || 10);
+  destroyCharts();
+
+  // chart1: show distribution of selected metric (or 2.1.7 default)
+  const mKey = (metric==="ALL") ? "2.1.7" : metric;
+  const distEntries = topN(countBy(filtered, r => metricValue(r, mKey)), top);
+  const labels1 = distEntries.map(x=>x[0]);
+  const data1   = distEntries.map(x=>x[1]);
+
+  const titleMap = {
+    "2.1.7":"2.1.7 สถานะการตรวจสอบ FA",
+    "2.1.8":"2.1.8 สถานะปิดงบการเงิน",
+    "2.1.9":"2.1.9 สถานะส่งรายงานการเงิน",
+    "2.1.10":"2.1.10 สถานะหนังสือติดตาม",
+    "2.1.12":"2.1.12 ประชุมปิดตรวจ",
+    "2.1.14":"2.1.14 ผลการตรวจสอบ",
+    "2.1.15":"2.1.15 ข้อสังเกต",
+    "2.1.16":"2.1.16 การปรับปรุงบัญชี",
+    "2.1.17":"2.1.17 เงินขาดบัญชี",
+    "2.1.19":"2.1.19 ปัญหาการตรวจ",
+    "2.1.20":"2.1.20 ข้อเสนอแนะ"
+  };
+  $("c1_title").textContent = titleMap[mKey] || "สัดส่วนตามตัวกรอง";
+  $("c1_pill").textContent  = `Top ${top}`;
+  $("c1_note").textContent  = `แสดง Top ${top} หมวด (ที่เหลือถูกรวมเป็น “อื่นๆ” ในการตีความเชิงบริหาร)`;
+
+  chart1 = makeDoughnut($("chart1"), labels1, data1);
+
+  // chart2: trend by period for selected metric
+  const trendMetric = (metric==="ALL") ? "2.1.7" : metric;
+  const { keys, periodMaps } = trendByPeriod(filtered, trendMetric);
+
+  // pick top categories overall (by summing)
+  const sumMap = new Map();
+  periodMaps.forEach(m=>{
+    for(const [k,v] of m.entries()){
+      sumMap.set(k, (sumMap.get(k)||0)+v);
+    }
+  });
+  const topCats = [...sumMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0, 3).map(x=>x[0]); // 3 lines
+
+  const labels2 = keys.map(k=>{
+    const [fy,t,val]=k.split("|");
+    const shortT = t==="YEAR"?"Y":t==="QUARTER"?"Q":t==="MONTH"?"M":"D";
+    return `FY${fy}-${shortT}${val}`;
+  });
+
+  const datasets = topCats.map(cat=>{
+    const data = periodMaps.map(m => m.get(cat) || 0);
+    return { label: cat, data, tension:.25 };
+  });
+
+  $("c2_title").textContent = `แนวโน้มตามงวด (${titleMap[trendMetric] || trendMetric})`;
+  $("c2_pill").textContent  = `Top ${topCats.length} หมวด`;
+  $("c2_note").textContent  = (keys.length===0)
+    ? "ไม่มีข้อมูลเพียงพอสำหรับทำ Trend (ลองเปลี่ยนตัวกรอง)"
+    : "กราฟนี้ช่วยเห็น “ทิศทาง” และ “คอขวด” ตามงวดเวลา";
+
+  chart2 = makeLine($("chart2"), labels2, datasets);
+
+  // Action list: records with problems or recommendations
+  const actions = filtered
+    .filter(r => (safe(r.s219_problem) && safe(r.s219_problem)!=="ไม่ทราบ" && safe(r.s219_problem)!=="ไม่มีปัญหาเรื่อง") ||
+                 (safe(r.s220_rec_type) && safe(r.s220_rec_type)!=="ไม่ทราบ"))
+    .sort((a,b)=>(b.updated_at||0)-(a.updated_at||0))
+    .slice(0, 50);
+
+  $("a_pill").textContent = `${actions.length} รายการ (แสดงสูงสุด 50)`;
+
+  const tbody = $("actionRows");
+  tbody.innerHTML = "";
+  actions.forEach(r=>{
+    const tr=document.createElement("tr");
+    const entity = `${safe(r.entity?.type)} ${safe(r.entity?.name)}`;
+    const prd = fmtPeriod(r.period);
+    const fa = safe(r.s217) || "-";
+    const prob = safe(r.s219_problem) || "-";
+    const rec = (safe(r.s220_rec_type) ? safe(r.s220_rec_type) : "-") + (safe(r.s220_rec_text) ? " • " + safe(r.s220_rec_text) : "");
+    tr.innerHTML = `
+      <td class="nowrap"><b>${entity}</b><div class="tiny">${safe(r.entity?.province)} / ${safe(r.entity?.district)} / ${safe(r.entity?.subdistrict)}</div></td>
+      <td class="nowrap">${prd}</td>
+      <td>${fa}</td>
+      <td>${prob}</td>
+      <td>${rec}</td>
+      <td class="nowrap">${ymd(r.updated_at)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+/* =========================
+   9) Main
+   ========================= */
+let ALL = [];
+
+function boot(){
+  ALL = getRecords();
+
+  // init period options
+  fillPeriodValue();
+
+  // build options
+  rebuildGeoEntityOptions(ALL);
+  updateDistrictSubdistrict(ALL);
+  updateEntityNames(ALL);
+
+  // apply initial render
+  const filtered = applyFilters(ALL);
+  render(ALL, filtered);
+}
+
+/* =========================
+   10) Events
+   ========================= */
+$("timeMode").addEventListener("change", ()=>{
+  fillPeriodValue();
+});
+
+$("province").addEventListener("change", ()=>{
+  updateDistrictSubdistrict(ALL);
+  updateEntityNames(ALL);
+});
+$("district").addEventListener("change", ()=>{
+  updateDistrictSubdistrict(ALL);
+  updateEntityNames(ALL);
+});
+$("subdistrict").addEventListener("change", ()=>{
+  updateEntityNames(ALL);
+});
+$("entityType").addEventListener("change", ()=>{
+  updateEntityNames(ALL);
+});
+$("qEntity").addEventListener("input", ()=>{
+  updateEntityNames(ALL);
+});
+
+$("btnApply").addEventListener("click", ()=>{
+  const filtered = applyFilters(ALL);
+  render(ALL, filtered);
+});
+
+$("btnReset").addEventListener("click", ()=>{
+  $("timeMode").value="ALL";
+  $("fiscalYear").value="";
+  fillPeriodValue();
+  $("periodValue").value="";
+  $("onlySubmitted").value="Y";
+
+  $("province").value="";
+  updateDistrictSubdistrict(ALL);
+  $("district").value="";
+  $("subdistrict").value="";
+  $("qEntity").value="";
+
+  $("entityType").value="";
+  $("entityName").value="";
+  $("metric").value="ALL";
+  $("topN").value="10";
+
+  updateDistrictSubdistrict(ALL);
+  updateEntityNames(ALL);
+
+  const filtered = applyFilters(ALL);
+  render(ALL, filtered);
+});
+
+$("btnHome").addEventListener("click", ()=> location.href="index.html");
+$("btnData").addEventListener("click", ()=> location.href="data-hub.html"); // (ไฟล์นี้เราจะสร้างต่อไป)
+
+/* =========================
+   11) Auto refresh (optional)
+   - เพื่อให้รู้สึก "เรียลไทม์" ในเครื่องเดียวกัน
+   ========================= */
+setInterval(()=>{
+  const now = JSON.stringify(getRecords());
+  const old = JSON.stringify(ALL);
+  if(now !== old){
+    boot();
+  }
+}, 5000);
+
+/* start */
+boot();
+</script>
+</body>
+</html>
