@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ลงทะเบียนผู้ใช้ • ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์</title>
+  <style>
+    :root{--bg:#f5f7fb;--card:#fff;--line:#dde3ee;--text:#29384d;--muted:#6a7c95;--brand:#1e5aaa;--shadow:0 10px 30px rgba(20,40,80,.08);--r:18px}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Thai","Noto Sans";background:var(--bg);color:var(--text)}
+    .wrap{max-width:980px;margin:22px auto;padding:0 18px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
+    h1{margin:0 0 10px}
+    .muted{color:var(--muted);font-size:13px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+    label{font-weight:900;font-size:13px}
+    input,select{
+      width:100%;padding:11px 12px;border-radius:14px;border:1px solid var(--line);background:#fff;
+      font-size:14px;outline:none
+    }
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .btn{border:1px solid var(--line);background:#fff;border-radius:14px;padding:10px 12px;cursor:pointer;font-weight:900}
+    .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
+    .msg{display:none;margin-top:12px;padding:10px 12px;border-radius:14px;font-weight:900}
+    .ok{border:1px solid #c8f2d6;background:#effaf3;color:#1f7a3b}
+    .bad{border:1px solid #ffd2d2;background:#fff0f0;color:#b13b3b}
+    @media (max-width:800px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>ลงทะเบียนผู้ใช้</h1>
+      <div class="muted">
+        โหมดเริ่มต้นบน GitHub Pages: บันทึกผู้ใช้ในเครื่อง (localStorage) เพื่อทดลองระบบ/เดโม flow
+      </div>
+
+      <div class="grid">
+        <div>
+          <label>ชื่อผู้ใช้ (Username)</label>
+          <input id="username" placeholder="เช่น oag_user01" autocomplete="username" />
+        </div>
+        <div>
+          <label>รหัสผ่าน (Password)</label>
+          <input id="password" type="password" placeholder="อย่างน้อย 6 ตัวอักษร" autocomplete="new-password" />
+        </div>
+        <div>
+          <label>ชื่อ-สกุล</label>
+          <input id="fullname" placeholder="เช่น นาย/นาง/นางสาว ..." />
+        </div>
+        <div>
+          <label>บทบาทผู้ใช้</label>
+          <select id="role">
+            <option value="ADMIN">ผู้ดูแลระบบ (Admin)</option>
+            <option value="AUDITOR" selected>ผู้ตรวจสอบ (Auditor)</option>
+            <option value="REVIEWER">ผู้สอบทาน (Reviewer)</option>
+            <option value="USER">ผู้ใช้ทั่วไป (User)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <button class="btn" onclick="location.href='index.html'">กลับหน้าแรก</button>
+        <button class="btn" onclick="location.href='login.html'">ไปหน้า Login</button>
+        <button class="btn primary" id="btnRegister">บันทึกการลงทะเบียน</button>
+      </div>
+
+      <div class="msg ok" id="ok"></div>
+      <div class="msg bad" id="bad"></div>
+
+      <div class="muted" style="margin-top:10px">
+        หมายเหตุเพื่อความปลอดภัย: โหมดนี้เป็น “เดโมในเครื่อง” — หากต้องใช้งานจริงหลายคน/หลายเครื่อง จะเปลี่ยนไปใช้ระบบ Auth กลาง (เช่น Supabase Auth) ในเฟสถัดไป
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const USERS_KEY = "fa_users_v1";
+
+    function show(id, text){
+      const ok = document.getElementById("ok");
+      const bad = document.getElementById("bad");
+      ok.style.display = "none"; bad.style.display = "none";
+      const el = document.getElementById(id);
+      el.textContent = text;
+      el.style.display = "block";
+    }
+
+    document.getElementById("btnRegister").addEventListener("click", () => {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+      const fullname = document.getElementById("fullname").value.trim();
+      const role = document.getElementById("role").value;
+
+      if(!username) return show("bad", "กรุณากรอก Username");
+      if(password.length < 6) return show("bad", "รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร");
+      if(!fullname) return show("bad", "กรุณากรอกชื่อ-สกุล");
+
+      const users = JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
+      if(users.some(u => u.username.toLowerCase() === username.toLowerCase())){
+        return show("bad", "Username นี้ถูกใช้แล้ว กรุณาเลือกใหม่");
+      }
+
+      // Demo only: เก็บรหัสผ่านแบบ plain text (ไม่ปลอดภัยสำหรับ production)
+      users.push({
+        id: "U-" + Date.now() + "-" + Math.random().toString(16).slice(2),
+        username,
+        password,
+        fullname,
+        role,
+        created_at: Date.now()
+      });
+
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+      show("ok", "ลงทะเบียนเรียบร้อย ✅ ไปหน้า Login เพื่อเข้าสู่ระบบได้เลย");
+    });
+  </script>
+</body>
+</html>
