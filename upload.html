@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>อัปโหลดไฟล์ • ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์</title>
+  <style>
+    :root{
+      --bg:#f5f7fb; --card:#fff; --line:#dde3ee; --text:#29384d; --muted:#6a7c95;
+      --brand:#1e5aaa; --brand2:#2f7de1; --shadow:0 10px 30px rgba(20,40,80,.08);
+      --r:18px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Thai","Noto Sans";background:var(--bg);color:var(--text)}
+    header{
+      position:sticky; top:0; z-index:10;
+      background:#fff; border-bottom:1px solid var(--line);
+      padding:14px 18px; display:flex; align-items:center; gap:12px;
+    }
+    .title{display:flex;flex-direction:column;line-height:1.05}
+    .title h1{margin:0;font-size:18px}
+    .title small{color:var(--muted)}
+    .spacer{flex:1}
+    .badge{border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa;padding:8px 12px;border-radius:14px;font-weight:900}
+    .wrap{max-width:1200px;margin:18px auto;padding:0 18px}
+    .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;min-width:0}
+    h2{margin:0 0 10px;font-size:16px}
+    .muted{color:var(--muted);font-size:13px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .btn{
+      border:1px solid var(--line); background:#fff; border-radius:14px;
+      padding:10px 12px; cursor:pointer; font-weight:900; color:var(--text);
+    }
+    .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2)); color:#fff; border-color:transparent}
+    .btn.danger{background:#fff0f0;border-color:#ffd2d2;color:#b13b3b}
+    .drop{
+      margin-top:10px;
+      border:2px dashed #cfe2ff;
+      background:#f3f8ff;
+      border-radius:18px;
+      padding:16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .drop.drag{background:#e9f2ff;border-color:#8bb7ff}
+    input[type="file"]{display:none}
+    table{width:100%;border-collapse:separate;border-spacing:0 10px;margin-top:10px}
+    th{font-size:12px;color:var(--muted);text-align:left;padding:0 8px}
+    td{
+      background:#f7f9fc;border:1px solid #e6ecf6;
+      padding:10px 8px; font-size:13px;
+    }
+    tr td:first-child{border-radius:14px 0 0 14px}
+    tr td:last-child{border-radius:0 14px 14px 0}
+    .pill{padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa;white-space:nowrap}
+    .msg{display:none;margin-top:10px;padding:10px 12px;border-radius:14px;font-weight:900}
+    .ok{border:1px solid #c8f2d6;background:#effaf3;color:#1f7a3b}
+    .bad{border:1px solid #ffd2d2;background:#fff0f0;color:#b13b3b}
+    .hint{margin-top:10px;font-size:12px;color:#7b8dab}
+    @media (max-width:1000px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="title">
+    <h1>อัปโหลดไฟล์ (รองรับทุกไฟล์ • ครั้งละไม่เกิน 10 ไฟล์)</h1>
+    <small>ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์</small>
+  </div>
+  <div class="spacer"></div>
+  <div class="badge" id="userBadge">กำลังตรวจสอบสถานะผู้ใช้…</div>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+    <section class="card">
+      <h2>อัปโหลดไฟล์</h2>
+      <div class="muted">
+        หน้านี้เก็บไฟล์ไว้ในเครื่องผู้ใช้ด้วย IndexedDB (เหมาะกับ GitHub Pages แบบไม่มีเซิร์ฟเวอร์)  
+        <b>อัปโหลดได้ทุกชนิดไฟล์</b> และ <b>ครั้งละไม่เกิน 10 ไฟล์</b>
+      </div>
+
+      <div class="drop" id="dropZone">
+        <div>
+          <div style="font-weight:900">ลากไฟล์มาวางที่นี่ หรือกดเลือกไฟล์</div>
+          <div class="muted">รองรับ: ทุกไฟล์ • จำกัด: 10 ไฟล์/ครั้ง</div>
+        </div>
+        <div>
+          <label class="btn primary" for="fileInput">เลือกไฟล์</label>
+          <input id="fileInput" type="file" multiple />
+        </div>
+      </div>
+
+      <div class="row">
+        <button class="btn" onclick="location.href='index.html'">กลับหน้าแรก</button>
+        <button class="btn" onclick="location.href='vault-upload.html'">ไปคลังข้อมูล (อัปโหลด)</button>
+        <button class="btn" id="btnRefresh">รีเฟรชรายการ</button>
+        <button class="btn danger" id="btnClearAll">ลบทั้งหมด (ในเครื่องนี้)</button>
+      </div>
+
+      <div class="msg ok" id="ok"></div>
+      <div class="msg bad" id="bad"></div>
+
+      <h2 style="margin-top:14px">รายการไฟล์ที่อัปโหลด</h2>
+      <div class="muted">แสดงข้อมูล: ชื่อไฟล์ • ขนาด • วันที่ • ผู้อัปโหลด • ดาวน์โหลด/ลบ</div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>ชื่อไฟล์</th>
+            <th>ขนาด</th>
+            <th>วันที่อัปโหลด</th>
+            <th>ผู้อัปโหลด</th>
+            <th>การทำงาน</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+
+      <div class="hint">
+        หมายเหตุ: ไฟล์เก็บอยู่ “เครื่องที่อัปโหลด” (โหมดเริ่มต้น) หากต้องการใช้งานหลายคน/หลายเครื่องจริง → ต้องมีที่เก็บกลาง (เช่น Supabase Storage, S3 ฯลฯ)
+      </div>
+    </section>
+
+    <aside class="card">
+      <h2>ส่งออก (Export)</h2>
+      <div class="muted">ส่งออกเฉพาะ “ข้อมูลรายการไฟล์” เป็น JSON/CSV เพื่อใช้ทำรายงานหรือย้ายข้อมูล</div>
+      <div class="row">
+        <button class="btn primary" id="btnExportJSON">Export JSON</button>
+        <button class="btn" id="btnExportCSV">Export CSV</button>
+      </div>
+
+      <h2 style="margin-top:14px">นโยบายการใช้งาน</h2>
+      <div class="muted">
+        • จำกัดแก้ไข/ลบตามสิทธิ์ในเฟสถัดไป (Admin) <br/>
+        • ตอนนี้ใช้ session จากหน้า Login เป็นตัวระบุ “ผู้อัปโหลด” <br/>
+        • จะเชื่อมเข้าหน้า Admin / Vault เต็มรูปแบบต่อไป
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+/* =========================
+   0) Auth Guard (Prototype)
+   ========================= */
+const SESSION_KEY = "fa_session_v1";
+const session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+if(!session){
+  location.href = "login.html";
+}
+document.getElementById("userBadge").textContent =
+  "ผู้ใช้: " + (session.fullname || session.username) + " • บทบาท: " + (session.role || "USER");
+
+/* =========================
+   1) IndexedDB - Vault Upload
+   ========================= */
+const DB_NAME = "fa_vault_db";
+const DB_VER  = 1;
+const STORE   = "uploads";
+
+function openDB(){
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = (e) => {
+      const db = req.result;
+      if(!db.objectStoreNames.contains(STORE)){
+        const st = db.createObjectStore(STORE, { keyPath: "id" });
+        st.createIndex("uploaded_at", "uploaded_at", { unique:false });
+        st.createIndex("uploader", "uploader", { unique:false });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function putUpload(file){
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    const st = tx.objectStore(STORE);
+
+    const id = "UP-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+    const record = {
+      id,
+      name: file.name,
+      type: file.type || "application/octet-stream",
+      size: file.size,
+      uploaded_at: Date.now(),
+      uploader: session.fullname || session.username,
+      uploader_role: session.role || "USER",
+      blob: file
+    };
+
+    const req = st.put(record);
+    req.onsuccess = () => resolve(record);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function listUploads(){
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, "readonly");
+    const st = tx.objectStore(STORE);
+    const req = st.getAll();
+    req.onsuccess = () => {
+      const arr = req.result || [];
+      arr.sort((a,b)=> b.uploaded_at - a.uploaded_at);
+      resolve(arr);
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function deleteUpload(id){
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    const st = tx.objectStore(STORE);
+    const req = st.delete(id);
+    req.onsuccess = () => resolve(true);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function clearAll(){
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    const st = tx.objectStore(STORE);
+    const req = st.clear();
+    req.onsuccess = () => resolve(true);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function bytes(n){
+  if(n < 1024) return n + " B";
+  const kb = n/1024;
+  if(kb < 1024) return kb.toFixed(1) + " KB";
+  const mb = kb/1024;
+  if(mb < 1024) return mb.toFixed(2) + " MB";
+  const gb = mb/1024;
+  return gb.toFixed(2) + " GB";
+}
+
+function showMsg(kind, text){
+  const ok = document.getElementById("ok");
+  const bad = document.getElementById("bad");
+  ok.style.display="none"; bad.style.display="none";
+  const el = (kind==="ok") ? ok : bad;
+  el.textContent = text;
+  el.style.display="block";
+  setTimeout(()=> el.style.display="none", 2500);
+}
+
+async function render(){
+  const tbody = document.getElementById("tbody");
+  const data = await listUploads();
+  if(!data.length){
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;border-radius:14px">ยังไม่มีไฟล์อัปโหลด</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = data.map(r=>{
+    const dt = new Date(r.uploaded_at).toLocaleString();
+    return `
+      <tr>
+        <td title="${r.id}"><b>${escapeHtml(r.name)}</b><div class="muted" style="font-size:12px">${escapeHtml(r.type)}</div></td>
+        <td>${bytes(r.size)}</td>
+        <td>${dt}</td>
+        <td><span class="pill">${escapeHtml(r.uploader)}</span></td>
+        <td>
+          <button class="btn" onclick="downloadFile('${r.id}')">ดาวน์โหลด</button>
+          <button class="btn danger" onclick="removeFile('${r.id}')">ลบ</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function escapeHtml(s){
+  return String(s||"").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+/* =========================
+   2) UI handlers (Upload)
+   ========================= */
+const fileInput = document.getElementById("fileInput");
+const dropZone  = document.getElementById("dropZone");
+
+fileInput.addEventListener("change", async (e) => {
+  const files = [...(e.target.files || [])];
+  await handleFiles(files);
+  fileInput.value = "";
+});
+
+dropZone.addEventListener("dragover", (e)=>{ e.preventDefault(); dropZone.classList.add("drag"); });
+dropZone.addEventListener("dragleave", ()=> dropZone.classList.remove("drag"));
+dropZone.addEventListener("drop", async (e)=>{
+  e.preventDefault();
+  dropZone.classList.remove("drag");
+  const files = [...(e.dataTransfer.files || [])];
+  await handleFiles(files);
+});
+
+async function handleFiles(files){
+  if(!files.length) return;
+
+  if(files.length > 10){
+    showMsg("bad","อัปโหลดได้ครั้งละไม่เกิน 10 ไฟล์");
+    files = files.slice(0,10);
+  }
+
+  try{
+    for(const f of files){
+      await putUpload(f);
+    }
+    showMsg("ok","อัปโหลดไฟล์เรียบร้อย ✅ ("+files.length+" ไฟล์)");
+    await render();
+  }catch(err){
+    console.error(err);
+    showMsg("bad","เกิดข้อผิดพลาดระหว่างอัปโหลด");
+  }
+}
+
+document.getElementById("btnRefresh").addEventListener("click", render);
+
+document.getElementById("btnClearAll").addEventListener("click", async ()=>{
+  if(!confirm("ยืนยันลบไฟล์ทั้งหมดในเครื่องนี้?")) return;
+  await clearAll();
+  showMsg("ok","ลบทั้งหมดเรียบร้อย");
+  await render();
+});
+
+/* =========================
+   3) Download / Delete
+   ========================= */
+async function getById(id){
+  const db = await openDB();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(STORE, "readonly");
+    const st = tx.objectStore(STORE);
+    const req = st.get(id);
+    req.onsuccess = ()=> resolve(req.result || null);
+    req.onerror = ()=> reject(req.error);
+  });
+}
+
+window.downloadFile = async (id) => {
+  const rec = await getById(id);
+  if(!rec){ showMsg("bad","ไม่พบไฟล์"); return; }
+  const url = URL.createObjectURL(rec.blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = rec.name || "download";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1200);
+};
+
+window.removeFile = async (id) => {
+  if(!confirm("ยืนยันลบไฟล์นี้?")) return;
+  await deleteUpload(id);
+  showMsg("ok","ลบไฟล์เรียบร้อย");
+  await render();
+};
+
+/* =========================
+   4) Export JSON / CSV
+   ========================= */
+function downloadText(filename, text, mime="application/json"){
+  const blob = new Blob([text], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1200);
+}
+
+document.getElementById("btnExportJSON").addEventListener("click", async ()=>{
+  const data = await listUploads();
+  // ไม่ส่ง blob ออกไป เพื่อลดขนาดไฟล์ export
+  const meta = data.map(({blob, ...rest})=>rest);
+  downloadText("fa-upload-metadata.json", JSON.stringify(meta, null, 2), "application/json");
+});
+
+document.getElementById("btnExportCSV").addEventListener("click", async ()=>{
+  const data = await listUploads();
+  const meta = data.map(({blob, ...rest})=>rest);
+  const headers = ["id","name","type","size","uploaded_at","uploader","uploader_role"];
+  const lines = [headers.join(",")].concat(meta.map(r=>{
+    return headers.map(h=>{
+      const v = r[h];
+      const s = (v===null||v===undefined) ? "" : String(v).replace(/"/g,'""');
+      return `"${s}"`;
+    }).join(",");
+  }));
+  downloadText("fa-upload-metadata.csv", lines.join("\n"), "text/csv");
+});
+
+/* init */
+render();
+</script>
+</body>
+</html>
