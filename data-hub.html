@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>คลังข้อมูล (Data Hub) • ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์</title>
+
+  <style>
+    :root{
+      --bg:#f4f7fb; --card:#fff; --line:#dde5f2; --text:#24364c; --muted:#6a7f9a;
+      --brand:#1e5aaa; --brand2:#2f7de1;
+      --shadow:0 10px 28px rgba(20,40,80,.08);
+      --r:18px;
+      --ok:#1f7a3b; --bad:#b13b3b; --warn:#8a5a00;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Thai","Noto Sans";background:var(--bg);color:var(--text)}
+    header{
+      position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);
+      padding:14px 18px;display:flex;align-items:center;gap:12px
+    }
+    .title{display:flex;flex-direction:column;line-height:1.05}
+    .title h1{margin:0;font-size:18px}
+    .title small{color:var(--muted)}
+    .spacer{flex:1}
+    .badge{border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa;padding:8px 12px;border-radius:14px;font-weight:900}
+    .wrap{max-width:1200px;margin:18px auto;padding:0 18px}
+
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;min-width:0}
+    h2{margin:0 0 10px;font-size:16px}
+    h3{margin:14px 0 8px;font-size:14px}
+    .muted{color:var(--muted);font-size:13px}
+    .hr{height:1px;background:#eef2f7;margin:12px 0}
+
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row>*{flex:1;min-width:170px}
+
+    .btn{
+      border:1px solid var(--line); background:#fff; border-radius:14px;
+      padding:10px 12px; cursor:pointer; font-weight:900; color:var(--text);
+      text-align:center
+    }
+    .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;border-color:transparent}
+    .btn.danger{background:#fff0f0;border-color:#ffd2d2;color:var(--bad)}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .kpi{border:1px solid #e6ecf6;border-radius:16px;padding:10px;background:#f7f9fc}
+    .kpi b{display:block;font-size:12px;color:#4a6281}
+    .kpi .v{font-size:20px;font-weight:1000;margin-top:6px}
+    .kpi .s{font-size:12px;color:var(--muted)}
+
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa}
+    .pill.ok{border-color:#c8f2d6;background:#effaf3;color:var(--ok)}
+    .pill.warn{border-color:#ffe7b8;background:#fff7e6;color:var(--warn)}
+    .pill.bad{border-color:#ffd2d2;background:#fff0f0;color:var(--bad)}
+
+    .menuCard{
+      border:1px solid #e6ecf6;border-radius:16px;padding:12px;background:#f7f9fc
+    }
+    .menuCard h3{margin:0 0 6px}
+    ul{margin:8px 0 0 18px;color:var(--muted);font-size:13px}
+    .tiny{font-size:12px;color:var(--muted)}
+    @media (max-width:900px){ .grid{grid-template-columns:1fr} .kpis{grid-template-columns:repeat(2,1fr)} }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="title">
+    <h1>คลังข้อมูล (Data Hub) — สำหรับผู้ดูแลระบบ</h1>
+    <small>จัดการข้อมูลจาก Upload และ Manual • เชื่อมต่อ Cashboard/Dashboard</small>
+  </div>
+  <div class="spacer"></div>
+  <div class="badge" id="userBadge">กำลังตรวจสอบผู้ใช้…</div>
+</header>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>สรุปสถานะคลังข้อมูล</h2>
+    <div class="muted">ตัวเลขนี้เป็นข้อมูลในเครื่อง (localStorage) เหมาะสำหรับ Prototype / GitHub Pages</div>
+    <div class="hr"></div>
+
+    <div class="kpis">
+      <div class="kpi">
+        <b>รายการ Manual (ทั้งหมด)</b>
+        <div class="v" id="k_manual">0</div>
+        <div class="s">จาก fa_manual_records_v1</div>
+      </div>
+      <div class="kpi">
+        <b>รายการ Manual (ส่งแล้ว)</b>
+        <div class="v" id="k_submitted">0</div>
+        <div class="s">submitted = true</div>
+      </div>
+      <div class="kpi">
+        <b>รายการที่ล็อกเกิน 356 วัน</b>
+        <div class="v" id="k_locked">0</div>
+        <div class="s">แก้ไขไม่ได้ (แต่แสดงผลได้)</div>
+      </div>
+      <div class="kpi">
+        <b>แฟ้ม Upload (ประวัติ)</b>
+        <div class="v" id="k_upload">0</div>
+        <div class="s">จาก fa_upload_log_v1</div>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+    <div class="row">
+      <button class="btn" id="btnHome">กลับหน้าแรก</button>
+      <button class="btn primary" id="btnCashboard">ไป Cashboard</button>
+      <button class="btn" id="btnDashboard">ไป Dashboard</button>
+      <button class="btn danger" id="btnLogout">ออกจากระบบ</button>
+    </div>
+
+    <div class="tiny" id="hint">—</div>
+  </div>
+
+  <div class="grid" style="margin-top:14px">
+
+    <!-- Upload data -->
+    <div class="card">
+      <h2>1) ข้อมูลจากการ Upload</h2>
+      <div class="muted">
+        แสดงรายการไฟล์ที่อัปโหลด: ชื่อไฟล์/ขนาด/วันที่/ผู้อัปโหลด • Admin สามารถแก้ไข/ลบ/เพิ่ม/ดู/Export
+      </div>
+      <div class="hr"></div>
+
+      <div class="menuCard">
+        <h3>หน้า: จัดการข้อมูล Upload</h3>
+        <span class="pill ok">admin-upload-data.html</span>
+        <ul>
+          <li>ตารางรายการไฟล์ (ชื่อ/ขนาด/วันที่/ผู้อัปโหลด)</li>
+          <li>ปุ่ม Admin: เพิ่ม/แก้ไข/ลบ/บันทึก/ดู/Export</li>
+          <li>เชื่อมการนำเข้าข้อมูลเข้าสู่ Manual Records (ถ้าต้องการ)</li>
+        </ul>
+      </div>
+
+      <div class="hr"></div>
+      <div class="row">
+        <button class="btn primary" id="goUpload">เปิดหน้าจัดการ Upload</button>
+        <button class="btn" id="goUploadExport">Export Log (JSON)</button>
+      </div>
+      <div class="tiny">* ตอนนี้ยังเป็นโหมด localStorage เพื่อให้ GitHub Pages ใช้ได้ทันที</div>
+    </div>
+
+    <!-- Manual data -->
+    <div class="card">
+      <h2>2) ข้อมูลจาก Manual (ตารางเหมือน Excel)</h2>
+      <div class="muted">
+        แบ่ง 3 หน้า: (2.1) ดูทั้งหมด (2.2) ค้นหา (2.3) ผลการค้นหา • Admin แก้ไข/ลบ/เพิ่ม/บันทึก/Export
+      </div>
+      <div class="hr"></div>
+
+      <div class="menuCard">
+        <h3>หน้า 2.1: ดูข้อมูลทั้งหมด (สรุป + ตาราง)</h3>
+        <span class="pill ok">admin-manual-table.html</span>
+        <ul>
+          <li>ตารางรวม: หน่วย/ปี/งวด/วันที่ล่าสุด/สถานะส่ง/สถานะล็อก</li>
+          <li>ปุ่ม: ดูรายละเอียด/แก้ไข/ลบ/เพิ่ม/Export</li>
+        </ul>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="menuCard">
+        <h3>หน้า 2.2: ค้นหาข้อมูล</h3>
+        <span class="pill ok">admin-manual-search.html</span>
+        <ul>
+          <li>2.2.1 ปีงบฯ 2560–2580</li>
+          <li>2.2.2 ชื่อหน่วย + ช่องค้นหาคำ</li>
+          <li>2.2.3 จังหวัด/อำเภอ/ตำบล</li>
+          <li>2.2.4 ค้นหาตามคำ (free text)</li>
+        </ul>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="menuCard">
+        <h3>หน้า 2.3: ผลการค้นหา (ตารางเต็มหัวข้อ 2.1.1–2.1.20)</h3>
+        <span class="pill warn">admin-manual-search-result.html</span>
+        <ul>
+          <li>คอลัมน์ครบ 2.1.1–2.1.20 (เน้น 2.1.7–2.1.20 ตาม Cashboard)</li>
+          <li>ปุ่ม Admin: แก้ไข/ลบ/เพิ่ม/บันทึก/Export</li>
+        </ul>
+      </div>
+
+      <div class="hr"></div>
+      <div class="row">
+        <button class="btn primary" id="goManualAll">เปิดหน้า 2.1 ดูทั้งหมด</button>
+        <button class="btn" id="goManualSearch">เปิดหน้า 2.2 ค้นหา</button>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="goManualExport">Export Manual (CSV)</button>
+        <button class="btn" id="goManualExportJson">Export Manual (JSON)</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* =========================
+   0) Guard: must be logged in + ADMIN
+   ========================= */
+const SESSION_KEY = "fa_session_v1";
+const session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+if(!session){ location.href="login.html"; }
+
+const role = (session.role || "USER").toUpperCase();
+if(role !== "ADMIN"){
+  alert("หน้านี้สำหรับผู้ดูแลระบบ (ADMIN) เท่านั้น");
+  location.href = "index.html";
+}
+document.getElementById("userBadge").textContent =
+  "ผู้ใช้: " + (session.fullname || session.username) + " • บทบาท: " + role;
+
+/* =========================
+   1) Keys
+   ========================= */
+const RECORDS_KEY = "fa_manual_records_v1";
+const UPLOAD_LOG_KEY = "fa_upload_log_v1";
+
+/* =========================
+   2) Helpers
+   ========================= */
+function getArr(key){ return JSON.parse(localStorage.getItem(key) || "[]"); }
+function isLocked(created_at){
+  if(!created_at) return false;
+  const days = (Date.now() - created_at)/86400000;
+  return days >= 356;
+}
+function downloadText(filename, text, mime="application/json"){
+  const blob = new Blob([text], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+function toCSV(rows){
+  const esc = (v)=>('"'+String(v??"").replaceAll('"','""')+'"');
+  if(!rows.length) return "sep=,\n";
+  const cols = Object.keys(rows[0]);
+  const lines = [];
+  lines.push("sep=,");
+  lines.push(cols.map(esc).join(","));
+  for(const r of rows){
+    lines.push(cols.map(c=>esc(r[c])).join(","));
+  }
+  return lines.join("\n");
+}
+
+/* =========================
+   3) KPI Render
+   ========================= */
+function renderKpis(){
+  const manual = getArr(RECORDS_KEY);
+  const upload = getArr(UPLOAD_LOG_KEY);
+
+  const submitted = manual.filter(x=>!!x.submitted).length;
+  const locked = manual.filter(x=>isLocked(x.created_at)).length;
+
+  document.getElementById("k_manual").textContent = manual.length;
+  document.getElementById("k_submitted").textContent = submitted;
+  document.getElementById("k_locked").textContent = locked;
+  document.getElementById("k_upload").textContent = upload.length;
+
+  const hint = document.getElementById("hint");
+  hint.textContent =
+    `Manual: ${manual.length} รายการ (ส่งแล้ว ${submitted}) • Upload Log: ${upload.length} รายการ • อัปเดตล่าสุด: ${new Date().toLocaleString()}`;
+}
+renderKpis();
+
+/* =========================
+   4) Navigation
+   ========================= */
+document.getElementById("btnHome").addEventListener("click", ()=>location.href="index.html");
+document.getElementById("btnCashboard").addEventListener("click", ()=>location.href="cashboard.html");
+document.getElementById("btnDashboard").addEventListener("click", ()=>location.href="dashboard.html"); // (ถ้ายังไม่สร้าง เดี๋ยวสร้างต่อ)
+document.getElementById("btnLogout").addEventListener("click", ()=>{
+  localStorage.removeItem(SESSION_KEY);
+  alert("ออกจากระบบเรียบร้อย");
+  location.href="login.html";
+});
+
+/* Upload pages */
+document.getElementById("goUpload").addEventListener("click", ()=>location.href="admin-upload-data.html");
+document.getElementById("goUploadExport").addEventListener("click", ()=>{
+  const upload = getArr(UPLOAD_LOG_KEY);
+  downloadText(`fa_upload_log_${Date.now()}.json`, JSON.stringify(upload,null,2), "application/json");
+});
+
+/* Manual pages */
+document.getElementById("goManualAll").addEventListener("click", ()=>location.href="admin-manual-table.html");
+document.getElementById("goManualSearch").addEventListener("click", ()=>location.href="admin-manual-search.html");
+
+document.getElementById("goManualExport").addEventListener("click", ()=>{
+  const manual = getArr(RECORDS_KEY);
+
+  // export แบบ “สรุปตาราง” ให้คล้ายหน้า 2.1 (ไม่ใช่คอลัมน์ยิบย่อยทั้งหมด)
+  const rows = manual.map(r=>({
+    entity_type: r.entity?.type || "",
+    entity_name: r.entity?.name || "",
+    province: r.entity?.province || "",
+    district: r.entity?.district || "",
+    subdistrict: r.entity?.subdistrict || "",
+    fiscal_year: r.period?.fiscalYear || "",
+    period_type: r.period?.periodType || "",
+    period_value: r.period?.periodValue || "",
+    fa_status_2_1_7: r.s217 || "",
+    close_status_2_1_8: r.s218 || "",
+    report_status_2_1_9: r.s219 || "",
+    letter_status_2_1_10: r.s2110 || "",
+    result_2_1_14: r.s214 || "",
+    findings_2_1_15: r.s215 || "",
+    adjustments_2_1_16: r.s216 || "",
+    cash_shortage_2_1_17: r.s217_cash || "",
+    problems_2_1_19: r.s219_problem || "",
+    rec_type_2_1_20: r.s220_rec_type || "",
+    rec_text_2_1_20: r.s220_rec_text || "",
+    submitted: r.submitted ? "Y" : "N",
+    created_at: r.created_at ? new Date(r.created_at).toISOString() : "",
+    updated_at: r.updated_at ? new Date(r.updated_at).toISOString() : ""
+  }));
+
+  downloadText(`fa_manual_export_${Date.now()}.csv`, toCSV(rows), "text/csv;charset=utf-8");
+});
+
+document.getElementById("goManualExportJson").addEventListener("click", ()=>{
+  const manual = getArr(RECORDS_KEY);
+  downloadText(`fa_manual_records_${Date.now()}.json`, JSON.stringify(manual,null,2), "application/json");
+});
+
+/* =========================
+   5) Light auto-refresh
+   ========================= */
+setInterval(renderKpis, 5000);
+</script>
+</body>
+</html>
