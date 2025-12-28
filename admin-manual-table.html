@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Manual Data (Admin) • 2.1 ดูข้อมูลทั้งหมด • ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์</title>
+
+  <style>
+    :root{
+      --bg:#f4f7fb; --card:#fff; --line:#dde5f2; --text:#24364c; --muted:#6a7f9a;
+      --brand:#1e5aaa; --brand2:#2f7de1;
+      --shadow:0 10px 28px rgba(20,40,80,.08);
+      --r:18px;
+      --ok:#1f7a3b; --bad:#b13b3b; --warn:#8a5a00; --info:#0b5aa6;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Thai","Noto Sans";background:var(--bg);color:var(--text)}
+    header{
+      position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);
+      padding:14px 18px;display:flex;align-items:center;gap:12px
+    }
+    .title{display:flex;flex-direction:column;line-height:1.05}
+    .title h1{margin:0;font-size:18px}
+    .title small{color:var(--muted)}
+    .spacer{flex:1}
+    .badge{border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa;padding:8px 12px;border-radius:14px;font-weight:900}
+
+    .wrap{max-width:1600px;margin:18px auto;padding:0 18px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;min-width:0}
+    h2{margin:0 0 10px;font-size:16px}
+    .muted{color:var(--muted);font-size:13px}
+    .hr{height:1px;background:#eef2f7;margin:12px 0}
+
+    input,select{
+      width:100%;padding:10px 12px;border-radius:14px;border:1px solid var(--line);
+      background:#fff;font-size:14px;outline:none
+    }
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row>*{flex:1;min-width:170px}
+
+    .btn{
+      border:1px solid var(--line); background:#fff; border-radius:14px;
+      padding:10px 12px; cursor:pointer; font-weight:900; color:var(--text);
+      white-space:nowrap
+    }
+    .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;border-color:transparent}
+    .btn.danger{background:#fff0f0;border-color:#ffd2d2;color:var(--bad)}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid #eef2f7;padding:8px 6px;text-align:left;font-size:13px;vertical-align:top}
+    th{color:#4a5f7d;white-space:nowrap}
+    .nowrap{white-space:nowrap}
+    .tiny{font-size:12px;color:var(--muted)}
+    .right{text-align:right}
+
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa}
+    .pill.ok{border-color:#c8f2d6;background:#effaf3;color:var(--ok)}
+    .pill.warn{border-color:#ffe7b8;background:#fff7e6;color:var(--warn)}
+    .pill.bad{border-color:#ffd2d2;background:#fff0f0;color:var(--bad)}
+    .pill.info{border-color:#cfe2ff;background:#eef6ff;color:var(--info)}
+
+    .msg{display:none;margin-top:10px;padding:10px 12px;border-radius:14px;font-weight:900}
+    .okBox{border:1px solid #c8f2d6;background:#effaf3;color:var(--ok)}
+    .badBox{border:1px solid #ffd2d2;background:#fff0f0;color:var(--bad)}
+    .warnBox{border:1px solid #ffe7b8;background:#fff7e6;color:var(--warn)}
+
+    @media (max-width:900px){ .row>*{min-width:140px} }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="title">
+    <h1>Manual Data (Admin) — 2.1 ดูข้อมูลทั้งหมด</h1>
+    <small>ตารางสรุปทุกเรคคอร์ด • แก้ไข/ลบ/เพิ่ม/Export • ล็อกแก้ไขเมื่อครบ 356 วัน</small>
+  </div>
+  <div class="spacer"></div>
+  <div class="badge" id="userBadge">กำลังตรวจสอบผู้ใช้…</div>
+</header>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>ตัวกรอง + คำสั่ง</h2>
+    <div class="muted">ค้นหา/คัดกรอง เพื่อการกำกับติดตามและตรวจสอบย้อนกลับ (audit trail-friendly)</div>
+
+    <div class="row" style="margin-top:10px">
+      <input id="q" placeholder="ค้นหา: ชื่อหน่วย/จังหวัด/อำเภอ/ตำบล/สถานะ/ผู้ตรวจ/ผู้สอบทาน" />
+      <select id="fy">
+        <option value="">ทุกปีงบฯ</option>
+      </select>
+      <select id="submitted">
+        <option value="">ทั้งหมด (รวมยังไม่ส่ง)</option>
+        <option value="Y">เฉพาะส่งแล้ว</option>
+        <option value="N">เฉพาะยังไม่ส่ง</option>
+      </select>
+      <select id="lock">
+        <option value="">ทั้งหมด (ล็อก/ไม่ล็อก)</option>
+        <option value="LOCKED">เฉพาะล็อก (>=356 วัน)</option>
+        <option value="OPEN">เฉพาะยังไม่ล็อก</option>
+      </select>
+      <select id="sort">
+        <option value="NEW">ล่าสุดก่อน</option>
+        <option value="OLD">เก่าก่อน</option>
+        <option value="ENTITY">เรียงชื่อหน่วย</option>
+        <option value="FY">เรียงปีงบฯ</option>
+      </select>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="btnAdd">เพิ่มข้อมูลใหม่</button>
+      <button class="btn" id="btnSearch">ประมวลผล</button>
+      <button class="btn" id="btnReset">รีเซ็ต</button>
+
+      <button class="btn" id="btnExportCsv">Export CSV</button>
+      <button class="btn" id="btnExportJson">Export JSON</button>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="btnHub">กลับ Data Hub</button>
+      <button class="btn" id="btnCashboard">ไป Cashboard</button>
+      <button class="btn" id="btnHome">กลับหน้าแรก</button>
+    </div>
+
+    <div class="msg okBox" id="ok"></div>
+    <div class="msg warnBox" id="warn"></div>
+    <div class="msg badBox" id="bad"></div>
+
+    <div class="tiny" id="hint">—</div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h2>ตารางข้อมูลทั้งหมด</h2>
+    <div class="muted">คลิกปุ่ม “แก้ไข” เพื่อไปหน้าแก้ไขแบบเต็ม (2.1.1–2.1.20)</div>
+    <div class="hr"></div>
+
+    <div style="overflow:auto">
+      <table>
+        <thead>
+          <tr>
+            <th class="nowrap">หน่วยรับตรวจ</th>
+            <th class="nowrap">ประเภท</th>
+            <th class="nowrap">จังหวัด</th>
+            <th class="nowrap">อำเภอ</th>
+            <th class="nowrap">ตำบล</th>
+
+            <th class="nowrap">ปีงบฯ</th>
+            <th class="nowrap">งวด</th>
+
+            <th class="nowrap">สถานะ FA (2.1.7)</th>
+            <th class="nowrap">ปิดงบ (2.1.8)</th>
+            <th class="nowrap">ส่งรายงาน (2.1.9)</th>
+
+            <th class="nowrap">ส่งแล้ว</th>
+            <th class="nowrap">ล็อก 356 วัน</th>
+            <th class="nowrap">อัปเดตล่าสุด</th>
+            <th class="nowrap">คำสั่ง</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+    <div class="hr"></div>
+    <div class="tiny">
+      * “ลบ” เป็น soft-delete (deleted=true) เพื่อรักษาหลักฐานทางตรวจสอบ  
+      * “ล็อก” ใช้ created_at เป็นฐาน: ครบ 356 วันแล้วแก้ไขไม่ได้
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* =========================
+   0) Guard: login + ADMIN
+   ========================= */
+const SESSION_KEY = "fa_session_v1";
+const session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+if(!session){ location.href="login.html"; }
+const role = (session.role || "USER").toUpperCase();
+if(role !== "ADMIN"){
+  alert("หน้านี้สำหรับผู้ดูแลระบบ (ADMIN) เท่านั้น");
+  location.href = "index.html";
+}
+document.getElementById("userBadge").textContent =
+  "ผู้ใช้: " + (session.fullname || session.username) + " • บทบาท: " + role;
+
+/* =========================
+   1) Storage keys
+   ========================= */
+const RECORDS_KEY = "fa_manual_records_v1";
+const EDIT_CTX_KEY = "fa_admin_edit_ctx_v1"; // send record id to edit page
+
+function getRecords(){ return JSON.parse(localStorage.getItem(RECORDS_KEY) || "[]"); }
+function saveRecords(arr){ localStorage.setItem(RECORDS_KEY, JSON.stringify(arr)); }
+
+/* =========================
+   2) Helpers
+   ========================= */
+const $ = (id)=>document.getElementById(id);
+function show(box, text){
+  const el = $(box);
+  el.textContent = text;
+  el.style.display = "block";
+  setTimeout(()=>{ el.style.display="none"; }, 2500);
+}
+function safe(v){ return (v===null||v===undefined) ? "" : String(v); }
+function isLocked(created_at){
+  if(!created_at) return false;
+  const days = (Date.now() - created_at)/86400000;
+  return days >= 356;
+}
+function fmt(ts){ return ts ? new Date(ts).toLocaleString() : "-"; }
+function periodLabel(p){
+  if(!p) return "-";
+  const t = p.periodType || "-";
+  const v = p.periodValue || "-";
+  return `${t}:${v}`;
+}
+function contains(hay, q){
+  if(!q) return true;
+  return String(hay||"").toLowerCase().includes(q.toLowerCase());
+}
+function downloadText(filename, text, mime="application/json"){
+  const blob = new Blob([text], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href=url; a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+function toCSV(rows){
+  const esc = (v)=>('"'+String(v??"").replaceAll('"','""')+'"');
+  if(!rows.length) return "sep=,\n";
+  const cols = Object.keys(rows[0]);
+  const lines = [];
+  lines.push("sep=,");
+  lines.push(cols.map(esc).join(","));
+  for(const r of rows){
+    lines.push(cols.map(c=>esc(r[c])).join(","));
+  }
+  return lines.join("\n");
+}
+
+/* =========================
+   3) Bootstrap years
+   ========================= */
+(function initYear(){
+  for(let y=2560;y<=2580;y++){
+    const op=document.createElement("option");
+    op.value=String(y); op.textContent="ปีงบฯ "+y;
+    $("fy").appendChild(op);
+  }
+})();
+
+/* =========================
+   4) Filter + sort
+   ========================= */
+function apply(all){
+  let arr = all.slice();
+
+  // ignore soft deleted by default (ยังแสดงได้ถ้าคุณอยาก—ตอนนี้ “ซ่อน” เพื่อความสะอาด)
+  arr = arr.filter(r => !r.deleted);
+
+  const q = $("q").value.trim();
+  const fy = $("fy").value;
+  const sub = $("submitted").value;
+  const lock = $("lock").value;
+  const sort = $("sort").value;
+
+  if(fy) arr = arr.filter(r => String(r.period?.fiscalYear||"") === String(fy));
+  if(sub==="Y") arr = arr.filter(r => !!r.submitted);
+  if(sub==="N") arr = arr.filter(r => !r.submitted);
+
+  if(lock==="LOCKED") arr = arr.filter(r => isLocked(r.created_at));
+  if(lock==="OPEN")   arr = arr.filter(r => !isLocked(r.created_at));
+
+  if(q){
+    arr = arr.filter(r=>{
+      const hay = [
+        r.entity?.name, r.entity?.type, r.entity?.province, r.entity?.district, r.entity?.subdistrict,
+        r.s217, r.s218, r.s219, r.s2110,
+        JSON.stringify(r.auditors||[]), JSON.stringify(r.reviewers||[])
+      ].join(" ");
+      return contains(hay, q);
+    });
+  }
+
+  if(sort==="NEW") arr.sort((a,b)=>(b.updated_at||0)-(a.updated_at||0));
+  if(sort==="OLD") arr.sort((a,b)=>(a.updated_at||0)-(b.updated_at||0));
+  if(sort==="ENTITY") arr.sort((a,b)=>String(a.entity?.name||"").localeCompare(String(b.entity?.name||""),"th"));
+  if(sort==="FY") arr.sort((a,b)=>Number(a.period?.fiscalYear||0)-Number(b.period?.fiscalYear||0));
+
+  return arr;
+}
+
+/* =========================
+   5) Render table
+   ========================= */
+function pillSubmitted(r){
+  return r.submitted ? `<span class="pill ok">ส่งแล้ว</span>` : `<span class="pill warn">ยังไม่ส่ง</span>`;
+}
+function pillLocked(r){
+  return isLocked(r.created_at) ? `<span class="pill bad">ล็อก</span>` : `<span class="pill ok">เปิด</span>`;
+}
+
+function render(){
+  const all = getRecords();
+  const arr = apply(all);
+
+  $("hint").textContent = `ทั้งหมด (ไม่รวมลบ): ${arr.length} รายการ • ฐานข้อมูลรวม: ${all.length} รายการ • เวลา: ${new Date().toLocaleString()}`;
+
+  const tbody = $("rows");
+  tbody.innerHTML = "";
+
+  if(arr.length===0){
+    tbody.innerHTML = `<tr><td colspan="14" class="muted">ไม่พบข้อมูลตามเงื่อนไข</td></tr>`;
+    return;
+  }
+
+  arr.slice(0,400).forEach(r=>{
+    const tr = document.createElement("tr");
+    const locked = isLocked(r.created_at);
+
+    tr.innerHTML = `
+      <td class="nowrap"><b>${safe(r.entity?.name)||"-"}</b><div class="tiny">${safe(r.id)||""}</div></td>
+      <td class="nowrap">${safe(r.entity?.type)||"-"}</td>
+      <td class="nowrap">${safe(r.entity?.province)||"-"}</td>
+      <td class="nowrap">${safe(r.entity?.district)||"-"}</td>
+      <td class="nowrap">${safe(r.entity?.subdistrict)||"-"}</td>
+
+      <td class="nowrap">${safe(r.period?.fiscalYear)||"-"}</td>
+      <td class="nowrap">${periodLabel(r.period)}</td>
+
+      <td>${safe(r.s217)||"-"}</td>
+      <td class="nowrap">${safe(r.s218)||"-"}</td>
+      <td class="nowrap">${safe(r.s219)||"-"}</td>
+
+      <td class="nowrap">${pillSubmitted(r)}</td>
+      <td class="nowrap">${pillLocked(r)}</td>
+      <td class="nowrap">${fmt(r.updated_at||r.created_at)}</td>
+
+      <td class="nowrap">
+        <button class="btn" data-act="view" data-id="${r.id}">ดู</button>
+        <button class="btn primary" data-act="edit" data-id="${r.id}" ${locked ? "disabled" : ""}>แก้ไข</button>
+        <button class="btn danger" data-act="del" data-id="${r.id}">ลบ</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // actions
+  tbody.querySelectorAll("button[data-act]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const act = btn.getAttribute("data-act");
+      const id = btn.getAttribute("data-id");
+      if(act==="view") onView(id);
+      if(act==="edit") onEdit(id);
+      if(act==="del")  onDelete(id);
+    });
+  });
+}
+
+/* =========================
+   6) Actions
+   ========================= */
+function onView(id){
+  const r = getRecords().find(x=>x.id===id);
+  if(!r){ show("bad","ไม่พบรายการ"); return; }
+  const msg =
+`สรุปข้อมูล
+- หน่วย: ${safe(r.entity?.type)} ${safe(r.entity?.name)}
+- พื้นที่: ${safe(r.entity?.province)} / ${safe(r.entity?.district)} / ${safe(r.entity?.subdistrict)}
+- ปี/งวด: ปีงบฯ ${safe(r.period?.fiscalYear)} • ${periodLabel(r.period)}
+- ส่งแล้ว: ${r.submitted ? "ใช่" : "ไม่"}
+- ล็อก: ${isLocked(r.created_at) ? "ใช่ (>=356 วัน)" : "ไม่"}
+- 2.1.7 สถานะ FA: ${safe(r.s217)}
+- 2.1.8 ปิดงบ: ${safe(r.s218)}
+- 2.1.9 ส่งรายงาน: ${safe(r.s219)}
+- 2.1.10 หนังสือติดตาม: ${safe(r.s2110)}
+- 2.1.14 ผลตรวจ: ${safe(r.s214)}
+- 2.1.15 ข้อสังเกต: ${safe(r.s215)}
+- 2.1.16 ปรับปรุงบัญชี: ${safe(r.s216)}
+- 2.1.17 เงินขาดบัญชี: ${safe(r.s217_cash)}
+- 2.1.19 ปัญหา: ${safe(r.s219_problem)}
+- 2.1.20 ข้อเสนอแนะ: ${(safe(r.s220_rec_type)||"-")} ${safe(r.s220_rec_text)||""}
+
+อัปเดตล่าสุด: ${fmt(r.updated_at||r.created_at)}`;
+  alert(msg);
+}
+
+function onEdit(id){
+  const r = getRecords().find(x=>x.id===id);
+  if(!r){ show("bad","ไม่พบรายการ"); return; }
+  if(isLocked(r.created_at)){
+    show("warn","รายการนี้ถูกล็อกครบ 356 วันแล้ว — แก้ไขไม่ได้");
+    return;
+  }
+  localStorage.setItem(EDIT_CTX_KEY, JSON.stringify({ id, from:"admin-manual-table.html", ts:Date.now() }));
+  // ไฟล์นี้จะสร้าง “ต่อไป” เพื่อแก้ครบ 2.1.1–2.1.20
+  location.href = "admin-manual-edit.html";
+}
+
+function onDelete(id){
+  const ok = confirm("ยืนยันลบ (soft-delete) รายการนี้? ระบบจะทำ deleted=true เพื่อรักษา audit trail");
+  if(!ok) return;
+
+  const all = getRecords();
+  const idx = all.findIndex(x=>x.id===id);
+  if(idx<0){ show("bad","ไม่พบรายการ"); return; }
+
+  all[idx].deleted = true;
+  all[idx].deleted_at = Date.now();
+  all[idx].deleted_by = safe(session.fullname || session.username);
+  all[idx].updated_at = Date.now();
+  all[idx].updated_by = safe(session.fullname || session.username);
+  saveRecords(all);
+
+  render();
+  show("ok","ลบ (soft-delete) เรียบร้อย");
+}
+
+/* =========================
+   7) Buttons
+   ========================= */
+$("btnSearch").addEventListener("click", render);
+
+$("btnReset").addEventListener("click", ()=>{
+  $("q").value="";
+  $("fy").value="";
+  $("submitted").value="";
+  $("lock").value="";
+  $("sort").value="NEW";
+  render();
+  show("ok","รีเซ็ตเรียบร้อย");
+});
+
+$("btnAdd").addEventListener("click", ()=>{
+  // ไปหน้าแก้ไขแบบเต็ม โดยเป็นโหมด NEW
+  localStorage.setItem(EDIT_CTX_KEY, JSON.stringify({ id:null, mode:"NEW", from:"admin-manual-table.html", ts:Date.now() }));
+  location.href = "admin-manual-edit.html";
+});
+
+$("btnExportJson").addEventListener("click", ()=>{
+  const all = getRecords().filter(r=>!r.deleted);
+  downloadText(`fa_manual_records_${Date.now()}.json`, JSON.stringify(all,null,2), "application/json");
+  show("ok","Export JSON เรียบร้อย");
+});
+
+$("btnExportCsv").addEventListener("click", ()=>{
+  const all = getRecords().filter(r=>!r.deleted);
+  const rows = all.map(r=>({
+    id: r.id || "",
+    entity_type: r.entity?.type || "",
+    entity_name: r.entity?.name || "",
+    province: r.entity?.province || "",
+    district: r.entity?.district || "",
+    subdistrict: r.entity?.subdistrict || "",
+    fiscal_year: r.period?.fiscalYear || "",
+    period_type: r.period?.periodType || "",
+    period_value: r.period?.periodValue || "",
+    fa_status_2_1_7: r.s217 || "",
+    close_status_2_1_8: r.s218 || "",
+    report_status_2_1_9: r.s219 || "",
+    letter_status_2_1_10: r.s2110 || "",
+    submitted: r.submitted ? "Y" : "N",
+    locked_356d: isLocked(r.created_at) ? "Y" : "N",
+    created_at: r.created_at ? new Date(r.created_at).toISOString() : "",
+    updated_at: r.updated_at ? new Date(r.updated_at).toISOString() : ""
+  }));
+  downloadText(`fa_manual_summary_${Date.now()}.csv`, toCSV(rows), "text/csv;charset=utf-8");
+  show("ok","Export CSV เรียบร้อย");
+});
+
+$("btnHub").addEventListener("click", ()=>location.href="data-hub.html");
+$("btnCashboard").addEventListener("click", ()=>location.href="cashboard.html");
+$("btnHome").addEventListener("click", ()=>location.href="index.html");
+
+/* =========================
+   8) Boot
+   ========================= */
+render();
+
+/* light refresh */
+setInterval(()=>render(), 7000);
+</script>
+</body>
+</html>
