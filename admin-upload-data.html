@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>จัดการข้อมูล Upload (Admin) • ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์</title>
+
+  <style>
+    :root{
+      --bg:#f4f7fb; --card:#fff; --line:#dde5f2; --text:#24364c; --muted:#6a7f9a;
+      --brand:#1e5aaa; --brand2:#2f7de1;
+      --shadow:0 10px 28px rgba(20,40,80,.08);
+      --r:18px;
+      --ok:#1f7a3b; --bad:#b13b3b; --warn:#8a5a00; --info:#0b5aa6;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Thai","Noto Sans";background:var(--bg);color:var(--text)}
+    header{
+      position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);
+      padding:14px 18px;display:flex;align-items:center;gap:12px
+    }
+    .title{display:flex;flex-direction:column;line-height:1.05}
+    .title h1{margin:0;font-size:18px}
+    .title small{color:var(--muted)}
+    .spacer{flex:1}
+    .badge{border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa;padding:8px 12px;border-radius:14px;font-weight:900}
+
+    .wrap{max-width:1400px;margin:18px auto;padding:0 18px}
+    .grid{display:grid;grid-template-columns:460px 1fr;gap:14px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;min-width:0}
+    h2{margin:0 0 10px;font-size:16px}
+    h3{margin:12px 0 8px;font-size:14px}
+    .muted{color:var(--muted);font-size:13px}
+    .hr{height:1px;background:#eef2f7;margin:12px 0}
+
+    input,select,textarea{
+      width:100%;padding:10px 12px;border-radius:14px;border:1px solid var(--line);
+      background:#fff;font-size:14px;outline:none
+    }
+    textarea{min-height:90px;resize:vertical}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row>*{flex:1;min-width:160px}
+
+    .btn{
+      border:1px solid var(--line); background:#fff; border-radius:14px;
+      padding:10px 12px; cursor:pointer; font-weight:900; color:var(--text);
+    }
+    .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;border-color:transparent}
+    .btn.danger{background:#fff0f0;border-color:#ffd2d2;color:var(--bad)}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid #eef2f7;padding:8px 6px;text-align:left;font-size:13px;vertical-align:top}
+    th{color:#4a5f7d;white-space:nowrap}
+    .nowrap{white-space:nowrap}
+    .tiny{font-size:12px;color:var(--muted)}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa}
+    .pill.ok{border-color:#c8f2d6;background:#effaf3;color:var(--ok)}
+    .pill.warn{border-color:#ffe7b8;background:#fff7e6;color:var(--warn)}
+    .pill.bad{border-color:#ffd2d2;background:#fff0f0;color:var(--bad)}
+    .pill.info{border-color:#cfe2ff;background:#eef6ff;color:var(--info)}
+
+    .list{display:grid;gap:8px}
+    .item{
+      border:1px solid #e6ecf6;border-radius:14px;padding:10px;background:#f7f9fc;
+      cursor:pointer;
+    }
+    .item:hover{border-color:#cfe2ff;background:#eef6ff}
+    .item b{display:block}
+    .item small{color:var(--muted)}
+    .active{border-color:#79aefc;background:#eef6ff}
+
+    .msg{display:none;margin-top:10px;padding:10px 12px;border-radius:14px;font-weight:900}
+    .okBox{border:1px solid #c8f2d6;background:#effaf3;color:var(--ok)}
+    .badBox{border:1px solid #ffd2d2;background:#fff0f0;color:var(--bad)}
+    .warnBox{border:1px solid #ffe7b8;background:#fff7e6;color:var(--warn)}
+
+    @media (max-width:1200px){ .grid{grid-template-columns:1fr} }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="title">
+    <h1>จัดการข้อมูล Upload (Admin)</h1>
+    <small>คลังข้อมูล • รายการไฟล์ที่อัปโหลดเข้าสู่ระบบ (metadata + optional file content)</small>
+  </div>
+  <div class="spacer"></div>
+  <div class="badge" id="userBadge">กำลังตรวจสอบผู้ใช้…</div>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+
+    <!-- LEFT: Search + List + Form -->
+    <aside class="card">
+      <h2>รายการไฟล์ Upload</h2>
+      <div class="muted">ค้นหาแล้วคลิกเลือก 1 รายการเพื่อดู/แก้ไข หรือกด “เพิ่มรายการใหม่”</div>
+
+      <div class="row" style="margin-top:10px">
+        <input id="q" placeholder="ค้นหา: ชื่อไฟล์/ผู้อัปโหลด/ประเภทไฟล์/หมายเหตุ" />
+        <select id="sort">
+          <option value="NEW">ล่าสุดก่อน</option>
+          <option value="OLD">เก่าก่อน</option>
+          <option value="NAME">เรียงชื่อไฟล์</option>
+          <option value="USER">เรียงผู้อัปโหลด</option>
+        </select>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="btnNew">เพิ่มรายการใหม่</button>
+        <button class="btn" id="btnRefresh">รีเฟรช</button>
+      </div>
+
+      <div class="hr"></div>
+      <div class="list" id="list"></div>
+
+      <div class="msg okBox" id="ok"></div>
+      <div class="msg warnBox" id="warn"></div>
+      <div class="msg badBox" id="bad"></div>
+
+      <div class="hr"></div>
+      <h3>แบบฟอร์ม (Admin Edit)</h3>
+
+      <div class="row">
+        <input id="f_id" placeholder="ID (auto)" disabled />
+        <input id="f_filename" placeholder="ชื่อไฟล์" />
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <input id="f_mime" placeholder="ประเภทไฟล์ (MIME)" />
+        <input id="f_size" placeholder="ขนาดไฟล์ (bytes)" />
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <input id="f_uploadedAt" placeholder="วันที่อัปโหลด (auto)" disabled />
+        <input id="f_uploader" placeholder="ผู้อัปโหลด" />
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <input id="f_tags" placeholder="แท็ก (คั่นด้วย , )" />
+        <select id="f_status">
+          <option value="ACTIVE">ACTIVE</option>
+          <option value="ARCHIVED">ARCHIVED</option>
+          <option value="DELETED">DELETED</option>
+        </select>
+      </div>
+
+      <div style="margin-top:10px">
+        <textarea id="f_note" placeholder="หมายเหตุ (Admin)"></textarea>
+        <div class="tiny">* หมายเหตุช่วยให้ค้นหา/ติดตามย้อนกลับง่ายขึ้น</div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="btnSave">บันทึก</button>
+        <button class="btn danger" id="btnDelete">ลบ</button>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="btnView">ดูรายละเอียด</button>
+        <button class="btn" id="btnDownload">ดาวน์โหลดไฟล์</button>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="btnExportJson">Export JSON</button>
+        <button class="btn" id="btnExportCsv">Export CSV</button>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="btnHub">กลับ Data Hub</button>
+        <button class="btn" id="btnCashboard">ไป Cashboard</button>
+        <button class="btn" id="btnHome">กลับหน้าแรก</button>
+      </div>
+
+      <div class="tiny" id="hint">—</div>
+    </aside>
+
+    <!-- RIGHT: Table view -->
+    <main class="card">
+      <h2>ตาราง Upload Log</h2>
+      <div class="muted">มุมมองแบบตาราง (เหมาะกับการตรวจสอบ/คัดกรอง) • คลิกแถวเพื่อเลือก</div>
+      <div class="hr"></div>
+
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th class="nowrap">วันที่อัปโหลด</th>
+              <th>ชื่อไฟล์</th>
+              <th class="nowrap">ประเภทไฟล์</th>
+              <th class="nowrap">ขนาด</th>
+              <th class="nowrap">ผู้อัปโหลด</th>
+              <th class="nowrap">สถานะ</th>
+              <th>หมายเหตุ</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+
+      <div class="hr"></div>
+      <div class="tiny">
+        ข้อควรรู้: บน GitHub Pages จะเก็บได้ดีแบบ “metadata log” (ชื่อ/ขนาด/ผู้ส่ง/วันที่)  
+        ถ้าต้องการ “ดาวน์โหลดไฟล์เดิมจากระบบ” ต้องเก็บเนื้อไฟล์เป็น dataUrl/base64 (ขนาดจะโตเร็ว)
+      </div>
+    </main>
+
+  </div>
+</div>
+
+<script>
+/* =========================
+   0) Guard: login + ADMIN
+   ========================= */
+const SESSION_KEY = "fa_session_v1";
+const session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+if(!session){ location.href="login.html"; }
+const role = (session.role || "USER").toUpperCase();
+if(role !== "ADMIN"){
+  alert("หน้านี้สำหรับผู้ดูแลระบบ (ADMIN) เท่านั้น");
+  location.href = "index.html";
+}
+document.getElementById("userBadge").textContent =
+  "ผู้ใช้: " + (session.fullname || session.username) + " • บทบาท: " + role;
+
+/* =========================
+   1) Storage
+   ========================= */
+const UPLOAD_LOG_KEY = "fa_upload_log_v1"; // array of uploads
+const LAST_PICK_KEY  = "fa_admin_upload_last_pick_v1";
+
+function getLog(){ return JSON.parse(localStorage.getItem(UPLOAD_LOG_KEY) || "[]"); }
+function saveLog(arr){ localStorage.setItem(UPLOAD_LOG_KEY, JSON.stringify(arr)); }
+
+/* =========================
+   2) Helpers
+   ========================= */
+const $ = (id)=>document.getElementById(id);
+function show(box, text){
+  const el = $(box);
+  el.textContent = text;
+  el.style.display = "block";
+  setTimeout(()=>{ el.style.display="none"; }, 2500);
+}
+function safe(v){ return (v===null||v===undefined) ? "" : String(v); }
+function fmtBytes(n){
+  const x = Number(n||0);
+  if(!x) return "0 B";
+  const u=["B","KB","MB","GB"];
+  let i=0, v=x;
+  while(v>=1024 && i<u.length-1){ v/=1024; i++; }
+  return `${v.toFixed(i===0?0:2)} ${u[i]}`;
+}
+function nowLocal(){ return new Date().toLocaleString(); }
+function uid(){
+  return "UPL-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2,6).toUpperCase();
+}
+function downloadText(filename, text, mime="application/json"){
+  const blob = new Blob([text], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href=url; a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+function toCSV(rows){
+  const esc = (v)=>('"'+String(v??"").replaceAll('"','""')+'"');
+  if(!rows.length) return "sep=,\n";
+  const cols = Object.keys(rows[0]);
+  const lines = [];
+  lines.push("sep=,");
+  lines.push(cols.map(esc).join(","));
+  for(const r of rows){
+    lines.push(cols.map(c=>esc(r[c])).join(","));
+  }
+  return lines.join("\n");
+}
+
+/* =========================
+   3) State
+   ========================= */
+let LOG = [];
+let ACTIVE = null;
+
+/* =========================
+   4) Render list + table
+   ========================= */
+function matchQuery(item, q){
+  if(!q) return true;
+  const hay = [
+    item.filename, item.mime, item.uploader, item.note,
+    (item.tags||[]).join(","),
+    item.status
+  ].join(" ").toLowerCase();
+  return hay.includes(q.toLowerCase());
+}
+
+function sortLog(arr, mode){
+  const a = arr.slice();
+  if(mode==="NEW") a.sort((x,y)=>(y.uploaded_at||0)-(x.uploaded_at||0));
+  if(mode==="OLD") a.sort((x,y)=>(x.uploaded_at||0)-(y.uploaded_at||0));
+  if(mode==="NAME") a.sort((x,y)=>String(x.filename||"").localeCompare(String(y.filename||""), "th"));
+  if(mode==="USER") a.sort((x,y)=>String(x.uploader||"").localeCompare(String(y.uploader||""), "th"));
+  return a;
+}
+
+function renderAll(){
+  LOG = getLog();
+
+  const q = $("q").value.trim();
+  const sort = $("sort").value;
+
+  const filtered = sortLog(LOG.filter(x=>matchQuery(x,q)), sort);
+
+  // hint
+  $("hint").textContent = `ทั้งหมด ${LOG.length} รายการ • แสดง ${filtered.length} รายการ • อัปเดต: ${nowLocal()}`;
+
+  // list
+  const list = $("list");
+  list.innerHTML = "";
+  if(filtered.length===0){
+    list.innerHTML = `<div class="muted">ไม่พบรายการ (ลองเปลี่ยนคำค้น หรือเพิ่มรายการใหม่)</div>`;
+  } else {
+    filtered.slice(0,80).forEach(it=>{
+      const div = document.createElement("div");
+      div.className = "item" + (ACTIVE?.id===it.id ? " active" : "");
+      const pill =
+        it.status==="ACTIVE" ? `<span class="pill ok">ACTIVE</span>` :
+        it.status==="ARCHIVED" ? `<span class="pill warn">ARCHIVED</span>` :
+        `<span class="pill bad">DELETED</span>`;
+      const hasFile = it.dataUrl ? `<span class="pill info">มีไฟล์</span>` : `<span class="pill">metadata</span>`;
+      div.innerHTML = `
+        <b>${safe(it.filename)||"(ไม่ระบุชื่อไฟล์)"}</b>
+        <small>${safe(it.mime)||"-"} • ${fmtBytes(it.size)} • ${safe(it.uploader)||"-"}</small><br/>
+        <small>อัปโหลด: ${it.uploaded_at ? new Date(it.uploaded_at).toLocaleString() : "-"}</small><br/>
+        ${pill} ${hasFile}
+      `;
+      div.addEventListener("click", ()=>{
+        setActive(it);
+        renderAll();
+      });
+      list.appendChild(div);
+    });
+  }
+
+  // table
+  const tbody = $("rows");
+  tbody.innerHTML = "";
+  filtered.slice(0,200).forEach(it=>{
+    const tr = document.createElement("tr");
+    tr.style.cursor="pointer";
+    tr.addEventListener("click", ()=>{
+      setActive(it);
+      renderAll();
+    });
+    tr.innerHTML = `
+      <td class="nowrap">${it.uploaded_at ? new Date(it.uploaded_at).toLocaleString() : "-"}</td>
+      <td><b>${safe(it.filename)||"(ไม่ระบุ)"}</b><div class="tiny">${safe(it.id)}</div></td>
+      <td class="nowrap">${safe(it.mime)||"-"}</td>
+      <td class="nowrap">${fmtBytes(it.size)}</td>
+      <td class="nowrap">${safe(it.uploader)||"-"}</td>
+      <td class="nowrap">
+        ${it.status==="ACTIVE" ? `<span class="pill ok">ACTIVE</span>` :
+          it.status==="ARCHIVED" ? `<span class="pill warn">ARCHIVED</span>` :
+          `<span class="pill bad">DELETED</span>`}
+      </td>
+      <td>${safe(it.note)||"-"}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // auto-pick last
+  if(!ACTIVE){
+    const last = localStorage.getItem(LAST_PICK_KEY);
+    if(last){
+      const found = LOG.find(x=>x.id===last);
+      if(found) setActive(found);
+    }
+  }
+}
+
+function clearForm(){
+  $("f_id").value="";
+  $("f_filename").value="";
+  $("f_mime").value="";
+  $("f_size").value="";
+  $("f_uploadedAt").value="";
+  $("f_uploader").value= safe(session.fullname || session.username);
+  $("f_tags").value="";
+  $("f_status").value="ACTIVE";
+  $("f_note").value="";
+}
+
+function fillForm(it){
+  $("f_id").value = it.id || "";
+  $("f_filename").value = it.filename || "";
+  $("f_mime").value = it.mime || "";
+  $("f_size").value = it.size || "";
+  $("f_uploadedAt").value = it.uploaded_at ? new Date(it.uploaded_at).toLocaleString() : "";
+  $("f_uploader").value = it.uploader || "";
+  $("f_tags").value = (it.tags||[]).join(", ");
+  $("f_status").value = it.status || "ACTIVE";
+  $("f_note").value = it.note || "";
+}
+
+function setActive(it){
+  ACTIVE = it;
+  if(it?.id) localStorage.setItem(LAST_PICK_KEY, it.id);
+  if(!it){ clearForm(); return; }
+  fillForm(it);
+}
+
+/* =========================
+   5) CRUD
+   ========================= */
+function readForm(){
+  const tags = $("f_tags").value.split(",").map(x=>x.trim()).filter(x=>x);
+  return {
+    id: $("f_id").value || uid(),
+    filename: $("f_filename").value.trim(),
+    mime: $("f_mime").value.trim(),
+    size: Number($("f_size").value || 0),
+    uploaded_at: ACTIVE?.uploaded_at || Date.now(),
+    uploader: $("f_uploader").value.trim(),
+    tags,
+    status: $("f_status").value,
+    note: $("f_note").value.trim(),
+
+    // optional fields we keep if existed
+    dataUrl: ACTIVE?.dataUrl || null,
+    originalName: ACTIVE?.originalName || null,
+    updated_at: Date.now(),
+    updated_by: safe(session.fullname || session.username)
+  };
+}
+
+$("btnNew").addEventListener("click", ()=>{
+  ACTIVE = null;
+  clearForm();
+  $("f_id").value = uid();
+  $("f_uploadedAt").value = new Date().toLocaleString();
+  show("ok","เริ่มเพิ่มรายการใหม่แล้ว");
+});
+
+$("btnRefresh").addEventListener("click", ()=>{
+  renderAll();
+  show("ok","รีเฟรชเรียบร้อย");
+});
+
+$("btnSave").addEventListener("click", ()=>{
+  const item = readForm();
+  if(!item.filename){
+    show("warn","กรุณาระบุ “ชื่อไฟล์”");
+    return;
+  }
+
+  const all = getLog();
+  const idx = all.findIndex(x=>x.id===item.id);
+  if(idx>=0){
+    // preserve file content if any
+    item.dataUrl = all[idx].dataUrl || item.dataUrl;
+    item.originalName = all[idx].originalName || item.originalName;
+    all[idx] = {...all[idx], ...item};
+    saveLog(all);
+    setActive(all[idx]);
+    show("ok","บันทึกการแก้ไขเรียบร้อย ✅");
+  }else{
+    // new
+    item.created_at = Date.now();
+    item.created_by = safe(session.fullname || session.username);
+    all.push(item);
+    saveLog(all);
+    setActive(item);
+    show("ok","เพิ่มรายการใหม่เรียบร้อย ✅");
+  }
+  renderAll();
+});
+
+$("btnDelete").addEventListener("click", ()=>{
+  if(!ACTIVE?.id){
+    show("warn","ยังไม่ได้เลือกรายการ");
+    return;
+  }
+  const ok = confirm("ยืนยันลบรายการนี้? (ระบบจะทำเครื่องหมาย DELETED)");
+  if(!ok) return;
+
+  const all = getLog();
+  const idx = all.findIndex(x=>x.id===ACTIVE.id);
+  if(idx<0){
+    show("bad","ไม่พบรายการในระบบ");
+    return;
+  }
+  all[idx].status = "DELETED";
+  all[idx].updated_at = Date.now();
+  all[idx].updated_by = safe(session.fullname || session.username);
+  saveLog(all);
+  setActive(all[idx]);
+  renderAll();
+  show("ok","ทำเครื่องหมายลบ (DELETED) เรียบร้อย");
+});
+
+$("btnView").addEventListener("click", ()=>{
+  if(!ACTIVE?.id){ show("warn","ยังไม่ได้เลือกรายการ"); return; }
+  const it = getLog().find(x=>x.id===ACTIVE.id);
+  if(!it){ show("bad","ไม่พบรายการ"); return; }
+
+  const msg =
+`รายละเอียด Upload
+- ID: ${it.id}
+- ชื่อไฟล์: ${it.filename||"-"}
+- ประเภทไฟล์: ${it.mime||"-"}
+- ขนาด: ${fmtBytes(it.size)}
+- ผู้อัปโหลด: ${it.uploader||"-"}
+- วันที่อัปโหลด: ${it.uploaded_at ? new Date(it.uploaded_at).toLocaleString() : "-"}
+- สถานะ: ${it.status||"-"}
+- แท็ก: ${(it.tags||[]).join(", ") || "-"}
+- หมายเหตุ: ${it.note||"-"}
+- มีไฟล์แนบใน log: ${it.dataUrl ? "มี" : "ไม่มี (metadata only)"}
+- แก้ไขล่าสุด: ${it.updated_at ? new Date(it.updated_at).toLocaleString() : "-"} โดย ${it.updated_by||"-"}`;
+  alert(msg);
+});
+
+$("btnDownload").addEventListener("click", ()=>{
+  if(!ACTIVE?.id){ show("warn","ยังไม่ได้เลือกรายการ"); return; }
+  const it = getLog().find(x=>x.id===ACTIVE.id);
+  if(!it){ show("bad","ไม่พบรายการ"); return; }
+
+  if(!it.dataUrl){
+    show("warn","ไม่มีไฟล์แนบในระบบ (มีเฉพาะ metadata)");
+    return;
+  }
+  const a = document.createElement("a");
+  a.href = it.dataUrl;
+  a.download = it.filename || (it.originalName || "download");
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  show("ok","เริ่มดาวน์โหลดไฟล์แล้ว");
+});
+
+/* =========================
+   6) Export
+   ========================= */
+$("btnExportJson").addEventListener("click", ()=>{
+  const log = getLog();
+  downloadText(`fa_upload_log_${Date.now()}.json`, JSON.stringify(log,null,2), "application/json");
+  show("ok","Export JSON เรียบร้อย");
+});
+
+$("btnExportCsv").addEventListener("click", ()=>{
+  const log = getLog();
+  const rows = log.map(it=>({
+    id: it.id || "",
+    filename: it.filename || "",
+    mime: it.mime || "",
+    size: it.size || 0,
+    uploader: it.uploader || "",
+    uploaded_at: it.uploaded_at ? new Date(it.uploaded_at).toISOString() : "",
+    status: it.status || "",
+    tags: (it.tags||[]).join("|"),
+    note: it.note || "",
+    has_file: it.dataUrl ? "Y" : "N",
+    updated_at: it.updated_at ? new Date(it.updated_at).toISOString() : "",
+    updated_by: it.updated_by || ""
+  }));
+  downloadText(`fa_upload_log_${Date.now()}.csv`, toCSV(rows), "text/csv;charset=utf-8");
+  show("ok","Export CSV เรียบร้อย");
+});
+
+/* =========================
+   7) Nav
+   ========================= */
+$("btnHub").addEventListener("click", ()=>location.href="data-hub.html");
+$("btnCashboard").addEventListener("click", ()=>location.href="cashboard.html");
+$("btnHome").addEventListener("click", ()=>location.href="index.html");
+
+/* =========================
+   8) Boot
+   ========================= */
+clearForm();
+renderAll();
+
+/* auto refresh small */
+setInterval(()=>{ renderAll(); }, 5000);
+</script>
+</body>
+</html>
