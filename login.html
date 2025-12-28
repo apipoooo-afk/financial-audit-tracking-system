@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>เข้าสู่ระบบ • ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์</title>
+  <style>
+    :root{--bg:#f5f7fb;--card:#fff;--line:#dde3ee;--text:#29384d;--muted:#6a7c95;--brand:#1e5aaa;--shadow:0 10px 30px rgba(20,40,80,.08);--r:18px}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Thai","Noto Sans";background:var(--bg);color:var(--text)}
+    .wrap{max-width:860px;margin:22px auto;padding:0 18px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:16px}
+    h1{margin:0 0 10px}
+    .muted{color:var(--muted);font-size:13px}
+    label{font-weight:900;font-size:13px}
+    input{
+      width:100%;padding:11px 12px;border-radius:14px;border:1px solid var(--line);background:#fff;
+      font-size:14px;outline:none;margin-top:6px
+    }
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .btn{border:1px solid var(--line);background:#fff;border-radius:14px;padding:10px 12px;cursor:pointer;font-weight:900}
+    .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
+    .msg{display:none;margin-top:12px;padding:10px 12px;border-radius:14px;font-weight:900}
+    .ok{border:1px solid #c8f2d6;background:#effaf3;color:#1f7a3b}
+    .bad{border:1px solid #ffd2d2;background:#fff0f0;color:#b13b3b}
+    .session{margin-top:12px;padding:10px 12px;border-radius:14px;border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa;font-weight:900;display:none}
+    @media (max-width:800px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>เข้าสู่ระบบ</h1>
+      <div class="muted">โหมดเริ่มต้น: ตรวจสอบบัญชีจาก localStorage (เดโม/ทดสอบ flow)</div>
+
+      <div class="grid">
+        <div>
+          <label>Username</label>
+          <input id="username" autocomplete="username" placeholder="เช่น oag_user01" />
+        </div>
+        <div>
+          <label>Password</label>
+          <input id="password" type="password" autocomplete="current-password" placeholder="รหัสผ่าน" />
+        </div>
+      </div>
+
+      <div class="row">
+        <button class="btn" onclick="location.href='index.html'">กลับหน้าแรก</button>
+        <button class="btn" onclick="location.href='register.html'">ไปลงทะเบียน</button>
+        <button class="btn primary" id="btnLogin">เข้าสู่ระบบ</button>
+        <button class="btn" id="btnLogout">ออกจากระบบ</button>
+      </div>
+
+      <div class="session" id="sessionBox"></div>
+      <div class="msg ok" id="ok"></div>
+      <div class="msg bad" id="bad"></div>
+    </div>
+  </div>
+
+  <script>
+    const USERS_KEY = "fa_users_v1";
+    const SESSION_KEY = "fa_session_v1";
+
+    function show(id, text){
+      const ok = document.getElementById("ok");
+      const bad = document.getElementById("bad");
+      ok.style.display = "none"; bad.style.display = "none";
+      const el = document.getElementById(id);
+      el.textContent = text;
+      el.style.display = "block";
+    }
+
+    function renderSession(){
+      const s = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+      const box = document.getElementById("sessionBox");
+      if(!s){ box.style.display="none"; return; }
+      box.style.display="block";
+      box.textContent = "เข้าสู่ระบบแล้ว: " + (s.fullname || s.username) + " • บทบาท: " + (s.role || "USER");
+    }
+    renderSession();
+
+    document.getElementById("btnLogin").addEventListener("click", () => {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+
+      if(!username) return show("bad", "กรุณากรอก Username");
+      if(!password) return show("bad", "กรุณากรอกรหัสผ่าน");
+
+      const users = JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
+      const u = users.find(x => x.username.toLowerCase() === username.toLowerCase() && x.password === password);
+
+      if(!u) return show("bad", "Username หรือ Password ไม่ถูกต้อง");
+
+      const session = {
+        uid: u.id,
+        username: u.username,
+        fullname: u.fullname,
+        role: u.role,
+        login_at: Date.now()
+      };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      show("ok", "เข้าสู่ระบบสำเร็จ ✅");
+      renderSession();
+
+      // กลับหน้าแรกอัตโนมัติ (ถ้าต้องการ)
+      setTimeout(()=>location.href="index.html", 450);
+    });
+
+    document.getElementById("btnLogout").addEventListener("click", () => {
+      localStorage.removeItem(SESSION_KEY);
+      show("ok", "ออกจากระบบเรียบร้อย");
+      renderSession();
+    });
+  </script>
+</body>
+</html>
