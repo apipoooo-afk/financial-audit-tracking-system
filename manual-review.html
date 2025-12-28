@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ตรวจทาน & ส่งข้อมูล (Manual Review) • ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์</title>
+  <style>
+    :root{
+      --bg:#f5f7fb; --card:#fff; --line:#dde3ee; --text:#29384d; --muted:#6a7c95;
+      --brand:#1e5aaa; --brand2:#2f7de1; --shadow:0 10px 30px rgba(20,40,80,.08);
+      --r:18px; --danger:#b13b3b; --ok:#1f7a3b; --warn:#8a5a00;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Thai","Noto Sans";background:var(--bg);color:var(--text)}
+    header{
+      position:sticky; top:0; z-index:10;
+      background:#fff; border-bottom:1px solid var(--line);
+      padding:14px 18px; display:flex; align-items:center; gap:12px;
+    }
+    .title{display:flex;flex-direction:column;line-height:1.05}
+    .title h1{margin:0;font-size:18px}
+    .title small{color:var(--muted)}
+    .spacer{flex:1}
+    .badge{border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa;padding:8px 12px;border-radius:14px;font-weight:900}
+    .wrap{max-width:1300px;margin:18px auto;padding:0 18px}
+    .grid{display:grid;grid-template-columns:380px 1fr;gap:14px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;min-width:0}
+    h2{margin:0 0 10px;font-size:16px}
+    h3{margin:14px 0 8px;font-size:14px}
+    .muted{color:var(--muted);font-size:13px}
+    input,select,textarea{
+      width:100%;padding:10px 12px;border-radius:14px;border:1px solid var(--line);
+      background:#fff;font-size:14px;outline:none
+    }
+    textarea{min-height:90px;resize:vertical}
+    .btn{
+      border:1px solid var(--line); background:#fff; border-radius:14px;
+      padding:10px 12px; cursor:pointer; font-weight:900; color:var(--text);
+    }
+    .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2)); color:#fff; border-color:transparent}
+    .btn.danger{background:#fff0f0;border-color:#ffd2d2;color:var(--danger)}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row > *{flex:1;min-width:140px}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa}
+    .pill.ok{border-color:#c8f2d6;background:#effaf3;color:var(--ok)}
+    .pill.bad{border-color:#ffd2d2;background:#fff0f0;color:var(--danger)}
+    .pill.warn{border-color:#ffe7b8;background:#fff7e6;color:var(--warn)}
+    .hr{height:1px;background:#eef2f7;margin:10px 0}
+    .msg{display:none;margin-top:10px;padding:10px 12px;border-radius:14px;font-weight:900}
+    .okBox{border:1px solid #c8f2d6;background:#effaf3;color:var(--ok)}
+    .badBox{border:1px solid #ffd2d2;background:#fff0f0;color:var(--danger)}
+    .warnBox{border:1px solid #ffe7b8;background:#fff7e6;color:var(--warn)}
+
+    .list{display:grid;gap:8px}
+    .item{
+      border:1px solid #e6ecf6;border-radius:14px;padding:10px;background:#f7f9fc;
+      cursor:pointer;
+    }
+    .item:hover{border-color:#cfe2ff;background:#eef6ff}
+    .item b{display:block}
+    .item small{color:var(--muted)}
+    .active{border-color:#79aefc;background:#eef6ff}
+
+    .kv{display:flex;justify-content:space-between;gap:10px;margin:6px 0}
+    .kv b{white-space:nowrap}
+    .kv span{color:var(--muted);text-align:right}
+
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .box{border:1px solid #e6ecf6;border-radius:14px;padding:10px;background:#f7f9fc}
+    .mini{font-size:12px;color:#7b8dab}
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid #eef2f7;padding:8px 6px;text-align:left;font-size:13px;vertical-align:top}
+    th{color:#4a5f7d}
+    @media (max-width:1100px){ .grid{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+<header>
+  <div class="title">
+    <h1>ตรวจทาน & ส่งข้อมูล (Manual Review)</h1>
+    <small>ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์ • สรุปก่อนส่งเข้าระบบ</small>
+  </div>
+  <div class="spacer"></div>
+  <div class="badge" id="userBadge">กำลังตรวจสอบสถานะผู้ใช้…</div>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+
+    <!-- LEFT: PICK RECORD -->
+    <aside class="card">
+      <h2>เลือกชุดข้อมูล</h2>
+      <div class="muted">ค้นหาแล้วคลิกเลือก 1 รายการ เพื่อแสดงสรุปและส่งข้อมูล</div>
+
+      <div class="row" style="margin-top:10px">
+        <input id="q" placeholder="ค้นหา: ชื่อหน่วย/จังหวัด/ปีงบฯ/สถานะ" />
+        <select id="filterYear">
+          <option value="">ทุกปีงบฯ</option>
+        </select>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="btnRefresh">รีเฟรชรายการ</button>
+        <button class="btn" id="btnGoEntry">กลับไปหน้า Manual Entry</button>
+      </div>
+
+      <div class="hr"></div>
+      <div class="list" id="list"></div>
+
+      <div class="msg warnBox" id="warn"></div>
+      <div class="msg badBox" id="bad"></div>
+      <div class="msg okBox" id="ok"></div>
+    </aside>
+
+    <!-- RIGHT: SUMMARY -->
+    <main class="card">
+      <h2>สรุปชุดข้อมูลที่เลือก</h2>
+      <div class="muted">หน้านี้เหมาะสำหรับ “ตรวจทานก่อนส่ง” และใช้เป็นหลักฐานการควบคุมคุณภาพ (QC) แบบด่วน</div>
+
+      <div class="hr"></div>
+      <div class="row">
+        <div class="box">
+          <div class="kv"><b>หน่วยรับตรวจ</b><span id="sEntity">-</span></div>
+          <div class="kv"><b>ที่ตั้ง</b><span id="sLoc">-</span></div>
+          <div class="kv"><b>ปีงบฯ/งวด</b><span id="sPeriod">-</span></div>
+          <div class="kv"><b>Record ID</b><span id="sId">-</span></div>
+          <div class="mini">* ใช้ Record ID เพื่ออ้างอิง/ตรวจสอบย้อนกลับได้</div>
+        </div>
+        <div class="box">
+          <div class="kv"><b>สร้างครั้งแรก</b><span id="sCreated">-</span></div>
+          <div class="kv"><b>แก้ไขล่าสุด</b><span id="sUpdated">-</span></div>
+          <div class="kv"><b>ผู้สร้าง</b><span id="sCreatedBy">-</span></div>
+          <div class="kv"><b>ผู้แก้ไขล่าสุด</b><span id="sUpdatedBy">-</span></div>
+          <div class="kv"><b>สถานะล็อก</b><span id="sLock">-</span></div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <div class="row">
+        <div class="box">
+          <h3>2.1.7–2.1.20 สถานะ/ผล/ปัญหา/ข้อเสนอแนะ</h3>
+          <div class="grid2">
+            <div class="kv"><b>2.1.7</b><span id="s217">-</span></div>
+            <div class="kv"><b>2.1.8</b><span id="s218">-</span></div>
+            <div class="kv"><b>2.1.9</b><span id="s219">-</span></div>
+            <div class="kv"><b>2.1.10</b><span id="s2110">-</span></div>
+            <div class="kv"><b>2.1.12</b><span id="s212">-</span></div>
+            <div class="kv"><b>2.1.14</b><span id="s214">-</span></div>
+            <div class="kv"><b>2.1.15</b><span id="s215">-</span></div>
+            <div class="kv"><b>2.1.16</b><span id="s216">-</span></div>
+            <div class="kv"><b>2.1.17</b><span id="s217c">-</span></div>
+            <div class="kv"><b>2.1.19</b><span id="s219p">-</span></div>
+            <div class="kv" style="grid-column:1 / -1"><b>2.1.20</b><span id="s220">-</span></div>
+          </div>
+        </div>
+
+        <div class="box">
+          <h3>สถานะการส่งข้อมูล</h3>
+          <div class="kv"><b>ส่งแล้ว?</b><span id="sSubmitted">-</span></div>
+          <div class="kv"><b>เวลาที่ส่ง</b><span id="sSubmittedAt">-</span></div>
+          <div class="kv"><b>ผู้ส่ง</b><span id="sSubmittedBy">-</span></div>
+          <div class="hr"></div>
+          <div class="row">
+            <button class="btn primary" id="btnSubmit">ส่งข้อมูลเข้าระบบ</button>
+            <button class="btn" id="btnBackEdit">กลับไปแก้ไข</button>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <button class="btn" id="btnCopyId">คัดลอก Record ID</button>
+            <button class="btn" id="btnExportJson">Export JSON</button>
+            <button class="btn" id="btnExportCsv">Export CSV</button>
+          </div>
+          <div class="mini" style="margin-top:8px">
+            * ถ้าครบ 356 วันจากวันบันทึกครั้งแรก → ระบบจะล็อก (ส่ง/แก้ไขไม่ได้)
+          </div>
+
+          <div class="msg okBox" id="ok2"></div>
+          <div class="msg badBox" id="bad2"></div>
+          <div class="msg warnBox" id="warn2"></div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <h3>ทีมตรวจ/ทีมสอบทาน (สำหรับตรวจทานความครบถ้วน)</h3>
+      <div class="grid2">
+        <div class="box">
+          <b>ผู้ตรวจสอบ</b>
+          <div id="auditorsBox" class="mini" style="margin-top:6px">-</div>
+        </div>
+        <div class="box">
+          <b>ผู้สอบทาน</b>
+          <div id="reviewersBox" class="mini" style="margin-top:6px">-</div>
+        </div>
+        <div class="box">
+          <b>ผู้อำนวยการสำนัก</b>
+          <div id="directorBox" class="mini" style="margin-top:6px">-</div>
+        </div>
+        <div class="box">
+          <b>ผู้รับตรวจ</b>
+          <div id="auditeeBox" class="mini" style="margin-top:6px">-</div>
+        </div>
+      </div>
+    </main>
+
+  </div>
+</div>
+
+<script>
+/* =========================
+   A) Auth guard
+   ========================= */
+const SESSION_KEY = "fa_session_v1";
+const session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+if(!session){ location.href="login.html"; }
+document.getElementById("userBadge").textContent =
+  "ผู้ใช้: " + (session.fullname || session.username) + " • บทบาท: " + (session.role || "USER");
+
+/* =========================
+   B) Storage keys
+   ========================= */
+const RECORDS_KEY = "fa_manual_records_v1";
+const SUBMIT_KEY  = "fa_manual_submissions_v1";
+const LAST_PICK_KEY = "fa_manual_last_pick_id_v1"; // สำหรับกลับไปแก้ไข/อ้างอิง
+
+/* =========================
+   C) Helpers
+   ========================= */
+const $ = (id)=>document.getElementById(id);
+function show(box, text){
+  const el = $(box);
+  el.textContent = text;
+  el.style.display="block";
+  setTimeout(()=>{ el.style.display="none"; }, 2600);
+}
+function safe(v){ return (v===null||v===undefined||v==="") ? "-" : String(v); }
+function ymd(ts){ return ts ? new Date(ts).toLocaleString() : "-"; }
+function isLocked(created_at){
+  if(!created_at) return false;
+  const days = (Date.now() - created_at)/86400000;
+  return days >= 356;
+}
+function getRecords(){ return JSON.parse(localStorage.getItem(RECORDS_KEY) || "[]"); }
+function saveRecords(arr){ localStorage.setItem(RECORDS_KEY, JSON.stringify(arr)); }
+
+/* =========================
+   D) UI state
+   ========================= */
+let records = [];
+let active = null;
+let submittedBy = "-";
+
+(function initYearFilter(){
+  const fy = $("filterYear");
+  for(let y=2560;y<=2580;y++){
+    const op=document.createElement("option");
+    op.value=String(y); op.textContent="ปีงบฯ "+y;
+    fy.appendChild(op);
+  }
+})();
+
+function fmtPeriod(p){
+  if(!p) return "-";
+  const type = p.periodType;
+  const val  = p.periodValue;
+  const label = type==="YEAR"?"รายปี":type==="QUARTER"?"รายไตรมาส":type==="MONTH"?"รายเดือน":"รายวัน";
+  return `ปีงบฯ ${p.fiscalYear} • ${label} ${val}`;
+}
+
+function matchQuery(rec, q){
+  if(!q) return true;
+  const hay = [
+    rec.entity?.type, rec.entity?.name, rec.entity?.province, rec.entity?.district, rec.entity?.subdistrict,
+    rec.period?.fiscalYear, rec.period?.periodType, rec.period?.periodValue,
+    rec.s217, rec.s218, rec.s219, rec.s2110, rec.s219_problem, rec.s220_rec_type, rec.s220_rec_text
+  ].join(" ").toLowerCase();
+  return hay.includes(q.toLowerCase());
+}
+
+function matchYear(rec, year){
+  if(!year) return true;
+  return String(rec.period?.fiscalYear||"") === String(year);
+}
+
+/* =========================
+   E) Render list
+   ========================= */
+function refreshList(){
+  records = getRecords().sort((a,b)=>(b.updated_at||0)-(a.updated_at||0));
+
+  const q = $("q").value.trim();
+  const y = $("filterYear").value;
+
+  const list = $("list");
+  list.innerHTML = "";
+
+  const filtered = records.filter(r => matchQuery(r,q) && matchYear(r,y));
+
+  if(filtered.length===0){
+    list.innerHTML = `<div class="muted">ไม่พบข้อมูล (ลองเปลี่ยนคำค้น/ตัวกรอง หรือไปบันทึกที่หน้า Manual Entry)</div>`;
+    setActive(null);
+    return;
+  }
+
+  filtered.slice(0,80).forEach(r=>{
+    const div=document.createElement("div");
+    div.className="item" + (active?.id===r.id ? " active" : "");
+    const locked = isLocked(r.created_at);
+    const pill = locked ? `<span class="pill bad">ล็อก 356 วัน</span>` : `<span class="pill ok">แก้ไขได้</span>`;
+    const sub = r.submitted ? `<span class="pill warn">ส่งแล้ว</span>` : `<span class="pill">ยังไม่ส่ง</span>`;
+    div.innerHTML = `
+      <b>${safe(r.entity?.type)} ${safe(r.entity?.name)}</b>
+      <small>${safe(r.entity?.province)} / ${safe(r.entity?.district)} / ${safe(r.entity?.subdistrict)}</small><br/>
+      <small>${fmtPeriod(r.period)} • อัปเดตล่าสุด: ${ymd(r.updated_at)}</small><br/>
+      ${pill} ${sub}
+    `;
+    div.addEventListener("click", ()=>{
+      setActive(r);
+      refreshList(); // เพื่อไฮไลต์ active
+    });
+    list.appendChild(div);
+  });
+
+  // auto pick last
+  const lastId = localStorage.getItem(LAST_PICK_KEY);
+  if(!active && lastId){
+    const found = records.find(x=>x.id===lastId);
+    if(found) setActive(found);
+  }
+  if(!active) setActive(filtered[0]);
+}
+
+/* =========================
+   F) Render active summary
+   ========================= */
+function renderPeople(list){
+  if(!Array.isArray(list) || list.length===0) return "-";
+  return list.map((p,i)=>{
+    const duty = p.duty ? ` • หน้าที่: ${p.duty}` : "";
+    const grp = p.group ? ` • ${p.group}` : "";
+    const off = p.office ? ` • ${p.office}` : "";
+    const dt  = p.assigned_date ? ` • วันที่: ${p.assigned_date}` : "";
+    return `${i+1}) ${safe(p.name)} (${safe(p.position)})${grp}${off}${dt}${duty}`;
+  }).join("<br/>");
+}
+
+function setActive(rec){
+  active = rec;
+  if(!rec){
+    ["sEntity","sLoc","sPeriod","sId","sCreated","sUpdated","sCreatedBy","sUpdatedBy","sLock",
+     "s217","s218","s219","s2110","s212","s214","s215","s216","s217c","s219p","s220",
+     "sSubmitted","sSubmittedAt","sSubmittedBy"
+    ].forEach(id=>$(id).textContent="-");
+    $("auditorsBox").innerHTML = "-";
+    $("reviewersBox").innerHTML = "-";
+    $("directorBox").innerHTML = "-";
+    $("auditeeBox").innerHTML = "-";
+    $("btnSubmit").disabled = true;
+    $("btnBackEdit").disabled = true;
+    return;
+  }
+
+  localStorage.setItem(LAST_PICK_KEY, rec.id);
+
+  const loc = `${safe(rec.entity?.province)} / ${safe(rec.entity?.district)} / ${safe(rec.entity?.subdistrict)}`;
+  $("sEntity").textContent = `${safe(rec.entity?.type)} ${safe(rec.entity?.name)}`;
+  $("sLoc").textContent = loc;
+  $("sPeriod").textContent = fmtPeriod(rec.period);
+  $("sId").textContent = rec.id;
+
+  $("sCreated").textContent = ymd(rec.created_at);
+  $("sUpdated").textContent = ymd(rec.updated_at);
+  $("sCreatedBy").textContent = safe(rec.created_by);
+  $("sUpdatedBy").textContent = safe(rec.updated_by);
+
+  const locked = isLocked(rec.created_at);
+  $("sLock").innerHTML = locked ? `<span class="pill bad">ล็อกแล้ว (ครบ 356 วัน)</span>` : `<span class="pill ok">แก้ไขได้</span>`;
+
+  $("s217").textContent = safe(rec.s217);
+  $("s218").textContent = safe(rec.s218);
+  $("s219").textContent = safe(rec.s219);
+  $("s2110").textContent = safe(rec.s2110);
+  $("s212").textContent = safe(rec.s212);
+  $("s214").textContent = safe(rec.s214);
+  $("s215").textContent = safe(rec.s215);
+  $("s216").textContent = safe(rec.s216);
+  $("s217c").textContent = safe(rec.s217_cash);
+  $("s219p").textContent = safe(rec.s219_problem);
+  const s220 = `${safe(rec.s220_rec_type)}${rec.s220_rec_text ? " • " + rec.s220_rec_text : ""}`;
+  $("s220").textContent = s220;
+
+  $("auditorsBox").innerHTML = renderPeople(rec.auditors);
+  $("reviewersBox").innerHTML = renderPeople(rec.reviewers);
+  $("directorBox").innerHTML = renderPeople(rec.director);
+  $("auditeeBox").innerHTML = renderPeople(rec.auditee);
+
+  // submitted info
+  $("sSubmitted").innerHTML = rec.submitted ? `<span class="pill warn">ส่งแล้ว</span>` : `<span class="pill">ยังไม่ส่ง</span>`;
+  $("sSubmittedAt").textContent = rec.submitted_at ? ymd(rec.submitted_at) : "-";
+
+  // find submitter from log
+  const log = JSON.parse(localStorage.getItem(SUBMIT_KEY) || "[]");
+  const last = [...log].reverse().find(x=>x.id===rec.id);
+  submittedBy = last?.by || "-";
+  $("sSubmittedBy").textContent = submittedBy;
+
+  // buttons
+  $("btnSubmit").disabled = locked;
+  $("btnBackEdit").disabled = locked ? true : false;
+}
+
+/* =========================
+   G) Actions
+   ========================= */
+$("btnRefresh").addEventListener("click", ()=>{
+  refreshList();
+  show("ok","รีเฟรชรายการเรียบร้อย");
+});
+$("q").addEventListener("input", refreshList);
+$("filterYear").addEventListener("change", refreshList);
+
+$("btnGoEntry").addEventListener("click", ()=>{
+  // เปิดหน้า manual-entry เพื่อโหลด/แก้ไข
+  // (ตอนนี้หน้า manual-entry ยังไม่ auto-load จาก id — ให้กด “โหลด/เริ่มบันทึก” ตามปกติ)
+  location.href = "manual-entry.html";
+});
+
+$("btnBackEdit").addEventListener("click", ()=>{
+  if(!active){ show("warn2","ยังไม่ได้เลือกชุดข้อมูล"); return; }
+  if(isLocked(active.created_at)){ show("bad2","ชุดข้อมูลถูกล็อกแล้ว (ครบ 356 วัน)"); return; }
+  // เก็บ id ไว้ให้เป็น reference
+  localStorage.setItem(LAST_PICK_KEY, active.id);
+  show("ok2","กำลังกลับไปหน้าแก้ไข…");
+  setTimeout(()=> location.href="manual-entry.html", 600);
+});
+
+$("btnSubmit").addEventListener("click", ()=>{
+  if(!active){ show("warn2","ยังไม่ได้เลือกชุดข้อมูล"); return; }
+  if(isLocked(active.created_at)){ show("bad2","ไม่สามารถส่งได้: ชุดข้อมูลถูกล็อกครบ 356 วันแล้ว"); return; }
+
+  // mark submitted and update record
+  const all = getRecords();
+  const idx = all.findIndex(r=>r.id===active.id);
+  if(idx<0){ show("bad2","ไม่พบเรคคอร์ดในระบบ"); return; }
+
+  const rec = {...all[idx]};
+  rec.submitted = true;
+  rec.submitted_at = Date.now();
+  rec.updated_at = Date.now();
+  rec.updated_by = (session.fullname || session.username);
+
+  all[idx]=rec;
+  saveRecords(all);
+
+  // append log
+  const log = JSON.parse(localStorage.getItem(SUBMIT_KEY) || "[]");
+  log.push({ id: rec.id, submitted_at: rec.submitted_at, by: (session.fullname||session.username) });
+  localStorage.setItem(SUBMIT_KEY, JSON.stringify(log));
+
+  active = rec;
+  setActive(active);
+  show("ok2","ส่งข้อมูลเรียบร้อย ✅ (พร้อมให้ Cashboard ดึงไปแสดง)");
+});
+
+$("btnCopyId").addEventListener("click", async ()=>{
+  if(!active){ show("warn2","ยังไม่ได้เลือกชุดข้อมูล"); return; }
+  try{
+    await navigator.clipboard.writeText(active.id);
+    show("ok2","คัดลอก Record ID แล้ว");
+  }catch(e){
+    show("warn2","คัดลอกไม่ได้ (เบราว์เซอร์บล็อก) — ให้คัดลอกจากช่อง Record ID");
+  }
+});
+
+$("btnExportJson").addEventListener("click", ()=>{
+  if(!active){ show("warn2","ยังไม่ได้เลือกชุดข้อมูล"); return; }
+  const blob = new Blob([JSON.stringify(active, null, 2)], {type:"application/json;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "FA_manual_record.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  show("ok2","Export JSON เรียบร้อย");
+});
+
+function toCsvRow(obj, keys){
+  return keys.map(k=>{
+    const v = (obj?.[k]===undefined || obj?.[k]===null) ? "" : String(obj[k]).replaceAll('"','""');
+    return `"${v}"`;
+  }).join(",");
+}
+$("btnExportCsv").addEventListener("click", ()=>{
+  if(!active){ show("warn2","ยังไม่ได้เลือกชุดข้อมูล"); return; }
+  // flatten minimal columns for admin/audit quick review
+  const flat = {
+    id: active.id,
+    entity_type: active.entity?.type || "",
+    entity_name: active.entity?.name || "",
+    province: active.entity?.province || "",
+    district: active.entity?.district || "",
+    subdistrict: active.entity?.subdistrict || "",
+    fiscalYear: active.period?.fiscalYear || "",
+    periodType: active.period?.periodType || "",
+    periodValue: active.period?.periodValue || "",
+    s217: active.s217 || "",
+    s218: active.s218 || "",
+    s219: active.s219 || "",
+    s2110: active.s2110 || "",
+    s212: active.s212 || "",
+    s214: active.s214 || "",
+    s215: active.s215 || "",
+    s216: active.s216 || "",
+    s217_cash: active.s217_cash || "",
+    s219_problem: active.s219_problem || "",
+    s220_rec_type: active.s220_rec_type || "",
+    s220_rec_text: active.s220_rec_text || "",
+    created_at: active.created_at ? new Date(active.created_at).toISOString() : "",
+    updated_at: active.updated_at ? new Date(active.updated_at).toISOString() : "",
+    created_by: active.created_by || "",
+    updated_by: active.updated_by || "",
+    submitted: active.submitted ? "Y" : "N",
+    submitted_at: active.submitted_at ? new Date(active.submitted_at).toISOString() : ""
+  };
+  const keys = Object.keys(flat);
+  const csv = [
+    keys.join(","),
+    toCsvRow(flat, keys)
+  ].join("\n");
+
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "FA_manual_record.csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  show("ok2","Export CSV เรียบร้อย");
+});
+
+/* =========================
+   H) Boot
+   ========================= */
+refreshList();
+</script>
+</body>
+</html>
