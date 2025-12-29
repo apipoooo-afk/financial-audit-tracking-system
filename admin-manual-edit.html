@@ -1,0 +1,1086 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>แก้ไข/บันทึก Manual (Admin) • 2.1.1–2.1.20 • ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์</title>
+
+  <style>
+    :root{
+      --bg:#f4f7fb; --card:#fff; --line:#dde5f2; --text:#24364c; --muted:#6a7f9a;
+      --brand:#1e5aaa; --brand2:#2f7de1;
+      --shadow:0 10px 28px rgba(20,40,80,.08);
+      --r:18px;
+      --ok:#1f7a3b; --bad:#b13b3b; --warn:#8a5a00; --info:#0b5aa6;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Thai","Noto Sans";background:var(--bg);color:var(--text)}
+    header{
+      position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);
+      padding:14px 18px;display:flex;align-items:center;gap:12px
+    }
+    .title{display:flex;flex-direction:column;line-height:1.05}
+    .title h1{margin:0;font-size:18px}
+    .title small{color:var(--muted)}
+    .spacer{flex:1}
+    .badge{border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa;padding:8px 12px;border-radius:14px;font-weight:900}
+
+    .wrap{max-width:1400px;margin:18px auto;padding:0 18px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;min-width:0}
+    h2{margin:0 0 10px;font-size:16px}
+    h3{margin:12px 0 8px;font-size:14px}
+    .muted{color:var(--muted);font-size:13px}
+    .hr{height:1px;background:#eef2f7;margin:12px 0}
+
+    input,select,textarea{
+      width:100%;padding:10px 12px;border-radius:14px;border:1px solid var(--line);
+      background:#fff;font-size:14px;outline:none
+    }
+    textarea{min-height:88px;resize:vertical}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row>*{flex:1;min-width:170px}
+
+    .btn{
+      border:1px solid var(--line); background:#fff; border-radius:14px;
+      padding:10px 12px; cursor:pointer; font-weight:900; color:var(--text);
+      white-space:nowrap
+    }
+    .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;border-color:transparent}
+    .btn.danger{background:#fff0f0;border-color:#ffd2d2;color:var(--bad)}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa}
+    .pill.ok{border-color:#c8f2d6;background:#effaf3;color:var(--ok)}
+    .pill.warn{border-color:#ffe7b8;background:#fff7e6;color:var(--warn)}
+    .pill.bad{border-color:#ffd2d2;background:#fff0f0;color:var(--bad)}
+    .pill.info{border-color:#cfe2ff;background:#eef6ff;color:var(--info)}
+
+    .msg{display:none;margin-top:10px;padding:10px 12px;border-radius:14px;font-weight:900}
+    .okBox{border:1px solid #c8f2d6;background:#effaf3;color:var(--ok)}
+    .badBox{border:1px solid #ffd2d2;background:#fff0f0;color:var(--bad)}
+    .warnBox{border:1px solid #ffe7b8;background:#fff7e6;color:var(--warn)}
+
+    .miniTable{width:100%;border-collapse:collapse}
+    .miniTable th,.miniTable td{border-bottom:1px solid #eef2f7;padding:8px 6px;text-align:left;font-size:13px;vertical-align:top}
+    .miniTable th{color:#4a5f7d;white-space:nowrap}
+
+    .actionsBar{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .actionsBar .btn{flex:1;min-width:180px}
+
+    .lockBanner{
+      display:none; margin-top:10px;
+      border:1px solid #ffd2d2; background:#fff0f0; color:var(--bad);
+      border-radius:16px; padding:10px 12px; font-weight:1000;
+    }
+
+    @media (max-width:1000px){ .grid{grid-template-columns:1fr} .actionsBar .btn{min-width:140px} }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="title">
+    <h1>บันทึก/แก้ไข Manual (Admin) — 2.1.1–2.1.20</h1>
+    <small>เพิ่ม/แก้ไขได้ภายใน 356 วันจากวันที่บันทึกครั้งแรก (created_at) • เก็บร่องรอยการแก้ไข</small>
+  </div>
+  <div class="spacer"></div>
+  <div class="badge" id="userBadge">กำลังตรวจสอบผู้ใช้…</div>
+</header>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>สถานะรายการ</h2>
+    <div class="row">
+      <div>
+        <div class="muted">Record ID</div>
+        <input id="rid" disabled />
+      </div>
+      <div>
+        <div class="muted">สร้างครั้งแรก (created_at)</div>
+        <input id="createdAt" disabled />
+      </div>
+      <div>
+        <div class="muted">แก้ไขล่าสุด (updated_at)</div>
+        <input id="updatedAt" disabled />
+      </div>
+      <div>
+        <div class="muted">สถานะล็อก 356 วัน</div>
+        <div id="lockPill" class="pill">—</div>
+      </div>
+    </div>
+
+    <div class="lockBanner" id="lockBanner">
+      ⛔ รายการนี้ครบ 356 วันแล้ว: สามารถ “ดูได้” แต่ “แก้ไข/บันทึก/ส่ง” ไม่ได้
+    </div>
+
+    <div class="actionsBar">
+      <button class="btn primary" id="btnSave">บันทึกข้อมูล</button>
+      <button class="btn primary" id="btnSubmit">ส่งข้อมูลเข้าระบบ</button>
+      <button class="btn" id="btnView">ดูผลการบันทึก</button>
+      <button class="btn" id="btnBackEdit">กลับไปแก้ไข (หน้านี้)</button>
+      <button class="btn" id="btnBackTable">กลับตารางข้อมูลทั้งหมด</button>
+      <button class="btn" id="btnHub">กลับ Data Hub</button>
+      <button class="btn" id="btnCashboard">ไป Cashboard</button>
+      <button class="btn" id="btnHome">กลับหน้าแรก</button>
+    </div>
+
+    <div class="msg okBox" id="ok"></div>
+    <div class="msg warnBox" id="warn"></div>
+    <div class="msg badBox" id="bad"></div>
+
+    <div class="muted" id="hint" style="margin-top:10px">—</div>
+  </div>
+
+  <div class="grid" style="margin-top:14px">
+
+    <!-- LEFT: Entity + Period -->
+    <div class="card">
+      <h2>2.1.1 หน่วยรับตรวจ + ที่ตั้ง</h2>
+      <div class="row">
+        <select id="entityType">
+          <option value="">เลือกประเภทหน่วย</option>
+          <option value="อบจ">อบจ</option>
+          <option value="ทม">ทม</option>
+          <option value="ทน">ทน</option>
+          <option value="ทต">ทต</option>
+          <option value="อบต">อบต</option>
+        </select>
+        <input id="entityName" placeholder="ชื่อหน่วยรับตรวจ (เช่น เทศบาลเมืองศรีสะเกษ)" />
+      </div>
+      <div class="row" style="margin-top:10px">
+        <input id="province" placeholder="จังหวัด" />
+        <input id="district" placeholder="อำเภอ" />
+        <input id="subdistrict" placeholder="ตำบล" />
+      </div>
+
+      <div class="hr"></div>
+
+      <h2>2.1.2 ปีงบประมาณ + งวด</h2>
+      <div class="row">
+        <select id="fy"></select>
+        <select id="periodType">
+          <option value="YEAR">รายปี</option>
+          <option value="QUARTER">รายไตรมาส</option>
+          <option value="MONTH">รายเดือน</option>
+          <option value="DAY">รายวัน</option>
+        </select>
+        <select id="periodValue"></select>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <input id="stampNow" disabled />
+        <div class="pill info" style="display:flex;align-items:center;justify-content:center">
+          เวลาอัปเดตอัตโนมัติ
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <h2>2.1.7–2.1.10 สถานะหลัก</h2>
+      <div class="row">
+        <select id="s217">
+          <option value="">2.1.7 สถานะการตรวจสอบ FA</option>
+          <option>ยุติการติดตามผล</option>
+          <option>อยู่ระหว่างติดตามผลการตรวจสอบ</option>
+          <option>ออกรายงานการตรวจแล้ว</option>
+          <option>อยู่ระหว่างจัดพิมพ์รายงาน</option>
+          <option>อยู่ระหว่างสอบทานของ ผตจ.</option>
+          <option>อยู่ระหว่างสอบทาน ผอก.</option>
+          <option>อยู่ระหว่างตรวจสอบ</option>
+          <option>ยังไม่ตรวจ</option>
+          <option>ไม่ทราบสถานะ</option>
+        </select>
+        <select id="s218">
+          <option value="">2.1.8 สถานะการปิดงบการเงิน</option>
+          <option>ปิดงบการเงินแล้ว</option>
+          <option>ยังไม่ปิดงบการเงิน</option>
+          <option>ไม่ทราบสถานะ</option>
+        </select>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <select id="s219">
+          <option value="">2.1.9 สถานะการส่งรายงานการเงิน</option>
+          <option>ส่งรายงานการเงินแล้ว</option>
+          <option>ยังไม่ส่งรายงานการเงิน</option>
+          <option>ไม่ทราบสถานะ</option>
+        </select>
+        <select id="s2110">
+          <option value="">2.1.10 หนังสือติดตามการส่งรายงานการเงิน</option>
+          <option>จัดทำหนังสือแล้ว</option>
+          <option>ยังไม่จัดทำหนังสือ</option>
+          <option>ไม่ทราบสถานะ</option>
+        </select>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: People + Details + Outcomes -->
+    <div class="card">
+      <h2>2.1.3 ผู้ตรวจสอบ (เพิ่มได้ 5 คน)</h2>
+      <div class="muted">ชื่อ • ตำแหน่ง • กลุ่มตรวจ 1–10 • สำนักงาน • วันที่ได้รับมอบหมาย • หน้าที่</div>
+
+      <table class="miniTable" id="tblAuditors">
+        <thead>
+          <tr>
+            <th>ชื่อ</th><th>ตำแหน่ง</th><th class="nowrap">กลุ่ม</th><th>สำนักงาน</th><th class="nowrap">วันที่มอบหมาย</th><th>หน้าที่</th><th class="nowrap">ลบ</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="addAuditor">+ เพิ่มผู้ตรวจสอบ</button>
+        <div class="pill info" id="audCount">0/5</div>
+      </div>
+
+      <div class="hr"></div>
+
+      <h2>2.1.4 ผู้สอบทาน (เพิ่มได้ 2 คน)</h2>
+      <table class="miniTable" id="tblReviewers">
+        <thead>
+          <tr>
+            <th>ชื่อ</th><th>ตำแหน่ง</th><th class="nowrap">กลุ่ม</th><th>สำนักงาน</th><th class="nowrap">วันที่มอบหมาย</th><th class="nowrap">ลบ</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="addReviewer">+ เพิ่มผู้สอบทาน</button>
+        <div class="pill info" id="revCount">0/2</div>
+      </div>
+
+      <div class="hr"></div>
+
+      <h2>2.1.5–2.1.6 ผู้เกี่ยวข้องหลัก</h2>
+      <div class="row">
+        <input id="directorName" placeholder="2.1.5 ชื่อผู้อำนวยการสำนัก" />
+        <input id="directorPos" placeholder="ตำแหน่ง" />
+      </div>
+      <div class="row" style="margin-top:10px">
+        <input id="directorOffice" placeholder="สังกัดสำนักงาน" />
+        <input id="directorAssign" type="date" />
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <input id="auditeeName" placeholder="2.1.6 ชื่อผู้รับตรวจ (ผู้บริหาร/ผู้แทนหน่วย)" />
+        <input id="auditeePos" placeholder="ตำแหน่ง" />
+      </div>
+      <div class="row" style="margin-top:10px">
+        <input id="auditeeOffice" placeholder="สังกัดสำนักงาน/หน่วย" />
+        <input id="auditeeSince" type="date" />
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- DETAILS 2.1.11–2.1.13 -->
+  <div class="card" style="margin-top:14px">
+    <h2>2.1.11 รายละเอียดการตรวจสอบ (สถานะงานภาคสนาม/แบบฟอร์ม)</h2>
+    <div class="muted">เลือกระดับสถานะให้ครบ • “ไม่ต้องทำ” จะมีเฉพาะบางรายการ (8.18–8.31 และ 3.1.x)</div>
+    <div class="hr"></div>
+
+    <div class="row">
+      <select id="openAudit">
+        <option value="">(1) การเปิดตรวจ</option>
+        <option>ดำเนินการแล้ว</option><option>อยู่ระหว่างดำเนินการ</option><option>ยังไม่ดำเนินการ</option><option>ไม่ทราบ</option>
+      </select>
+      <select id="confirmWork">
+        <option value="">(2) หนังสือยืนยันการปฏิบัติงานตรวจสอบ</option>
+        <option>ดำเนินการแล้ว</option><option>อยู่ระหว่างดำเนินการ</option><option>ยังไม่ดำเนินการ</option><option>ไม่ทราบ</option>
+      </select>
+      <select id="bankConfirm">
+        <option value="">(3) ขอหนังสือยืนยันยอดเงินฝากธนาคาร</option>
+        <option>ดำเนินการแล้ว</option><option>อยู่ระหว่างดำเนินการ</option><option>ยังไม่ดำเนินการ</option><option>ไม่ทราบ</option>
+      </select>
+      <select id="localConfirm">
+        <option value="">(4) หนังสือยืนยันสถานุบาล</option>
+        <option>ดำเนินการแล้ว</option><option>อยู่ระหว่างดำเนินการ</option><option>ยังไม่ดำเนินการ</option><option>ไม่ทราบ</option>
+      </select>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <select id="opt3">
+        <option value="">(5) จัดทำ อปท.3</option>
+        <option>ดำเนินการแล้ว</option><option>อยู่ระหว่างดำเนินการ</option><option>ยังไม่ดำเนินการ</option><option>ไม่ทราบ</option>
+      </select>
+      <select id="opt5">
+        <option value="">(6) จัดทำ อปท.5</option>
+        <option>ดำเนินการแล้ว</option><option>อยู่ระหว่างดำเนินการ</option><option>ยังไม่ดำเนินการ</option><option>ไม่ทราบ</option>
+      </select>
+      <select id="opt6">
+        <option value="">(7) จัดทำ อปท.6</option>
+        <option>ดำเนินการแล้ว</option><option>อยู่ระหว่างดำเนินการ</option><option>ยังไม่ดำเนินการ</option><option>ไม่ทราบ</option>
+      </select>
+      <select id="opt7">
+        <option value="">(8) จัดทำ อปท.7</option>
+        <option>ดำเนินการแล้ว</option><option>อยู่ระหว่างดำเนินการ</option><option>ยังไม่ดำเนินการ</option><option>ไม่ทราบ</option>
+      </select>
+    </div>
+
+    <!-- อปท.8.1–8.17 (4 options) -->
+    <div class="hr"></div>
+    <h3>อปท.8.1–8.17 (4 ตัวเลือก)</h3>
+    <div class="row" id="opt8_1_17"></div>
+
+    <div class="hr"></div>
+    <h3>อปท.8.18–8.31 และ อปท.3.1.1–3.1.7 (5 ตัวเลือก รวม “ไม่ต้องทำ”)</h3>
+    <div class="row" id="opt8_18_31"></div>
+    <div class="row" id="opt3_1_x" style="margin-top:10px"></div>
+
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h2>2.1.12 การประชุมปิดตรวจสอบ FA</h2>
+    <div class="row">
+      <select id="closeMeeting">
+        <option value="">เลือกสถานะการประชุมปิดตรวจ</option>
+        <option>ยังไม่ประชุมปิดตรวจ</option>
+        <option>ประชุมปิดตรวจสอบแล้ว</option>
+        <option>ไม่ทราบ</option>
+        <option>ยังตรวจสอบไม่เสร็จ</option>
+      </select>
+      <div class="pill info" style="display:flex;align-items:center;justify-content:center">ใช้ประกอบ Dashboard/Cashboard</div>
+    </div>
+
+    <div class="hr"></div>
+
+    <h2>2.1.13 รายละเอียดการจัดทำรายงานการตรวจสอบ FA (5 ตัวเลือก)</h2>
+    <div class="row" id="reportPack"></div>
+
+  </div>
+
+  <!-- OUTCOMES 2.1.14–2.1.20 -->
+  <div class="card" style="margin-top:14px">
+    <h2>2.1.14–2.1.20 ผลและประเด็น</h2>
+
+    <div class="row">
+      <select id="s214">
+        <option value="">2.1.14 ผลการตรวจสอบ FA</option>
+        <option>แบบไม่มีเงื่อนไข</option>
+        <option>แบบมีเงื่อนไข</option>
+        <option>ไม่รับรองรายงาน</option>
+        <option>ไม่ให้ความเห็น</option>
+        <option>ไม่ทราบ</option>
+        <option>ยังไม่ออกรายงาน</option>
+      </select>
+
+      <select id="s215">
+        <option value="">2.1.15 ข้อสังเกตการตรวจสอบ FA</option>
+        <option>ไม่มีข้อสังเกต</option>
+        <option>มีข้อสังเกต</option>
+        <option>ไม่ทราบ</option>
+        <option>ยังไม่ออกรายงาน</option>
+      </select>
+
+      <select id="s216">
+        <option value="">2.1.16 การปรับปรุงบัญชี</option>
+        <option>มีการปรับปรุงมากกว่า 51 รายการ</option>
+        <option>มีการปรับปรุง 40-50 รายการ</option>
+        <option>มีการปรับปรุง 30-39 รายการ</option>
+        <option>มีการปรับปรุง 20-29 รายการ</option>
+        <option>มีการปรับปรุง 10-19 รายการ</option>
+        <option>มีการปรับปรุง 5-9 รายการ</option>
+        <option>มีการปรับปรุงน้อยกว่า 5 รายการ</option>
+        <option>ไม่มีการปรับปรุง</option>
+        <option>ยังไม่ทราบ</option>
+      </select>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <select id="s217_cash">
+        <option value="">2.1.17 เงินขาดบัญชี</option>
+        <option>ไม่มี</option><option>มี</option><option>ยังไม่ทราบ</option>
+      </select>
+
+      <select id="s219_problem">
+        <option value="">2.1.19 ปัญหาการตรวจ FA</option>
+        <option>มีปัญหาเรื่องคน</option>
+        <option>มีปัญหาเรื่องงาน</option>
+        <option>มีปัญหาเรื่องระยะเวลา</option>
+        <option>มีปัญหาเรื่องเครื่องมืออุปกรณ์</option>
+        <option>มีปัญหาเรื่องงบประมาณ</option>
+        <option>มีปัญหาเรื่องหน่วยรับตรวจ</option>
+        <option>ไม่มีปัญหาเรื่อง</option>
+        <option>ไม่ทราบ</option>
+      </select>
+
+      <select id="s220_rec_type">
+        <option value="">2.1.20 ประเภทข้อเสนอแนะ</option>
+        <option>แก้ไขปัญหาเรื่องคน</option>
+        <option>แก้ไขปัญหาเรื่องงาน</option>
+        <option>แก้ไขปัญหาเรื่องระยะเวลา</option>
+        <option>แก้ไขปัญหาเรื่องเครื่องมืออุปกรณ์</option>
+        <option>แก้ไขปัญหาเรื่องงบประมาณ</option>
+        <option>แก้ไขปัญหาเรื่องหน่วยรับตรวจ</option>
+        <option>แก้ไขปัญหาอื่นๆ</option>
+      </select>
+    </div>
+
+    <div style="margin-top:10px">
+      <textarea id="s220_rec_text" placeholder="2.1.20 รายละเอียดข้อเสนอแนะ (พิมพ์ได้)"></textarea>
+      <div class="muted">* ข้อมูลนี้จะไปแสดงใน Cashboard แบบรวม/แยกปี/งวด/หน่วย/จังหวัด/อำเภอ/ตำบล</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* =========================
+   0) Guard: login + ADMIN
+   ========================= */
+const SESSION_KEY = "fa_session_v1";
+const session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+if(!session){ location.href="login.html"; }
+const role = (session.role || "USER").toUpperCase();
+if(role !== "ADMIN"){
+  alert("หน้านี้สำหรับผู้ดูแลระบบ (ADMIN) เท่านั้น");
+  location.href = "index.html";
+}
+document.getElementById("userBadge").textContent =
+  "ผู้ใช้: " + (session.fullname || session.username) + " • บทบาท: " + role;
+
+/* =========================
+   1) Storage keys
+   ========================= */
+const RECORDS_KEY = "fa_manual_records_v1";
+const EDIT_CTX_KEY = "fa_admin_edit_ctx_v1";
+
+function getRecords(){ return JSON.parse(localStorage.getItem(RECORDS_KEY) || "[]"); }
+function saveRecords(arr){ localStorage.setItem(RECORDS_KEY, JSON.stringify(arr)); }
+
+/* =========================
+   2) Helpers
+   ========================= */
+const $ = (id)=>document.getElementById(id);
+function safe(v){ return (v===null||v===undefined) ? "" : String(v); }
+function show(box, text){
+  const el = $(box);
+  el.textContent = text;
+  el.style.display = "block";
+  setTimeout(()=>{ el.style.display="none"; }, 2500);
+}
+function uid(){
+  return "REC-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2,6).toUpperCase();
+}
+function isLocked(created_at){
+  if(!created_at) return false;
+  const days = (Date.now() - created_at)/86400000;
+  return days >= 356;
+}
+function fmt(ts){ return ts ? new Date(ts).toLocaleString() : "-"; }
+function pickAssignDateValue(v){
+  // input type=date expects yyyy-mm-dd
+  if(!v) return "";
+  // assume v is already yyyy-mm-dd
+  return v;
+}
+function setDisabledAll(dis){
+  document.querySelectorAll("input,select,textarea,button")
+    .forEach(el=>{
+      // allow navigation buttons even when locked
+      const keep = ["btnHub","btnCashboard","btnHome","btnBackTable","btnView","btnBackEdit"];
+      if(keep.includes(el.id)) return;
+      el.disabled = dis;
+    });
+}
+
+/* =========================
+   3) Period controls
+   ========================= */
+function initYears(){
+  const fy = $("fy");
+  fy.innerHTML = "";
+  for(let y=2560;y<=2580;y++){
+    const op=document.createElement("option");
+    op.value=String(y);
+    op.textContent="ปีงบฯ "+y;
+    fy.appendChild(op);
+  }
+}
+function rebuildPeriodValue(){
+  const t = $("periodType").value;
+  const pv = $("periodValue");
+  pv.innerHTML = "";
+  if(t==="YEAR"){
+    const op=document.createElement("option");
+    op.value="ALL";
+    op.textContent="ทั้งปี";
+    pv.appendChild(op);
+  }
+  if(t==="QUARTER"){
+    ["Q1","Q2","Q3","Q4"].forEach(x=>{
+      const op=document.createElement("option");
+      op.value=x; op.textContent=x;
+      pv.appendChild(op);
+    });
+  }
+  if(t==="MONTH"){
+    for(let m=1;m<=12;m++){
+      const mm = String(m).padStart(2,"0");
+      const op=document.createElement("option");
+      op.value=mm; op.textContent="เดือน "+mm;
+      pv.appendChild(op);
+    }
+  }
+  if(t==="DAY"){
+    const op=document.createElement("option");
+    op.value="TODAY";
+    op.textContent="รายวัน (ใช้วัน/เวลาปัจจุบัน)";
+    pv.appendChild(op);
+  }
+}
+initYears();
+rebuildPeriodValue();
+$("periodType").addEventListener("change", rebuildPeriodValue);
+
+/* =========================
+   4) Dynamic select builders (2.1.11 / 2.1.13)
+   ========================= */
+const OPT4 = ["ดำเนินการแล้ว","อยู่ระหว่างดำเนินการ","ยังไม่ดำเนินการ","ไม่ทราบ"];
+const OPT5 = ["ดำเนินการแล้ว","อยู่ระหว่างดำเนินการ","ยังไม่ดำเนินการ","ไม่ทราบ","ไม่ต้องทำ"];
+
+function makeSelect(id,label, opts){
+  const s=document.createElement("select");
+  s.id=id;
+  const op0=document.createElement("option");
+  op0.value=""; op0.textContent=label;
+  s.appendChild(op0);
+  opts.forEach(o=>{
+    const op=document.createElement("option");
+    op.value=o; op.textContent=o;
+    s.appendChild(op);
+  });
+  return s;
+}
+
+// 8.1–8.17 (4 options)
+(function(){
+  const host=$("opt8_1_17");
+  for(let i=1;i<=17;i++){
+    host.appendChild(makeSelect(`opt8_${i}`,`อปท.8.${i}`, OPT4));
+  }
+})();
+
+// 8.18–8.31 (5 options)
+(function(){
+  const host=$("opt8_18_31");
+  for(let i=18;i<=31;i++){
+    host.appendChild(makeSelect(`opt8_${i}`,`อปท.8.${i}`, OPT5));
+  }
+})();
+
+// 3.1.1–3.1.7 (5 options)
+(function(){
+  const host=$("opt3_1_x");
+  for(let i=1;i<=7;i++){
+    host.appendChild(makeSelect(`opt3_1_${i}`,`อปท.3.1.${i}`, OPT5));
+  }
+})();
+
+// report pack 2.1.13 (7 items, 5 options)
+(function(){
+  const host=$("reportPack");
+  const items = [
+    ["rpt_note","(1) หมายเหตุประกอบงบการเงิน"],
+    ["rpt_asset","(2) งบแสดงการเปลี่ยนแปลงสินทรัพย์/สิทธิ"],
+    ["rpt_ops","(3) งบแสดงผลการดำเนินงาน"],
+    ["rpt_fs","(4) งบแสดงฐานะทางการเงิน"],
+    ["rpt_fa","(5) รายงานการตรวจสอบการเงิน"],
+    ["rpt_memo","(6) บันทึกเสนอรายงานการตรวจสอบการเงิน"],
+    ["rpt_letter","(7) ร่างหนังสือแจ้งหน่วยรับตรวจ ส่งรายงาน"]
+  ];
+  items.forEach(([id,label])=>{
+    host.appendChild(makeSelect(id,label, OPT5));
+  });
+})();
+
+/* =========================
+   5) People tables
+   ========================= */
+let auditors = [];
+let reviewers = [];
+
+function groupSelectHtml(val){
+  const g = val || "";
+  let html = `<select class="g">`;
+  html += `<option value="">กลุ่ม</option>`;
+  for(let i=1;i<=10;i++){
+    const v = "กลุ่มตรวจสอบที่ " + i;
+    html += `<option ${g===v?"selected":""}>${v}</option>`;
+  }
+  html += `</select>`;
+  return html;
+}
+
+function renderAuditors(){
+  const tb = document.querySelector("#tblAuditors tbody");
+  tb.innerHTML="";
+  auditors.forEach((a,idx)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML = `
+      <td><input class="name" value="${safe(a.name)}" placeholder="ชื่อ" /></td>
+      <td><input class="pos" value="${safe(a.pos)}" placeholder="ตำแหน่ง" /></td>
+      <td>${groupSelectHtml(a.group)}</td>
+      <td><input class="office" value="${safe(a.office)}" placeholder="สังกัดสำนักงาน" /></td>
+      <td><input class="assign" type="date" value="${safe(a.assign)}" /></td>
+      <td><input class="duty" value="${safe(a.duty)}" placeholder="หน้าที่" /></td>
+      <td><button class="btn danger" data-del="${idx}">ลบ</button></td>
+    `;
+    tb.appendChild(tr);
+  });
+
+  tb.querySelectorAll("button[data-del]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const i = Number(btn.getAttribute("data-del"));
+      auditors.splice(i,1);
+      renderAuditors();
+    });
+  });
+
+  // bind inputs
+  tb.querySelectorAll("tr").forEach((tr,i)=>{
+    tr.querySelector(".name").addEventListener("input", e=>auditors[i].name=e.target.value);
+    tr.querySelector(".pos").addEventListener("input", e=>auditors[i].pos=e.target.value);
+    tr.querySelector(".g").addEventListener("change", e=>auditors[i].group=e.target.value);
+    tr.querySelector(".office").addEventListener("input", e=>auditors[i].office=e.target.value);
+    tr.querySelector(".assign").addEventListener("change", e=>auditors[i].assign=e.target.value);
+    tr.querySelector(".duty").addEventListener("input", e=>auditors[i].duty=e.target.value);
+  });
+
+  $("audCount").textContent = `${auditors.length}/5`;
+  $("addAuditor").disabled = auditors.length>=5;
+}
+
+function renderReviewers(){
+  const tb = document.querySelector("#tblReviewers tbody");
+  tb.innerHTML="";
+  reviewers.forEach((a,idx)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML = `
+      <td><input class="name" value="${safe(a.name)}" placeholder="ชื่อ" /></td>
+      <td><input class="pos" value="${safe(a.pos)}" placeholder="ตำแหน่ง" /></td>
+      <td>${groupSelectHtml(a.group)}</td>
+      <td><input class="office" value="${safe(a.office)}" placeholder="สังกัดสำนักงาน" /></td>
+      <td><input class="assign" type="date" value="${safe(a.assign)}" /></td>
+      <td><button class="btn danger" data-del="${idx}">ลบ</button></td>
+    `;
+    tb.appendChild(tr);
+  });
+
+  tb.querySelectorAll("button[data-del]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const i = Number(btn.getAttribute("data-del"));
+      reviewers.splice(i,1);
+      renderReviewers();
+    });
+  });
+
+  tb.querySelectorAll("tr").forEach((tr,i)=>{
+    tr.querySelector(".name").addEventListener("input", e=>reviewers[i].name=e.target.value);
+    tr.querySelector(".pos").addEventListener("input", e=>reviewers[i].pos=e.target.value);
+    tr.querySelector(".g").addEventListener("change", e=>reviewers[i].group=e.target.value);
+    tr.querySelector(".office").addEventListener("input", e=>reviewers[i].office=e.target.value);
+    tr.querySelector(".assign").addEventListener("change", e=>reviewers[i].assign=e.target.value);
+  });
+
+  $("revCount").textContent = `${reviewers.length}/2`;
+  $("addReviewer").disabled = reviewers.length>=2;
+}
+
+$("addAuditor").addEventListener("click", ()=>{
+  if(auditors.length>=5) return;
+  auditors.push({name:"",pos:"",group:"",office:"",assign:"",duty:""});
+  renderAuditors();
+});
+$("addReviewer").addEventListener("click", ()=>{
+  if(reviewers.length>=2) return;
+  reviewers.push({name:"",pos:"",group:"",office:"",assign:""});
+  renderReviewers();
+});
+
+/* =========================
+   6) Load context / record
+   ========================= */
+let MODE = "EDIT";
+let REC = null;
+
+function setHeaderStatus(r){
+  $("rid").value = r.id || "";
+  $("createdAt").value = fmt(r.created_at);
+  $("updatedAt").value = fmt(r.updated_at || r.created_at);
+
+  const locked = isLocked(r.created_at);
+  $("lockPill").className = locked ? "pill bad" : "pill ok";
+  $("lockPill").textContent = locked ? "ล็อก (>=356 วัน)" : "เปิดแก้ไขได้";
+  $("lockBanner").style.display = locked ? "block" : "none";
+
+  // disable if locked
+  if(locked){
+    setDisabledAll(true);
+    // keep view + navigation enabled already in setDisabledAll
+    $("btnView").disabled = false;
+    $("btnBackTable").disabled = false;
+    $("btnHub").disabled = false;
+    $("btnCashboard").disabled = false;
+    $("btnHome").disabled = false;
+    $("btnBackEdit").disabled = false;
+  }else{
+    setDisabledAll(false);
+  }
+}
+
+function emptyRecord(){
+  const id = uid();
+  const now = Date.now();
+  return {
+    id,
+    entity:{type:"",name:"",province:"",district:"",subdistrict:""},
+    period:{fiscalYear:"2567",periodType:"YEAR",periodValue:"ALL"},
+    auditors:[],
+    reviewers:[],
+    director:{name:"",pos:"",office:"",assign:""},
+    auditee:{name:"",pos:"",office:"",since:""},
+
+    // key statuses
+    s217:"", s218:"", s219:"", s2110:"",
+
+    // 2.1.11 details
+    details:{
+      openAudit:"", confirmWork:"", bankConfirm:"", localConfirm:"",
+      opt3:"", opt5:"", opt6:"", opt7:"",
+      opt8:{}, opt3_1:{}
+    },
+
+    // 2.1.12 close meeting
+    closeMeeting:"",
+
+    // 2.1.13 report pack
+    reportPack:{
+      rpt_note:"", rpt_asset:"", rpt_ops:"", rpt_fs:"",
+      rpt_fa:"", rpt_memo:"", rpt_letter:""
+    },
+
+    // outcomes
+    s214:"", s215:"", s216:"", s217_cash:"",
+    s219_problem:"",
+    s220_rec_type:"",
+    s220_rec_text:"",
+
+    submitted:false,
+    submitted_at:null,
+    submitted_by:null,
+
+    created_at: now,
+    created_by: safe(session.fullname || session.username),
+    updated_at: now,
+    updated_by: safe(session.fullname || session.username),
+
+    deleted:false
+  };
+}
+
+function fillForm(r){
+  // entity
+  $("entityType").value = r.entity?.type || "";
+  $("entityName").value = r.entity?.name || "";
+  $("province").value = r.entity?.province || "";
+  $("district").value = r.entity?.district || "";
+  $("subdistrict").value = r.entity?.subdistrict || "";
+
+  // period
+  $("fy").value = String(r.period?.fiscalYear || "2567");
+  $("periodType").value = r.period?.periodType || "YEAR";
+  rebuildPeriodValue();
+  $("periodValue").value = r.period?.periodValue || "ALL";
+
+  // stamp
+  $("stampNow").value = new Date().toLocaleString();
+
+  // key statuses
+  $("s217").value = r.s217 || "";
+  $("s218").value = r.s218 || "";
+  $("s219").value = r.s219 || "";
+  $("s2110").value = r.s2110 || "";
+
+  // people arrays
+  auditors = Array.isArray(r.auditors) ? r.auditors : [];
+  reviewers = Array.isArray(r.reviewers) ? r.reviewers : [];
+  renderAuditors();
+  renderReviewers();
+
+  // director/auditee
+  $("directorName").value = r.director?.name || "";
+  $("directorPos").value = r.director?.pos || "";
+  $("directorOffice").value = r.director?.office || "";
+  $("directorAssign").value = pickAssignDateValue(r.director?.assign);
+
+  $("auditeeName").value = r.auditee?.name || "";
+  $("auditeePos").value = r.auditee?.pos || "";
+  $("auditeeOffice").value = r.auditee?.office || "";
+  $("auditeeSince").value = pickAssignDateValue(r.auditee?.since);
+
+  // 2.1.11 base
+  const d = r.details || {};
+  $("openAudit").value = d.openAudit || "";
+  $("confirmWork").value = d.confirmWork || "";
+  $("bankConfirm").value = d.bankConfirm || "";
+  $("localConfirm").value = d.localConfirm || "";
+  $("opt3").value = d.opt3 || "";
+  $("opt5").value = d.opt5 || "";
+  $("opt6").value = d.opt6 || "";
+  $("opt7").value = d.opt7 || "";
+
+  // opt8 maps
+  const opt8 = d.opt8 || {};
+  for(let i=1;i<=31;i++){
+    const el = document.getElementById(`opt8_${i}`);
+    if(el) el.value = opt8[String(i)] || "";
+  }
+  const opt31 = d.opt3_1 || {};
+  for(let i=1;i<=7;i++){
+    const el = document.getElementById(`opt3_1_${i}`);
+    if(el) el.value = opt31[String(i)] || "";
+  }
+
+  // close meeting
+  $("closeMeeting").value = r.closeMeeting || "";
+
+  // report pack
+  const rp = r.reportPack || {};
+  ["rpt_note","rpt_asset","rpt_ops","rpt_fs","rpt_fa","rpt_memo","rpt_letter"]
+    .forEach(k=>{ const el=$(k); if(el) el.value = rp[k] || ""; });
+
+  // outcomes
+  $("s214").value = r.s214 || "";
+  $("s215").value = r.s215 || "";
+  $("s216").value = r.s216 || "";
+  $("s217_cash").value = r.s217_cash || "";
+  $("s219_problem").value = r.s219_problem || "";
+  $("s220_rec_type").value = r.s220_rec_type || "";
+  $("s220_rec_text").value = r.s220_rec_text || "";
+
+  // header + lock
+  setHeaderStatus(r);
+}
+
+function readForm(){
+  const r = REC ? {...REC} : emptyRecord();
+  const now = Date.now();
+
+  // entity
+  r.entity = {
+    type: $("entityType").value,
+    name: $("entityName").value.trim(),
+    province: $("province").value.trim(),
+    district: $("district").value.trim(),
+    subdistrict: $("subdistrict").value.trim()
+  };
+
+  // period
+  r.period = {
+    fiscalYear: $("fy").value,
+    periodType: $("periodType").value,
+    periodValue: $("periodValue").value
+  };
+
+  // statuses
+  r.s217 = $("s217").value;
+  r.s218 = $("s218").value;
+  r.s219 = $("s219").value;
+  r.s2110 = $("s2110").value;
+
+  // people
+  r.auditors = auditors;
+  r.reviewers = reviewers;
+  r.director = {
+    name: $("directorName").value.trim(),
+    pos: $("directorPos").value.trim(),
+    office: $("directorOffice").value.trim(),
+    assign: $("directorAssign").value
+  };
+  r.auditee = {
+    name: $("auditeeName").value.trim(),
+    pos: $("auditeePos").value.trim(),
+    office: $("auditeeOffice").value.trim(),
+    since: $("auditeeSince").value
+  };
+
+  // details 2.1.11
+  const opt8 = {};
+  for(let i=1;i<=31;i++){
+    const el = document.getElementById(`opt8_${i}`);
+    if(el) opt8[String(i)] = el.value || "";
+  }
+  const opt3_1 = {};
+  for(let i=1;i<=7;i++){
+    const el = document.getElementById(`opt3_1_${i}`);
+    if(el) opt3_1[String(i)] = el.value || "";
+  }
+
+  r.details = {
+    openAudit: $("openAudit").value,
+    confirmWork: $("confirmWork").value,
+    bankConfirm: $("bankConfirm").value,
+    localConfirm: $("localConfirm").value,
+    opt3: $("opt3").value,
+    opt5: $("opt5").value,
+    opt6: $("opt6").value,
+    opt7: $("opt7").value,
+    opt8,
+    opt3_1
+  };
+
+  // close meeting + report pack
+  r.closeMeeting = $("closeMeeting").value;
+  r.reportPack = {
+    rpt_note: $("rpt_note").value,
+    rpt_asset: $("rpt_asset").value,
+    rpt_ops: $("rpt_ops").value,
+    rpt_fs: $("rpt_fs").value,
+    rpt_fa: $("rpt_fa").value,
+    rpt_memo: $("rpt_memo").value,
+    rpt_letter: $("rpt_letter").value
+  };
+
+  // outcomes
+  r.s214 = $("s214").value;
+  r.s215 = $("s215").value;
+  r.s216 = $("s216").value;
+  r.s217_cash = $("s217_cash").value;
+  r.s219_problem = $("s219_problem").value;
+  r.s220_rec_type = $("s220_rec_type").value;
+  r.s220_rec_text = $("s220_rec_text").value.trim();
+
+  // update stamps
+  r.updated_at = now;
+  r.updated_by = safe(session.fullname || session.username);
+
+  // keep created as-is
+  if(!r.created_at) r.created_at = now;
+  if(!r.created_by) r.created_by = safe(session.fullname || session.username);
+
+  return r;
+}
+
+function validate(r){
+  if(!r.entity.type) return "กรุณาเลือกประเภทหน่วย (อบจ/ทม/ทน/ทต/อบต)";
+  if(!r.entity.name) return "กรุณากรอกชื่อหน่วยรับตรวจ";
+  if(!r.entity.province) return "กรุณากรอกจังหวัด";
+  if(!r.period.fiscalYear) return "กรุณาเลือกปีงบประมาณ";
+  return null;
+}
+
+function load(){
+  const ctx = JSON.parse(localStorage.getItem(EDIT_CTX_KEY) || "null");
+  const all = getRecords();
+
+  if(ctx?.mode==="NEW" || !ctx?.id){
+    MODE="NEW";
+    REC = emptyRecord();
+    // default fy = current buddhist year approx? keep 2567 by default, but allow user to choose
+    fillForm(REC);
+    $("hint").textContent = "โหมด: เพิ่มข้อมูลใหม่";
+    return;
+  }
+
+  MODE="EDIT";
+  const found = all.find(x=>x.id===ctx.id);
+  if(!found){
+    REC = emptyRecord();
+    fillForm(REC);
+    show("warn","ไม่พบรายการเดิม — เปิดเป็นรายการใหม่แทน");
+    $("hint").textContent = "โหมด: เพิ่มข้อมูลใหม่ (แทนรายการที่ไม่พบ)";
+    return;
+  }
+
+  REC = found;
+  fillForm(REC);
+  $("hint").textContent = "โหมด: แก้ไขรายการเดิม";
+}
+
+load();
+
+/* =========================
+   7) Save / Submit / View
+   ========================= */
+function upsert(r){
+  const all = getRecords();
+  const idx = all.findIndex(x=>x.id===r.id);
+  if(idx>=0) all[idx] = r;
+  else all.push(r);
+  saveRecords(all);
+  REC = r;
+  setHeaderStatus(REC);
+}
+
+$("btnSave").addEventListener("click", ()=>{
+  if(isLocked(REC.created_at)){
+    show("warn","รายการนี้ล็อกครบ 356 วันแล้ว — บันทึกไม่ได้");
+    return;
+  }
+  const r = readForm();
+  const err = validate(r);
+  if(err){ show("warn",err); return; }
+  upsert(r);
+  show("ok","บันทึกข้อมูลเรียบร้อย ✅");
+});
+
+$("btnSubmit").addEventListener("click", ()=>{
+  if(isLocked(REC.created_at)){
+    show("warn","รายการนี้ล็อกครบ 356 วันแล้ว — ส่งข้อมูลไม่ได้");
+    return;
+  }
+  const r = readForm();
+  const err = validate(r);
+  if(err){ show("warn",err); return; }
+
+  r.submitted = true;
+  r.submitted_at = Date.now();
+  r.submitted_by = safe(session.fullname || session.username);
+
+  upsert(r);
+  show("ok","ส่งข้อมูลเรียบร้อย ✅ (จะไปแสดงใน Cashboard)");
+});
+
+$("btnView").addEventListener("click", ()=>{
+  const r = readForm(); // show current state even before save
+  const msg =
+`สรุปข้อมูล (ปัจจุบันในฟอร์ม)
+- หน่วย: ${safe(r.entity.type)} ${safe(r.entity.name)}
+- ที่ตั้ง: ${safe(r.entity.province)} / ${safe(r.entity.district)} / ${safe(r.entity.subdistrict)}
+- ปี/งวด: ปีงบฯ ${safe(r.period.fiscalYear)} • ${safe(r.period.periodType)}:${safe(r.period.periodValue)}
+- สถานะ FA (2.1.7): ${safe(r.s217)}
+- ปิดงบ (2.1.8): ${safe(r.s218)}
+- ส่งรายงาน (2.1.9): ${safe(r.s219)}
+- หนังสือติดตาม (2.1.10): ${safe(r.s2110)}
+- ผลตรวจ (2.1.14): ${safe(r.s214)}
+- ข้อสังเกต (2.1.15): ${safe(r.s215)}
+- ปรับปรุงบัญชี (2.1.16): ${safe(r.s216)}
+- เงินขาดบัญชี (2.1.17): ${safe(r.s217_cash)}
+- ปัญหา (2.1.19): ${safe(r.s219_problem)}
+- ข้อเสนอแนะ (2.1.20): ${safe(r.s220_rec_type)} | ${safe(r.s220_rec_text)}
+
+ผู้ตรวจ: ${Array.isArray(r.auditors)?r.auditors.length:0} คน • ผู้สอบทาน: ${Array.isArray(r.reviewers)?r.reviewers.length:0} คน
+ส่งแล้ว: ${r.submitted?"ใช่":"ไม่"}${r.submitted_at?(" • "+new Date(r.submitted_at).toLocaleString()):""}
+
+สถานะล็อก: ${isLocked(r.created_at) ? "ล็อก (>=356 วัน)" : "เปิดแก้ไขได้"}`;
+  alert(msg);
+});
+
+$("btnBackEdit").addEventListener("click", ()=>location.reload());
+$("btnBackTable").addEventListener("click", ()=>location.href="admin-manual-table.html");
+$("btnHub").addEventListener("click", ()=>location.href="data-hub.html");
+$("btnCashboard").addEventListener("click", ()=>location.href="cashboard.html");
+$("btnHome").addEventListener("click", ()=>location.href="index.html");
+
+/* =========================
+   8) Stamp clock
+   ========================= */
+setInterval(()=>{ $("stampNow").value = new Date().toLocaleString(); }, 1000);
+</script>
+</body>
+</html>
