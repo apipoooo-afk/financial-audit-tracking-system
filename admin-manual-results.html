@@ -1,0 +1,869 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin • ผลการค้นหา Manual | ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์</title>
+  <style>
+    :root{
+      --bg:#f4f7fb; --card:#fff; --line:#dde5f2; --text:#24364c; --muted:#6a7f9a;
+      --brand:#1e5aaa; --brand2:#2f7de1; --shadow:0 10px 28px rgba(20,40,80,.08); --r:18px;
+      --ok:#1f7a3b; --bad:#b13b3b; --warn:#8a5a00; --info:#0b5aa6;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Thai","Noto Sans";background:var(--bg);color:var(--text)}
+    header{
+      position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);
+      padding:14px 18px;display:flex;align-items:center;gap:12px
+    }
+    .title{display:flex;flex-direction:column;line-height:1.1}
+    .title h1{margin:0;font-size:18px}
+    .title small{color:var(--muted)}
+    .spacer{flex:1}
+    .badge{border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa;padding:8px 12px;border-radius:14px;font-weight:900;white-space:nowrap}
+
+    .wrap{max-width:1500px;margin:18px auto;padding:0 18px}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+    .card{
+      grid-column:span 12;background:var(--card);border:1px solid var(--line);
+      border-radius:var(--r);box-shadow:var(--shadow);padding:14px;min-width:0
+    }
+
+    h2{margin:0 0 8px;font-size:16px}
+    .muted{color:var(--muted);font-size:13px}
+    .hr{height:1px;background:#eef2f7;margin:12px 0}
+
+    .btn{
+      border:1px solid var(--line);background:#fff;border-radius:14px;padding:10px 12px;
+      cursor:pointer;font-weight:900;color:var(--text);text-align:center
+    }
+    .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;border-color:transparent}
+    .btn.warn{border-color:#ffe7b8;background:#fff7e6;color:var(--warn)}
+    .btn.danger{border-color:#ffd2d2;background:#fff0f0;color:var(--bad)}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+
+    label{display:block;font-size:12px;color:var(--muted);font-weight:900;margin:6px 0 4px}
+    input,select,textarea{
+      width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 10px;background:#fff;
+      color:var(--text);outline:none;font-size:14px
+    }
+    textarea{min-height:86px;resize:vertical}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+    .row>*{min-width:220px}
+
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa}
+    .pill.ok{border-color:#c8f2d6;background:#effaf3;color:var(--ok)}
+    .pill.warn{border-color:#ffe7b8;background:#fff7e6;color:var(--warn)}
+    .pill.bad{border-color:#ffd2d2;background:#fff0f0;color:var(--bad)}
+    .pill.info{border-color:#cfe2ff;background:#eef6ff;color:var(--info)}
+    .tiny{font-size:12px;color:var(--muted)}
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
+
+    .tableWrap{overflow:auto;border:1px solid var(--line);border-radius:14px}
+    table{border-collapse:collapse;width:100%;min-width:1600px;background:#fff}
+    th,td{border-bottom:1px solid #eef2f7;padding:10px;vertical-align:top}
+    th{position:sticky;top:0;background:#fafcff;border-bottom:1px solid var(--line);text-align:left;font-size:12px;color:var(--muted)}
+    td{font-size:13px}
+    .right{text-align:right}
+    .miniBtn{padding:7px 10px;border-radius:12px;border:1px solid var(--line);background:#fff;font-weight:900;cursor:pointer}
+    .miniBtn.primary{border-color:#cfe2ff;background:#eef6ff;color:#1e5aaa}
+    .miniBtn.warn{border-color:#ffe7b8;background:#fff7e6;color:var(--warn)}
+    .miniBtn.danger{border-color:#ffd2d2;background:#fff0f0;color:var(--bad)}
+    .miniBtn:disabled{opacity:.5;cursor:not-allowed}
+
+    .msg{display:none;margin-top:10px;padding:10px 12px;border-radius:14px;font-weight:900}
+    .okBox{border:1px solid #c8f2d6;background:#effaf3;color:var(--ok)}
+    .badBox{border:1px solid #ffd2d2;background:#fff0f0;color:var(--bad)}
+    .warnBox{border:1px solid #ffe7b8;background:#fff7e6;color:var(--warn)}
+    .noteBox{border:1px dashed #cfe2ff;background:#f6fbff;border-radius:14px;padding:10px 12px}
+
+    /* modal */
+    .modalOverlay{
+      position:fixed;inset:0;background:rgba(10,20,40,.45);display:none;align-items:center;justify-content:center;z-index:50
+    }
+    .modal{
+      width:min(980px,92vw);max-height:88vh;overflow:auto;background:#fff;border-radius:18px;border:1px solid var(--line);
+      box-shadow:0 18px 60px rgba(0,0,0,.18);padding:14px
+    }
+    .modalTop{display:flex;gap:10px;align-items:center}
+    .modalTop h3{margin:0;font-size:16px}
+    .pre{
+      white-space:pre-wrap;background:#fbfdff;border:1px solid #e6eefb;border-radius:14px;padding:10px;
+      font-family:ui-monospace, monospace;font-size:12px
+    }
+    .kv{display:grid;grid-template-columns:220px 1fr;gap:8px;border-top:1px solid #eef2f7;padding-top:10px;margin-top:10px}
+    .k{color:var(--muted);font-weight:900;font-size:12px}
+    .v{font-size:13px}
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="title">
+    <h1>Admin • ผลการค้นหา Manual (2.3)</h1>
+    <small>ตารางแสดงผลตาม 2.1.1–2.1.20 • แก้ไข/ลบ/Export • ล็อกแก้ไขเมื่อครบ 356 วัน</small>
+  </div>
+  <div class="spacer"></div>
+  <div class="badge" id="userBadge">กำลังตรวจสอบสิทธิ…</div>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div>
+          <h2 style="margin-bottom:4px">เงื่อนไขค้นหาปัจจุบัน</h2>
+          <div class="tiny mono" id="criteriaText">กำลังโหลด…</div>
+          <div style="margin-top:8px">
+            <span class="pill info">ผลลัพธ์: <span id="hit">0</span> รายการ</span>
+            <span class="pill ok">แก้ไขได้: <span id="editable">0</span></span>
+            <span class="pill warn">ล็อกแล้ว: <span id="locked">0</span></span>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="btn" id="btnBackSearch">กลับหน้าค้นหา</button>
+          <button class="btn" id="btnTableAll">ไปตารางทั้งหมด</button>
+          <button class="btn warn" id="btnExportJson">Export JSON</button>
+          <button class="btn warn" id="btnExportCsv">Export CSV</button>
+          <button class="btn" id="btnImport">Import JSON</button>
+          <input id="importFile" type="file" accept="application/json" style="display:none" />
+        </div>
+      </div>
+
+      <div class="msg okBox" id="ok"></div>
+      <div class="msg warnBox" id="warn"></div>
+      <div class="msg badBox" id="bad"></div>
+
+      <div class="hr"></div>
+
+      <div class="noteBox tiny">
+        หมายเหตุ: ตารางนี้แสดง “คอลัมน์หลัก” ของ 2.1.1–2.1.20  
+        รายการย่อย/ยาว (เช่น 2.1.11, 2.1.13, รายชื่อผู้ตรวจ/ผู้สอบทาน, ข้อเสนอแนะเชิงลึก) ให้กดปุ่ม “รายละเอียด”
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>2.1.1 หน่วยรับตรวจ</th>
+              <th>ประเภท</th>
+              <th>จังหวัด</th>
+              <th>อำเภอ</th>
+              <th>ตำบล</th>
+              <th>2.1.2 ปีงบ</th>
+              <th>งวด</th>
+
+              <th>2.1.7 สถานะ FA</th>
+              <th>2.1.8 ปิดงบ</th>
+              <th>2.1.9 ส่งรายงาน</th>
+              <th>2.1.10 หนังสือติดตาม</th>
+
+              <th>2.1.12 ประชุมปิดตรวจ</th>
+              <th>2.1.14 ผลตรวจ</th>
+              <th>2.1.15 ข้อสังเกต</th>
+              <th>2.1.16 ปรับปรุงบัญชี</th>
+              <th>2.1.17 เงินขาดบัญชี</th>
+              <th>2.1.19 ปัญหา</th>
+              <th>2.1.20 ข้อเสนอแนะ (สรุปย่อ)</th>
+
+              <th>บันทึกครั้งแรก</th>
+              <th>แก้ไขล่าสุด</th>
+              <th>สิทธิ</th>
+              <th class="right">การทำงาน</th>
+            </tr>
+          </thead>
+          <tbody id="tb"></tbody>
+        </table>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row" style="justify-content:flex-end">
+        <button class="miniBtn" id="btnPrev">ก่อนหน้า</button>
+        <span class="pill info" id="pageInfo">หน้า 1</span>
+        <button class="miniBtn" id="btnNext">ถัดไป</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modalOverlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modalTop">
+      <h3 id="modalTitle">รายละเอียดรายการ</h3>
+      <div class="spacer"></div>
+      <button class="miniBtn" id="btnClose">ปิด</button>
+    </div>
+    <div class="kv" id="modalBody"></div>
+    <div class="hr"></div>
+    <div class="tiny">JSON ทั้งรายการ</div>
+    <div class="pre" id="jsonPreview"></div>
+  </div>
+</div>
+
+<script>
+/* =========================
+   Guard: ADMIN only
+   ========================= */
+const SESSION_KEY = "fa_session_v1";
+const session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+if(!session){ location.href="login.html"; }
+const role = (session.role||"USER").toUpperCase();
+document.getElementById("userBadge").textContent =
+  "ผู้ใช้: " + (session.fullname || session.username) + " • บทบาท: " + role;
+
+if(role !== "ADMIN"){
+  alert("หน้านี้สำหรับ ADMIN เท่านั้น");
+  location.href="index.html";
+}
+
+/* =========================
+   Keys
+   ========================= */
+const MANUAL_KEY = "fa_manual_records_v1";
+const SEARCH_KEY = "fa_admin_manual_search_v1";
+
+/* =========================
+   Config: lock 356 days
+   ========================= */
+const LOCK_DAYS = 356;
+const LOCK_MS = LOCK_DAYS * 24 * 60 * 60 * 1000;
+
+/* =========================
+   Helpers
+   ========================= */
+const $ = (id)=>document.getElementById(id);
+function show(box, text){
+  const el = $(box);
+  el.textContent = text;
+  el.style.display="block";
+  setTimeout(()=>el.style.display="none", 2400);
+}
+function getData(){ return JSON.parse(localStorage.getItem(MANUAL_KEY) || "[]"); }
+function setData(arr){ localStorage.setItem(MANUAL_KEY, JSON.stringify(arr)); }
+function escapeHtml(s){
+  return String(s??"").replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m]));
+}
+function fmtTs(ts){
+  if(!ts) return "-";
+  const d=new Date(ts);
+  const pad=n=>String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function isLocked(rec){
+  const first = Number(rec.created_at || rec.first_saved_at || 0);
+  if(!first) return false;
+  return (Date.now() - first) >= LOCK_MS;
+}
+function periodLabel(p){
+  if(p==="YEAR") return "รายปี";
+  if(/^Q[1-4]$/.test(p)) return "ไตรมาส " + p.slice(1);
+  if(/^M\d\d$/.test(p)){
+    const m = Number(p.slice(1));
+    const names=["","ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+    return names[m] || p;
+  }
+  return p || "-";
+}
+function normalizeRecord(r){
+  const now = Date.now();
+  const rec = Object.assign({
+    id: "",
+    entity: { type:"", name:"", province:"", district:"", subdistrict:"" },
+    fy: "",
+    period: "YEAR",
+    auditors: [], reviewers: [], director: null, auditee: null,
+
+    s217_fa_status: "ไม่ทราบสถานะ",
+    s218_close_status: "ไม่ทราบสถานะ",
+    s219_report_submit: "ไม่ทราบสถานะ",
+    s2110_followup_letter: "ไม่ทราบสถานะ",
+    s2111_audit_steps: {},
+    s2112_close_meeting: "ไม่ทราบ",
+    s2113_report_steps: {},
+    s2114_audit_opinion: "ไม่ทราบ",
+    s2115_findings: "ไม่ทราบ",
+    s2116_adjustments: "ยังไม่ทราบ",
+    s2117_cash_shortage: "ยังไม่ทราบ",
+    s2119_problems: [],
+    s2120_recommendations: {},
+    note: "",
+    created_at: now,
+    created_by: "",
+    updated_at: null,
+    updated_by: null,
+    deleted: false
+  }, r || {});
+  rec.entity = Object.assign({type:"",name:"",province:"",district:"",subdistrict:""}, rec.entity||{});
+  if(rec.deleted==null) rec.deleted=false;
+  if(!rec.created_at) rec.created_at = now;
+  return rec;
+}
+
+function searchCriteria(){
+  const raw = JSON.parse(localStorage.getItem(SEARCH_KEY) || "null");
+  return raw;
+}
+
+function criteriaToText(c){
+  if(!c) return "ไม่มีเงื่อนไข (แนะนำให้กลับไปหน้าค้นหา)";
+  const base = `โหมด=${c.mode} • โดย=${c.by||"-"} • เวลา=${fmtTs(c.created_at)}`;
+  if(c.mode==="FY") return `${base} • ปีงบ=${c.fy} • งวด=${c.period||"ทั้งหมด"}`;
+  if(c.mode==="ENTITY") return `${base} • ประเภท=${c.entity_type||"ทั้งหมด"} • ชื่อหน่วย~${c.entity_name_q||"-"} • ปีงบ=${c.fy||"ทั้งหมด"} • สถานะFA=${c.fa_status||"ทั้งหมด"}`;
+  if(c.mode==="LOCATION") return `${base} • จว~${c.province_q||"-"} • อ~${c.district_q||"-"} • ต~${c.subdistrict_q||"-"} • ปีงบ=${c.fy||"ทั้งหมด"}`;
+  if(c.mode==="KEYWORD") return `${base} • คำค้น="${c.keyword||""}" • ปีงบ=${c.fy||"ทั้งหมด"} • ประเภท=${c.entity_type||"ทั้งหมด"}`;
+  return base;
+}
+
+function matchRecordByCriteria(rec, c){
+  if(rec.deleted) return false;
+  if(!c) return false;
+
+  const r = normalizeRecord(rec);
+  const hay = [
+    r.entity?.type, r.entity?.name, r.entity?.province, r.entity?.district, r.entity?.subdistrict,
+    r.fy, r.period, r.s217_fa_status, r.s218_close_status, r.s219_report_submit, r.s2110_followup_letter,
+    r.s2112_close_meeting, r.s2114_audit_opinion, r.s2115_findings, r.s2116_adjustments, r.s2117_cash_shortage,
+    (r.s2119_problems||[]).join(" "),
+    JSON.stringify(r.auditors||[]), JSON.stringify(r.reviewers||[]),
+    JSON.stringify(r.s2120_recommendations||{}),
+    r.note
+  ].join(" ").toLowerCase();
+
+  if(c.mode==="FY"){
+    if(String(r.fy||"") !== String(c.fy||"")) return false;
+    if(c.period && String(r.period||"") !== String(c.period||"")) return false;
+    return true;
+  }
+
+  if(c.mode==="ENTITY"){
+    if(c.entity_type && String(r.entity?.type||"") !== String(c.entity_type)) return false;
+    if(c.fy && String(r.fy||"") !== String(c.fy)) return false;
+    if(c.fa_status && String(r.s217_fa_status||"") !== String(c.fa_status)) return false;
+    if(c.entity_name_q){
+      const q = String(c.entity_name_q).toLowerCase();
+      if(!String(r.entity?.name||"").toLowerCase().includes(q)) return false;
+    }
+    return true;
+  }
+
+  if(c.mode==="LOCATION"){
+    if(c.fy && String(r.fy||"") !== String(c.fy)) return false;
+    if(c.province_q && !String(r.entity?.province||"").toLowerCase().includes(String(c.province_q).toLowerCase())) return false;
+    if(c.district_q && !String(r.entity?.district||"").toLowerCase().includes(String(c.district_q).toLowerCase())) return false;
+    if(c.subdistrict_q && !String(r.entity?.subdistrict||"").toLowerCase().includes(String(c.subdistrict_q).toLowerCase())) return false;
+    return true;
+  }
+
+  if(c.mode==="KEYWORD"){
+    if(c.fy && String(r.fy||"") !== String(c.fy)) return false;
+    if(c.entity_type && String(r.entity?.type||"") !== String(c.entity_type)) return false;
+    const kw = String(c.keyword||"").toLowerCase().trim();
+    if(!kw) return false;
+    return hay.includes(kw);
+  }
+
+  return false;
+}
+
+function recommendationsSummary(rec){
+  const map = rec.s2120_recommendations || {};
+  const parts=[];
+  Object.keys(map).forEach(k=>{
+    const v = String(map[k]||"").trim();
+    if(v) parts.push(`${k}:${v}`);
+  });
+  return parts.join(" | ") || (rec.note || "-");
+}
+
+/* =========================
+   Render + Paging
+   ========================= */
+let page=1;
+const PAGE_SIZE=25;
+let currentHits=[];
+
+function computeStats(arr){
+  const active = arr.filter(x=>!x.deleted);
+  const editable = active.filter(x=>!isLocked(x));
+  const locked = active.filter(x=>isLocked(x));
+  $("hit").textContent = active.length;
+  $("editable").textContent = editable.length;
+  $("locked").textContent = locked.length;
+}
+
+function render(){
+  const all = getData().map(normalizeRecord);
+  setData(all); // normalize persist safe
+
+  const c = searchCriteria();
+  $("criteriaText").textContent = criteriaToText(c);
+
+  currentHits = all.filter(r=>matchRecordByCriteria(r,c))
+    .sort((a,b)=>(b.updated_at||b.created_at||0)-(a.updated_at||a.created_at||0));
+
+  computeStats(currentHits);
+
+  const totalPages = Math.max(1, Math.ceil(currentHits.length / PAGE_SIZE));
+  if(page>totalPages) page=totalPages;
+  if(page<1) page=1;
+
+  $("pageInfo").textContent = `หน้า ${page} / ${totalPages}`;
+
+  const start=(page-1)*PAGE_SIZE;
+  const slice=currentHits.slice(start, start+PAGE_SIZE);
+
+  const tb=$("tb");
+  tb.innerHTML="";
+
+  slice.forEach(r=>{
+    const locked = isLocked(r);
+    const lockPill = locked ? `<span class="pill warn">ล็อก</span>` : `<span class="pill ok">แก้ไขได้</span>`;
+    const disabled = locked ? "disabled" : "";
+    const hint = locked ? 'title="รายการนี้ล็อกแล้ว (ครบ 356 วัน) แก้ไขไม่ได้"' : 'title="แก้ไขได้"';
+
+    const tr=document.createElement("tr");
+    tr.innerHTML = `
+      <td>
+        <div style="font-weight:900">${escapeHtml(r.entity?.name||"-")}</div>
+        <div class="tiny mono">ID: ${escapeHtml(r.id||"-")}</div>
+      </td>
+      <td>
+        <select data-k="entity.type" data-id="${r.id}" ${disabled} ${hint}>
+          ${["อบจ","ทม","ทน","ทต","อบต"].map(t=>`<option ${r.entity?.type===t?"selected":""} value="${t}">${t}</option>`).join("")}
+        </select>
+      </td>
+      <td><input data-k="entity.province" data-id="${r.id}" ${disabled} ${hint} value="${escapeHtml(r.entity?.province||"")}" /></td>
+      <td><input data-k="entity.district" data-id="${r.id}" ${disabled} ${hint} value="${escapeHtml(r.entity?.district||"")}" /></td>
+      <td><input data-k="entity.subdistrict" data-id="${r.id}" ${disabled} ${hint} value="${escapeHtml(r.entity?.subdistrict||"")}" /></td>
+
+      <td><input data-k="fy" data-id="${r.id}" ${disabled} ${hint} value="${escapeHtml(r.fy||"")}" /></td>
+      <td>
+        <select data-k="period" data-id="${r.id}" ${disabled} ${hint}>
+          ${periodOptionsHtml(String(r.period||"YEAR"))}
+        </select>
+      </td>
+
+      <td>
+        <select data-k="s217_fa_status" data-id="${r.id}" ${disabled} ${hint}>
+          ${faStatusOptionsHtml(String(r.s217_fa_status||"ไม่ทราบสถานะ"))}
+        </select>
+      </td>
+
+      <td>
+        <select data-k="s218_close_status" data-id="${r.id}" ${disabled} ${hint}>
+          ${simpleOptionsHtml(String(r.s218_close_status||"ไม่ทราบสถานะ"), ["ปิดงบการเงินแล้ว","ยังไม่ปิดงบการเงิน","ไม่ทราบสถานะ"])}
+        </select>
+      </td>
+
+      <td>
+        <select data-k="s219_report_submit" data-id="${r.id}" ${disabled} ${hint}>
+          ${simpleOptionsHtml(String(r.s219_report_submit||"ไม่ทราบสถานะ"), ["ส่งรายงานการเงินแล้ว","ยังไม่ส่งรายงานการเงิน","ไม่ทราบสถานะ"])}
+        </select>
+      </td>
+
+      <td>
+        <select data-k="s2110_followup_letter" data-id="${r.id}" ${disabled} ${hint}>
+          ${simpleOptionsHtml(String(r.s2110_followup_letter||"ไม่ทราบสถานะ"), ["จัดทำหนังสือแล้ว","ยังไม่จัดทำหนังสือ","ไม่ทราบสถานะ"])}
+        </select>
+      </td>
+
+      <td>
+        <select data-k="s2112_close_meeting" data-id="${r.id}" ${disabled} ${hint}>
+          ${simpleOptionsHtml(String(r.s2112_close_meeting||"ไม่ทราบ"), ["ยังไม่ประชุมปิดตรวจ","ประชุมปิดตรวจสอบแล้ว","ไม่ทราบ","ยังตรวจสอบไม่เสร็จ"])}
+        </select>
+      </td>
+
+      <td>
+        <select data-k="s2114_audit_opinion" data-id="${r.id}" ${disabled} ${hint}>
+          ${simpleOptionsHtml(String(r.s2114_audit_opinion||"ไม่ทราบ"), ["แบบไม่มีเงื่อนไข","แบบมีเงื่อนไข","ไม่รับรองรายงาน","ไม่ให้ความเห็น","ไม่ทราบ","ยังไม่ออกรายงาน"])}
+        </select>
+      </td>
+
+      <td>
+        <select data-k="s2115_findings" data-id="${r.id}" ${disabled} ${hint}>
+          ${simpleOptionsHtml(String(r.s2115_findings||"ไม่ทราบ"), ["ไม่มีข้อสังเกต","มีข้อสังเกต","ไม่ทราบ","ยังไม่ออกรายงาน"])}
+        </select>
+      </td>
+
+      <td>
+        <select data-k="s2116_adjustments" data-id="${r.id}" ${disabled} ${hint}>
+          ${simpleOptionsHtml(String(r.s2116_adjustments||"ยังไม่ทราบ"), [
+            "มีการปรับปรุงมากกว่า 51 รายการ","มีการปรับปรุง 40-50 รายการ","มีการปรับปรุง 30-39 รายการ",
+            "มีการปรับปรุง 20-29 รายการ","มีการปรับปรุง 10-19 รายการ","มีการปรับปรุง 5-9 รายการ",
+            "มีการปรับปรุงน้อยกว่า 5 รายการ","ไม่มีการปรับปรุง","ยังไม่ทราบ"
+          ])}
+        </select>
+      </td>
+
+      <td>
+        <select data-k="s2117_cash_shortage" data-id="${r.id}" ${disabled} ${hint}>
+          ${simpleOptionsHtml(String(r.s2117_cash_shortage||"ยังไม่ทราบ"), ["ไม่มี","มี","ยังไม่ทราบ"])}
+        </select>
+      </td>
+
+      <td>
+        <input data-k="s2119_problems" data-id="${r.id}" ${disabled} ${hint}
+          value="${escapeHtml((r.s2119_problems||[]).join(", "))}" placeholder="คั่นด้วย ," />
+      </td>
+
+      <td>
+        <input data-k="note" data-id="${r.id}" ${disabled} ${hint}
+          value="${escapeHtml(recommendationsSummary(r))}" placeholder="สรุปย่อ…" />
+      </td>
+
+      <td>${fmtTs(r.created_at)}</td>
+      <td>${fmtTs(r.updated_at)}</td>
+      <td>${lockPill}</td>
+
+      <td class="right">
+        <div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap">
+          <button class="miniBtn primary" data-detail="${r.id}">รายละเอียด</button>
+          <button class="miniBtn warn" data-save="${r.id}" ${disabled}>บันทึก</button>
+          <button class="miniBtn danger" data-del="${r.id}" ${disabled}>ลบ</button>
+        </div>
+      </td>
+    `;
+    tb.appendChild(tr);
+  });
+
+  // events
+  tb.querySelectorAll("input[data-k], select[data-k]").forEach(el=>{
+    el.addEventListener("change", ()=>{
+      const id = el.getAttribute("data-id");
+      const key = el.getAttribute("data-k");
+      stageChange(id, key, el.value);
+    });
+  });
+  tb.querySelectorAll("button[data-save]").forEach(b=>{
+    b.addEventListener("click", ()=>saveRow(b.dataset.save));
+  });
+  tb.querySelectorAll("button[data-del]").forEach(b=>{
+    b.addEventListener("click", ()=>deleteRow(b.dataset.del));
+  });
+  tb.querySelectorAll("button[data-detail]").forEach(b=>{
+    b.addEventListener("click", ()=>openDetail(b.dataset.detail));
+  });
+
+  $("btnPrev").disabled = (page<=1);
+  $("btnNext").disabled = (page>=totalPages);
+}
+
+/* =========================
+   Options html helpers
+   ========================= */
+function periodOptionsHtml(current){
+  const opts = [
+    ["YEAR","รายปี"],
+    ["Q1","ไตรมาส 1"],["Q2","ไตรมาส 2"],["Q3","ไตรมาส 3"],["Q4","ไตรมาส 4"],
+    ["M01","ม.ค."],["M02","ก.พ."],["M03","มี.ค."],["M04","เม.ย."],["M05","พ.ค."],["M06","มิ.ย."],
+    ["M07","ก.ค."],["M08","ส.ค."],["M09","ก.ย."],["M10","ต.ค."],["M11","พ.ย."],["M12","ธ.ค."]
+  ];
+  return opts.map(([v,t])=>`<option ${v===current?"selected":""} value="${v}">${t}</option>`).join("");
+}
+function faStatusOptionsHtml(current){
+  const opts = [
+    "ยุติการติดตามผล",
+    "อยู่ระหว่างติดตามผลการตรวจสอบ",
+    "ออกรายงานการตรวจแล้ว",
+    "อยู่ระหว่างจัดพิมพ์รายงาน",
+    "อยู่ระหว่างสอบทานของ ผตจ.",
+    "อยู่ระหว่างสอบทาน ผอก.",
+    "อยู่ระหว่างตรวจสอบ",
+    "ยังไม่ตรวจ",
+    "ไม่ทราบสถานะ"
+  ];
+  return opts.map(v=>`<option ${v===current?"selected":""} value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
+}
+function simpleOptionsHtml(current, opts){
+  return opts.map(v=>`<option ${v===current?"selected":""} value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
+}
+
+/* =========================
+   Staging + Save/Delete
+   ========================= */
+const staged = new Map(); // id -> change object
+
+function setDeep(obj, path, value){
+  const parts = path.split(".");
+  let cur = obj;
+  for(let i=0;i<parts.length-1;i++){
+    if(cur[parts[i]]==null || typeof cur[parts[i]]!=="object") cur[parts[i]]={};
+    cur = cur[parts[i]];
+  }
+  cur[parts[parts.length-1]] = value;
+}
+
+function stageChange(id, key, value){
+  const all = getData().map(normalizeRecord);
+  const rec = all.find(x=>x.id===id);
+  if(!rec) return;
+  if(isLocked(rec)){
+    show("warn","รายการนี้ล็อกแล้ว (ครบ 356 วัน) แก้ไขไม่ได้");
+    render();
+    return;
+  }
+  const ch = staged.get(id) || {};
+  ch[key]=value;
+  staged.set(id, ch);
+}
+
+function saveRow(id){
+  const all = getData().map(normalizeRecord);
+  const rec = all.find(x=>x.id===id);
+  if(!rec){ show("bad","ไม่พบรายการ"); return; }
+  if(isLocked(rec)){ show("warn","รายการนี้ล็อกแล้ว แก้ไขไม่ได้"); return; }
+
+  const ch = staged.get(id);
+  if(!ch){ show("warn","ไม่มีการเปลี่ยนแปลงให้บันทึก"); return; }
+
+  Object.entries(ch).forEach(([k,v])=>{
+    if(k==="s2119_problems"){
+      rec.s2119_problems = String(v||"").split(",").map(x=>x.trim()).filter(Boolean);
+      return;
+    }
+    if(k.includes(".")){
+      setDeep(rec, k, String(v||"").trim());
+    }else{
+      rec[k] = String(v||"").trim();
+    }
+  });
+
+  rec.updated_at = Date.now();
+  rec.updated_by = (session.fullname || session.username);
+
+  setData(all);
+  staged.delete(id);
+  show("ok","บันทึกเรียบร้อย ✅");
+  render();
+}
+
+function deleteRow(id){
+  const all = getData().map(normalizeRecord);
+  const rec = all.find(x=>x.id===id);
+  if(!rec){ show("bad","ไม่พบรายการ"); return; }
+  if(isLocked(rec)){ show("warn","รายการนี้ล็อกแล้ว ลบไม่ได้"); return; }
+  if(!confirm("ยืนยันลบรายการนี้?")) return;
+
+  rec.deleted=true;
+  rec.deleted_at=Date.now();
+  rec.deleted_by=(session.fullname || session.username);
+
+  setData(all);
+  staged.delete(id);
+  show("ok","ลบเรียบร้อย ✅");
+  render();
+}
+
+/* =========================
+   Detail Modal (read/edit long fields)
+   ========================= */
+function openDetail(id){
+  const all = getData().map(normalizeRecord);
+  const rec = all.find(x=>x.id===id);
+  if(!rec){ show("bad","ไม่พบรายการ"); return; }
+
+  const locked = isLocked(rec);
+  $("modalTitle").textContent =
+    `รายละเอียด: ${rec.entity?.name||"-"} (${rec.entity?.type||"-"}) • ${rec.fy||"-"} • ${periodLabel(rec.period)} • ${locked?"ล็อก":"แก้ไขได้"}`;
+
+  const body = $("modalBody");
+  body.innerHTML = `
+    <div class="k">2.1.3 ผู้ตรวจสอบ (JSON)</div>
+    <div class="v"><textarea id="d_auditors" ${locked?"disabled":""}>${escapeHtml(JSON.stringify(rec.auditors||[], null, 2))}</textarea></div>
+
+    <div class="k">2.1.4 ผู้สอบทาน (JSON)</div>
+    <div class="v"><textarea id="d_reviewers" ${locked?"disabled":""}>${escapeHtml(JSON.stringify(rec.reviewers||[], null, 2))}</textarea></div>
+
+    <div class="k">2.1.5 ผอ.สำนัก (JSON)</div>
+    <div class="v"><textarea id="d_director" ${locked?"disabled":""}>${escapeHtml(JSON.stringify(rec.director||null, null, 2))}</textarea></div>
+
+    <div class="k">2.1.6 ผู้รับตรวจ (JSON)</div>
+    <div class="v"><textarea id="d_auditee" ${locked?"disabled":""}>${escapeHtml(JSON.stringify(rec.auditee||null, null, 2))}</textarea></div>
+
+    <div class="k">2.1.11 รายละเอียดการตรวจ (JSON)</div>
+    <div class="v"><textarea id="d_steps" ${locked?"disabled":""}>${escapeHtml(JSON.stringify(rec.s2111_audit_steps||{}, null, 2))}</textarea></div>
+
+    <div class="k">2.1.13 รายละเอียดรายงาน (JSON)</div>
+    <div class="v"><textarea id="d_reportsteps" ${locked?"disabled":""}>${escapeHtml(JSON.stringify(rec.s2113_report_steps||{}, null, 2))}</textarea></div>
+
+    <div class="k">2.1.20 ข้อเสนอแนะ (JSON)</div>
+    <div class="v"><textarea id="d_recom" ${locked?"disabled":""}>${escapeHtml(JSON.stringify(rec.s2120_recommendations||{}, null, 2))}</textarea></div>
+
+    <div class="k">หมายเหตุ</div>
+    <div class="v"><textarea id="d_note" ${locked?"disabled":""}>${escapeHtml(rec.note||"")}</textarea></div>
+
+    <div class="k">การทำงาน</div>
+    <div class="v" style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn primary" id="d_save" ${locked?"disabled":""}>บันทึกรายละเอียด</button>
+      <button class="btn" id="d_copy">คัดลอก JSON</button>
+    </div>
+  `;
+
+  $("jsonPreview").textContent = JSON.stringify(rec, null, 2);
+  $("modalOverlay").style.display="flex";
+
+  $("d_copy").onclick = async ()=>{
+    try{
+      await navigator.clipboard.writeText(JSON.stringify(rec, null, 2));
+      show("ok","คัดลอกเรียบร้อย ✅");
+    }catch(e){
+      show("warn","คัดลอกไม่สำเร็จ (อาจถูกเบราว์เซอร์บล็อก)");
+    }
+  };
+
+  $("d_save").onclick = ()=>{
+    const all2 = getData().map(normalizeRecord);
+    const rec2 = all2.find(x=>x.id===id);
+    if(!rec2){ show("bad","ไม่พบรายการ"); return; }
+    if(isLocked(rec2)){ show("warn","รายการนี้ล็อกแล้ว แก้ไขไม่ได้"); return; }
+
+    try{ rec2.auditors = JSON.parse($("d_auditors").value || "[]"); }catch(e){ show("bad","JSON ผู้ตรวจสอบไม่ถูกต้อง"); return; }
+    try{ rec2.reviewers = JSON.parse($("d_reviewers").value || "[]"); }catch(e){ show("bad","JSON ผู้สอบทานไม่ถูกต้อง"); return; }
+    try{ rec2.director = JSON.parse($("d_director").value || "null"); }catch(e){ show("bad","JSON ผอ.สำนักไม่ถูกต้อง"); return; }
+    try{ rec2.auditee = JSON.parse($("d_auditee").value || "null"); }catch(e){ show("bad","JSON ผู้รับตรวจไม่ถูกต้อง"); return; }
+    try{ rec2.s2111_audit_steps = JSON.parse($("d_steps").value || "{}"); }catch(e){ show("bad","JSON รายละเอียดตรวจ (2.1.11) ไม่ถูกต้อง"); return; }
+    try{ rec2.s2113_report_steps = JSON.parse($("d_reportsteps").value || "{}"); }catch(e){ show("bad","JSON รายละเอียดรายงาน (2.1.13) ไม่ถูกต้อง"); return; }
+    try{ rec2.s2120_recommendations = JSON.parse($("d_recom").value || "{}"); }catch(e){ show("bad","JSON ข้อเสนอแนะ (2.1.20) ไม่ถูกต้อง"); return; }
+
+    rec2.note = $("d_note").value || "";
+    rec2.updated_at = Date.now();
+    rec2.updated_by = (session.fullname || session.username);
+
+    setData(all2);
+    staged.delete(id);
+    show("ok","บันทึกรายละเอียดเรียบร้อย ✅");
+    $("jsonPreview").textContent = JSON.stringify(rec2, null, 2);
+    render();
+  };
+}
+
+$("btnClose").addEventListener("click", ()=> $("modalOverlay").style.display="none");
+$("modalOverlay").addEventListener("click", (e)=>{ if(e.target.id==="modalOverlay") $("modalOverlay").style.display="none"; });
+
+/* =========================
+   Export / Import (เฉพาะผลการค้นหา)
+   ========================= */
+function downloadText(filename, text, mime="application/json"){
+  const blob = new Blob([text], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 500);
+}
+
+$("btnExportJson").addEventListener("click", ()=>{
+  const c = searchCriteria();
+  const data = currentHits.filter(x=>!x.deleted);
+  downloadText(
+    `fa-manual-search-results-${new Date().toISOString().slice(0,10)}.json`,
+    JSON.stringify({ exported_at: Date.now(), criteria: c, count: data.length, data }, null, 2),
+    "application/json"
+  );
+  show("ok","Export JSON เรียบร้อย ✅");
+});
+
+$("btnExportCsv").addEventListener("click", ()=>{
+  const data = currentHits.filter(x=>!x.deleted);
+
+  const header = [
+    "id","entity_type","entity_name","province","district","subdistrict",
+    "fy","period",
+    "fa_2_1_7","close_2_1_8","submit_2_1_9","followup_2_1_10",
+    "close_meeting_2_1_12",
+    "opinion_2_1_14","findings_2_1_15","adjust_2_1_16","cashshort_2_1_17",
+    "problems_2_1_19","note",
+    "created_at","updated_at","locked"
+  ];
+  const lines = [header.join(",")];
+
+  data.forEach(r=>{
+    const row = [
+      r.id,
+      `"${String(r.entity?.type||"").replaceAll('"','""')}"`,
+      `"${String(r.entity?.name||"").replaceAll('"','""')}"`,
+      `"${String(r.entity?.province||"").replaceAll('"','""')}"`,
+      `"${String(r.entity?.district||"").replaceAll('"','""')}"`,
+      `"${String(r.entity?.subdistrict||"").replaceAll('"','""')}"`,
+      r.fy||"",
+      r.period||"",
+      `"${String(r.s217_fa_status||"").replaceAll('"','""')}"`,
+      `"${String(r.s218_close_status||"").replaceAll('"','""')}"`,
+      `"${String(r.s219_report_submit||"").replaceAll('"','""')}"`,
+      `"${String(r.s2110_followup_letter||"").replaceAll('"','""')}"`,
+      `"${String(r.s2112_close_meeting||"").replaceAll('"','""')}"`,
+      `"${String(r.s2114_audit_opinion||"").replaceAll('"','""')}"`,
+      `"${String(r.s2115_findings||"").replaceAll('"','""')}"`,
+      `"${String(r.s2116_adjustments||"").replaceAll('"','""')}"`,
+      `"${String(r.s2117_cash_shortage||"").replaceAll('"','""')}"`,
+      `"${String((r.s2119_problems||[]).join("|")).replaceAll('"','""')}"`,
+      `"${String(r.note||"").replaceAll('"','""')}"`,
+      fmtTs(r.created_at),
+      fmtTs(r.updated_at),
+      isLocked(r) ? "YES" : "NO"
+    ];
+    lines.push(row.join(","));
+  });
+
+  downloadText(
+    `fa-manual-search-results-${new Date().toISOString().slice(0,10)}.csv`,
+    lines.join("\n"),
+    "text/csv"
+  );
+  show("ok","Export CSV เรียบร้อย ✅");
+});
+
+$("btnImport").addEventListener("click", ()=> $("importFile").click());
+$("importFile").addEventListener("change", async (ev)=>{
+  const f = ev.target.files?.[0];
+  if(!f) return;
+  try{
+    const text = await f.text();
+    const json = JSON.parse(text);
+    const incoming = Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : []);
+    if(!Array.isArray(incoming) || incoming.length===0){
+      show("warn","ไฟล์ JSON ไม่ถูกต้อง หรือไม่มีข้อมูล"); return;
+    }
+    if(!confirm(`ยืนยัน Import จำนวน ${incoming.length} รายการ? (จะรวมกับของเดิม)`)) return;
+
+    const all = getData().map(normalizeRecord);
+    incoming.forEach(x=>{
+      const rec = normalizeRecord(x);
+      if(!rec.id) rec.id = "M" + Math.random().toString(36).slice(2,8).toUpperCase();
+      all.unshift(rec);
+    });
+    setData(all);
+    $("importFile").value="";
+    show("ok","Import เรียบร้อย ✅");
+    page=1;
+    render();
+  }catch(e){
+    show("bad","อ่าน/แปลง JSON ไม่สำเร็จ");
+  }
+});
+
+/* =========================
+   Nav + Paging
+   ========================= */
+$("btnBackSearch").addEventListener("click", ()=>location.href="admin-manual-search.html");
+$("btnTableAll").addEventListener("click", ()=>location.href="admin-manual-table.html");
+
+$("btnPrev").addEventListener("click", ()=>{ page--; render(); });
+$("btnNext").addEventListener("click", ()=>{ page++; render(); });
+
+/* =========================
+   Init
+   ========================= */
+render();
+</script>
+</body>
+</html>
