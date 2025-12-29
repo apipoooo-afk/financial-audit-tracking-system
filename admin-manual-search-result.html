@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ผลการค้นหา Manual Data (Admin) • 2.3 ตารางผลค้นหา • ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์</title>
+
+  <style>
+    :root{
+      --bg:#f4f7fb; --card:#fff; --line:#dde5f2; --text:#24364c; --muted:#6a7f9a;
+      --brand:#1e5aaa; --brand2:#2f7de1;
+      --shadow:0 10px 28px rgba(20,40,80,.08);
+      --r:18px;
+      --ok:#1f7a3b; --bad:#b13b3b; --warn:#8a5a00; --info:#0b5aa6;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Thai","Noto Sans";background:var(--bg);color:var(--text)}
+    header{
+      position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);
+      padding:14px 18px;display:flex;align-items:center;gap:12px
+    }
+    .title{display:flex;flex-direction:column;line-height:1.05}
+    .title h1{margin:0;font-size:18px}
+    .title small{color:var(--muted)}
+    .spacer{flex:1}
+    .badge{border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa;padding:8px 12px;border-radius:14px;font-weight:900}
+
+    .wrap{max-width:1700px;margin:18px auto;padding:0 18px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;min-width:0}
+    h2{margin:0 0 10px;font-size:16px}
+    .muted{color:var(--muted);font-size:13px}
+    .hr{height:1px;background:#eef2f7;margin:12px 0}
+
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row>*{flex:1;min-width:170px}
+
+    input,select{
+      width:100%;padding:10px 12px;border-radius:14px;border:1px solid var(--line);
+      background:#fff;font-size:14px;outline:none
+    }
+
+    .btn{
+      border:1px solid var(--line); background:#fff; border-radius:14px;
+      padding:10px 12px; cursor:pointer; font-weight:900; color:var(--text);
+      white-space:nowrap
+    }
+    .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;border-color:transparent}
+    .btn.danger{background:#fff0f0;border-color:#ffd2d2;color:var(--bad)}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa}
+    .pill.ok{border-color:#c8f2d6;background:#effaf3;color:var(--ok)}
+    .pill.warn{border-color:#ffe7b8;background:#fff7e6;color:var(--warn)}
+    .pill.bad{border-color:#ffd2d2;background:#fff0f0;color:var(--bad)}
+    .pill.info{border-color:#cfe2ff;background:#eef6ff;color:var(--info)}
+
+    .msg{display:none;margin-top:10px;padding:10px 12px;border-radius:14px;font-weight:900}
+    .okBox{border:1px solid #c8f2d6;background:#effaf3;color:var(--ok)}
+    .badBox{border:1px solid #ffd2d2;background:#fff0f0;color:var(--bad)}
+    .warnBox{border:1px solid #ffe7b8;background:#fff7e6;color:var(--warn)}
+
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid #eef2f7;padding:8px 6px;text-align:left;font-size:12.5px;vertical-align:top}
+    th{color:#4a5f7d;white-space:nowrap;position:sticky;top:0;background:#fff;z-index:2}
+    .nowrap{white-space:nowrap}
+    .tiny{font-size:12px;color:var(--muted)}
+    .right{text-align:right}
+
+    @media (max-width:900px){
+      th{position:static}
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="title">
+    <h1>ผลการค้นหา Manual Data (Admin) — 2.3</h1>
+    <small>ตารางผลค้นหา • ดู/แก้ไข/ลบ • Export CSV/JSON • ล็อกแก้ไขเมื่อครบ 356 วัน</small>
+  </div>
+  <div class="spacer"></div>
+  <div class="badge" id="userBadge">กำลังตรวจสอบผู้ใช้…</div>
+</header>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>สรุปเงื่อนไขค้นหา + คำสั่ง</h2>
+    <div class="muted" id="qSummary">—</div>
+
+    <div class="row" style="margin-top:10px">
+      <input id="quick" placeholder="ค้นหาในผลลัพธ์ (filter เพิ่มเติม): ชื่อหน่วย/จังหวัด/สถานะ/คำสำคัญ" />
+      <select id="sort">
+        <option value="NEW">ล่าสุดก่อน</option>
+        <option value="OLD">เก่าก่อน</option>
+        <option value="ENTITY">เรียงชื่อหน่วย</option>
+        <option value="FY">เรียงปีงบฯ</option>
+      </select>
+      <select id="show">
+        <option value="200">แสดง 200 รายการ</option>
+        <option value="500">แสดง 500 รายการ</option>
+        <option value="1000">แสดง 1000 รายการ</option>
+      </select>
+      <button class="btn" id="btnApply">ประมวลผล</button>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="btnExportCsv">Export CSV</button>
+      <button class="btn" id="btnExportJson">Export JSON</button>
+
+      <button class="btn" id="btnBackSearch">กลับหน้า 2.2 ค้นหา</button>
+      <button class="btn" id="btnBackTable">กลับตารางข้อมูลทั้งหมด</button>
+      <button class="btn" id="btnHub">กลับ Data Hub</button>
+      <button class="btn" id="btnCashboard">ไป Cashboard</button>
+      <button class="btn" id="btnHome">กลับหน้าแรก</button>
+    </div>
+
+    <div class="msg okBox" id="ok"></div>
+    <div class="msg warnBox" id="warn"></div>
+    <div class="msg badBox" id="bad"></div>
+
+    <div class="hr"></div>
+    <div class="muted">
+      <span class="pill info" id="cntAll">ผลค้นหา: 0</span>
+      <span class="pill info" id="cntShow">กำลังแสดง: 0</span>
+      <span class="pill info" id="cntLocked">ล็อกแล้ว: 0</span>
+      <span class="pill info" id="cntSubmitted">ส่งแล้ว: 0</span>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h2>ตารางผลการค้นหา (2.1.1–2.1.20)</h2>
+    <div class="muted">* “รายละเอียด 2.1.11/2.1.13” แสดงแบบสรุปย่อในตาราง แต่ Export JSON จะเก็บรายละเอียดเต็ม</div>
+    <div class="hr"></div>
+
+    <div style="overflow:auto; max-height: 70vh">
+      <table>
+        <thead>
+          <tr>
+            <th class="nowrap">2.1.1 หน่วยรับตรวจ</th>
+            <th class="nowrap">ที่ตั้ง</th>
+            <th class="nowrap">2.1.2 ปี/งวด</th>
+
+            <th class="nowrap">2.1.3 ผู้ตรวจ</th>
+            <th class="nowrap">2.1.4 ผู้สอบทาน</th>
+            <th class="nowrap">2.1.5 ผอ.สำนัก</th>
+            <th class="nowrap">2.1.6 ผู้รับตรวจ</th>
+
+            <th class="nowrap">2.1.7 สถานะ FA</th>
+            <th class="nowrap">2.1.8 ปิดงบ</th>
+            <th class="nowrap">2.1.9 ส่งรายงาน</th>
+            <th class="nowrap">2.1.10 หนังสือติดตาม</th>
+
+            <th class="nowrap">2.1.11 รายละเอียด (สรุป)</th>
+            <th class="nowrap">2.1.12 ปิดตรวจ</th>
+            <th class="nowrap">2.1.13 จัดทำรายงาน (สรุป)</th>
+
+            <th class="nowrap">2.1.14 ผลตรวจ</th>
+            <th class="nowrap">2.1.15 ข้อสังเกต</th>
+            <th class="nowrap">2.1.16 ปรับปรุงบัญชี</th>
+            <th class="nowrap">2.1.17 เงินขาดบัญชี</th>
+            <th class="nowrap">2.1.19 ปัญหา</th>
+            <th class="nowrap">2.1.20 ข้อเสนอแนะ</th>
+
+            <th class="nowrap">ส่งแล้ว</th>
+            <th class="nowrap">ล็อก</th>
+            <th class="nowrap">อัปเดตล่าสุด</th>
+            <th class="nowrap">คำสั่ง</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+/* =========================
+   0) Guard: login + ADMIN
+   ========================= */
+const SESSION_KEY = "fa_session_v1";
+const session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+if(!session){ location.href="login.html"; }
+const role = (session.role || "USER").toUpperCase();
+if(role !== "ADMIN"){
+  alert("หน้านี้สำหรับผู้ดูแลระบบ (ADMIN) เท่านั้น");
+  location.href = "index.html";
+}
+document.getElementById("userBadge").textContent =
+  "ผู้ใช้: " + (session.fullname || session.username) + " • บทบาท: " + role;
+
+/* =========================
+   1) Storage
+   ========================= */
+const RECORDS_KEY = "fa_manual_records_v1";
+const SEARCH_CTX_KEY = "fa_admin_search_ctx_v1";
+const EDIT_CTX_KEY = "fa_admin_edit_ctx_v1";
+
+function getRecords(){ return JSON.parse(localStorage.getItem(RECORDS_KEY) || "[]"); }
+
+/* =========================
+   2) Helpers
+   ========================= */
+const $ = (id)=>document.getElementById(id);
+function safe(v){ return (v===null||v===undefined) ? "" : String(v); }
+function show(box, text){
+  const el = $(box);
+  el.textContent = text;
+  el.style.display = "block";
+  setTimeout(()=>{ el.style.display="none"; }, 2500);
+}
+function isLocked(created_at){
+  if(!created_at) return false;
+  const days = (Date.now() - created_at)/86400000;
+  return days >= 356;
+}
+function fmt(ts){ return ts ? new Date(ts).toLocaleString() : "-"; }
+function contains(hay, q){
+  if(!q) return true;
+  return String(hay||"").toLowerCase().includes(q.toLowerCase());
+}
+function downloadText(filename, text, mime="application/json"){
+  const blob = new Blob([text], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href=url; a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+function toCSV(rows){
+  const esc = (v)=>('"'+String(v??"").replaceAll('"','""')+'"');
+  if(!rows.length) return "sep=,\n";
+  const cols = Object.keys(rows[0]);
+  const lines = [];
+  lines.push("sep=,");
+  lines.push(cols.map(esc).join(","));
+  for(const r of rows){
+    lines.push(cols.map(c=>esc(r[c])).join(","));
+  }
+  return lines.join("\n");
+}
+
+/* =========================
+   3) Query apply (same logic as search page)
+   ========================= */
+function applyQuery(all, q){
+  let arr = all.filter(r=>!r.deleted);
+
+  if(q.fy) arr = arr.filter(r => String(r.period?.fiscalYear||"")===String(q.fy));
+  if(q.periodType) arr = arr.filter(r => String(r.period?.periodType||"")===String(q.periodType));
+  if(q.periodValue) arr = arr.filter(r => String(r.period?.periodValue||"")===String(q.periodValue));
+
+  if(q.entPick){
+    const [type,name,prov,dist,subd] = q.entPick.split("|");
+    arr = arr.filter(r =>
+      safe(r.entity?.type)===type &&
+      safe(r.entity?.name)===name &&
+      safe(r.entity?.province)===prov &&
+      safe(r.entity?.district)===dist &&
+      safe(r.entity?.subdistrict)===subd
+    );
+  }
+  if(q.entText){
+    arr = arr.filter(r=>{
+      const hay = [r.entity?.type, r.entity?.name].join(" ");
+      return contains(hay, q.entText);
+    });
+  }
+
+  if(q.province) arr = arr.filter(r=>contains(r.entity?.province, q.province));
+  if(q.district) arr = arr.filter(r=>contains(r.entity?.district, q.district));
+  if(q.subdistrict) arr = arr.filter(r=>contains(r.entity?.subdistrict, q.subdistrict));
+
+  if(q.submitted==="Y") arr = arr.filter(r=>!!r.submitted);
+  if(q.submitted==="N") arr = arr.filter(r=>!r.submitted);
+
+  if(q.lock==="LOCKED") arr = arr.filter(r=>isLocked(r.created_at));
+  if(q.lock==="OPEN") arr = arr.filter(r=>!isLocked(r.created_at));
+
+  if(q.keyword){
+    arr = arr.filter(r=>{
+      const hay = [
+        r.s217, r.s218, r.s219, r.s2110,
+        r.s214, r.s215, r.s216, r.s217_cash,
+        r.s219_problem, r.s220_rec_type, r.s220_rec_text,
+        JSON.stringify(r.details||{}),
+        JSON.stringify(r.reportPack||{}),
+        JSON.stringify(r.auditors||[]),
+        JSON.stringify(r.reviewers||[])
+      ].join(" ");
+      return contains(hay, q.keyword);
+    });
+  }
+
+  return arr;
+}
+
+/* =========================
+   4) Summaries for 2.1.11 and 2.1.13
+   ========================= */
+function summarizeOptMap(map, withNoNeed=false){
+  const c = {done:0, prog:0, todo:0, unk:0, noneed:0};
+  Object.values(map||{}).forEach(v=>{
+    if(v==="ดำเนินการแล้ว") c.done++;
+    else if(v==="อยู่ระหว่างดำเนินการ") c.prog++;
+    else if(v==="ยังไม่ดำเนินการ") c.todo++;
+    else if(v==="ไม่ทราบ") c.unk++;
+    else if(withNoNeed && v==="ไม่ต้องทำ") c.noneed++;
+  });
+  return c;
+}
+function sum211(r){
+  const d = r.details || {};
+  const base = {
+    openAudit:d.openAudit||"",
+    confirmWork:d.confirmWork||"",
+    bankConfirm:d.bankConfirm||"",
+    localConfirm:d.localConfirm||"",
+    opt3:d.opt3||"",
+    opt5:d.opt5||"",
+    opt6:d.opt6||"",
+    opt7:d.opt7||""
+  };
+  const opt8 = d.opt8 || {};
+  const opt3_1 = d.opt3_1 || {};
+
+  // split 8.1-8.17 (4) and 8.18-8.31 (5)
+  const map817 = {};
+  for(let i=1;i<=17;i++){ map817[i]=opt8[String(i)]||""; }
+  const map831 = {};
+  for(let i=18;i<=31;i++){ map831[i]=opt8[String(i)]||""; }
+
+  const a = summarizeOptMap(map817,false);
+  const b = summarizeOptMap(map831,true);
+  const c = summarizeOptMap(opt3_1,true);
+
+  const baseDone = Object.values(base).filter(v=>v==="ดำเนินการแล้ว").length;
+  const baseProg = Object.values(base).filter(v=>v==="อยู่ระหว่างดำเนินการ").length;
+  const baseTodo = Object.values(base).filter(v=>v==="ยังไม่ดำเนินการ").length;
+
+  return `ฐานงาน: D${baseDone}/P${baseProg}/T${baseTodo} • 8.1-8.17: D${a.done}/P${a.prog}/T${a.todo}/U${a.unk} • 8.18-8.31: D${b.done}/P${b.prog}/T${b.todo}/U${b.unk}/NN${b.noneed} • 3.1.x: D${c.done}/P${c.prog}/T${c.todo}/U${c.unk}/NN${c.noneed}`;
+}
+function sum213(r){
+  const rp = r.reportPack || {};
+  const c = summarizeOptMap(rp,true);
+  return `D${c.done}/P${c.prog}/T${c.todo}/U${c.unk}/NN${c.noneed}`;
+}
+function peopleShort(list){
+  if(!Array.isArray(list) || list.length===0) return "-";
+  return list
+    .map(p=>`${safe(p.name)||"-"}${p.group?(" ("+p.group+")"):""}`)
+    .slice(0,3)
+    .join(", ") + (list.length>3 ? ` (+${list.length-3})` : "");
+}
+
+/* =========================
+   5) Render
+   ========================= */
+let BASE = [];      // matched by query
+let VIEW = [];      // after quick filter + sort + limit
+
+function buildSummaryText(q){
+  const parts = [];
+  if(q.fy) parts.push(`ปีงบฯ=${q.fy}`);
+  if(q.periodType) parts.push(`งวด=${q.periodType}`);
+  if(q.periodValue) parts.push(`ค่า=${q.periodValue}`);
+  if(q.entPick) parts.push(`หน่วย(เลือก)=${q.entPick.split("|")[1]||""}`);
+  if(q.entText) parts.push(`หน่วย(คำ)=${q.entText}`);
+  if(q.province) parts.push(`จว=${q.province}`);
+  if(q.district) parts.push(`อ=${q.district}`);
+  if(q.subdistrict) parts.push(`ต=${q.subdistrict}`);
+  if(q.keyword) parts.push(`คำ=${q.keyword}`);
+  if(q.submitted) parts.push(`ส่ง=${q.submitted}`);
+  if(q.lock) parts.push(`ล็อก=${q.lock}`);
+  if(parts.length===0) return "ไม่มีเงื่อนไข (แสดงทั้งหมด)";
+  return parts.join(" • ");
+}
+
+function computeView(){
+  const qf = $("quick").value.trim();
+  const sort = $("sort").value;
+  const limit = Number($("show").value);
+
+  let arr = BASE.slice();
+
+  if(qf){
+    arr = arr.filter(r=>{
+      const hay = [
+        r.entity?.type, r.entity?.name,
+        r.entity?.province, r.entity?.district, r.entity?.subdistrict,
+        r.s217,r.s218,r.s219,r.s2110,r.s214,r.s215,r.s216,r.s219_problem,
+        r.s220_rec_type,r.s220_rec_text
+      ].join(" ");
+      return contains(hay, qf);
+    });
+  }
+
+  if(sort==="NEW") arr.sort((a,b)=>(b.updated_at||0)-(a.updated_at||0));
+  if(sort==="OLD") arr.sort((a,b)=>(a.updated_at||0)-(b.updated_at||0));
+  if(sort==="ENTITY") arr.sort((a,b)=>String(a.entity?.name||"").localeCompare(String(b.entity?.name||""),"th"));
+  if(sort==="FY") arr.sort((a,b)=>Number(a.period?.fiscalYear||0)-Number(b.period?.fiscalYear||0));
+
+  VIEW = arr.slice(0, limit);
+}
+
+function render(){
+  computeView();
+
+  const locked = VIEW.filter(r=>isLocked(r.created_at)).length;
+  const submitted = VIEW.filter(r=>!!r.submitted).length;
+
+  $("cntAll").textContent = `ผลค้นหา: ${BASE.length}`;
+  $("cntShow").textContent = `กำลังแสดง: ${VIEW.length}`;
+  $("cntLocked").textContent = `ล็อกแล้ว: ${locked}`;
+  $("cntSubmitted").textContent = `ส่งแล้ว: ${submitted}`;
+
+  const tb = $("rows");
+  tb.innerHTML = "";
+
+  if(VIEW.length===0){
+    tb.innerHTML = `<tr><td colspan="24" class="muted">ไม่พบข้อมูลตามเงื่อนไข / หรือถูกกรองออกด้วย Quick Filter</td></tr>`;
+    return;
+  }
+
+  VIEW.forEach(r=>{
+    const tr=document.createElement("tr");
+    const lock = isLocked(r.created_at);
+    const sub = !!r.submitted;
+
+    tr.innerHTML = `
+      <td class="nowrap"><b>${safe(r.entity?.type)} ${safe(r.entity?.name)}</b><div class="tiny">${safe(r.id)}</div></td>
+      <td class="nowrap">${safe(r.entity?.province)} / ${safe(r.entity?.district)} / ${safe(r.entity?.subdistrict)}</td>
+      <td class="nowrap">ปีงบฯ ${safe(r.period?.fiscalYear)}<div class="tiny">${safe(r.period?.periodType)}:${safe(r.period?.periodValue)}</div></td>
+
+      <td>${peopleShort(r.auditors)}</td>
+      <td>${peopleShort(r.reviewers)}</td>
+      <td class="nowrap">${safe(r.director?.name)||"-"}<div class="tiny">${safe(r.director?.pos)||""}</div></td>
+      <td class="nowrap">${safe(r.auditee?.name)||"-"}<div class="tiny">${safe(r.auditee?.pos)||""}</div></td>
+
+      <td>${safe(r.s217)||"-"}</td>
+      <td class="nowrap">${safe(r.s218)||"-"}</td>
+      <td class="nowrap">${safe(r.s219)||"-"}</td>
+      <td class="nowrap">${safe(r.s2110)||"-"}</td>
+
+      <td>${sum211(r)}</td>
+      <td class="nowrap">${safe(r.closeMeeting)||"-"}</td>
+      <td class="nowrap">${sum213(r)}</td>
+
+      <td class="nowrap">${safe(r.s214)||"-"}</td>
+      <td class="nowrap">${safe(r.s215)||"-"}</td>
+      <td class="nowrap">${safe(r.s216)||"-"}</td>
+      <td class="nowrap">${safe(r.s217_cash)||"-"}</td>
+      <td class="nowrap">${safe(r.s219_problem)||"-"}</td>
+      <td>${safe(r.s220_rec_type)||"-"}<div class="tiny">${safe(r.s220_rec_text)||""}</div></td>
+
+      <td class="nowrap">${sub ? `<span class="pill ok">ส่งแล้ว</span>` : `<span class="pill warn">ยังไม่ส่ง</span>`}</td>
+      <td class="nowrap">${lock ? `<span class="pill bad">ล็อก</span>` : `<span class="pill ok">เปิด</span>`}</td>
+      <td class="nowrap">${fmt(r.updated_at||r.created_at)}</td>
+
+      <td class="nowrap">
+        <button class="btn" data-act="view" data-id="${r.id}">ดู</button>
+        <button class="btn primary" data-act="edit" data-id="${r.id}" ${lock?"disabled":""}>แก้ไข</button>
+        <button class="btn danger" data-act="del" data-id="${r.id}">ลบ</button>
+      </td>
+    `;
+    tb.appendChild(tr);
+  });
+
+  tb.querySelectorAll("button[data-act]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const act = btn.getAttribute("data-act");
+      const id = btn.getAttribute("data-id");
+      if(act==="view") onView(id);
+      if(act==="edit") onEdit(id);
+      if(act==="del") onDelete(id);
+    });
+  });
+}
+
+/* =========================
+   6) Actions
+   ========================= */
+function onView(id){
+  const r = getRecords().find(x=>x.id===id);
+  if(!r){ show("bad","ไม่พบรายการ"); return; }
+  alert(
+`สรุปข้อมูล
+- หน่วย: ${safe(r.entity?.type)} ${safe(r.entity?.name)}
+- ที่ตั้ง: ${safe(r.entity?.province)} / ${safe(r.entity?.district)} / ${safe(r.entity?.subdistrict)}
+- ปี/งวด: ปีงบฯ ${safe(r.period?.fiscalYear)} • ${safe(r.period?.periodType)}:${safe(r.period?.periodValue)}
+- 2.1.7 สถานะ FA: ${safe(r.s217)}
+- 2.1.8 ปิดงบ: ${safe(r.s218)}
+- 2.1.9 ส่งรายงาน: ${safe(r.s219)}
+- 2.1.10 หนังสือติดตาม: ${safe(r.s2110)}
+- 2.1.14 ผลตรวจ: ${safe(r.s214)}
+- 2.1.15 ข้อสังเกต: ${safe(r.s215)}
+- 2.1.16 ปรับปรุงบัญชี: ${safe(r.s216)}
+- 2.1.17 เงินขาดบัญชี: ${safe(r.s217_cash)}
+- 2.1.19 ปัญหา: ${safe(r.s219_problem)}
+- 2.1.20 ข้อเสนอแนะ: ${safe(r.s220_rec_type)} | ${safe(r.s220_rec_text)}
+
+ส่งแล้ว: ${r.submitted?"ใช่":"ไม่"} • ล็อก: ${isLocked(r.created_at)?"ใช่":"ไม่"}
+อัปเดต: ${fmt(r.updated_at||r.created_at)}`
+  );
+}
+
+function onEdit(id){
+  const r = getRecords().find(x=>x.id===id);
+  if(!r){ show("bad","ไม่พบรายการ"); return; }
+  if(isLocked(r.created_at)){
+    show("warn","รายการนี้ล็อกครบ 356 วันแล้ว — แก้ไขไม่ได้");
+    return;
+  }
+  localStorage.setItem(EDIT_CTX_KEY, JSON.stringify({ id, from:"admin-manual-search-result.html", ts:Date.now() }));
+  location.href = "admin-manual-edit.html";
+}
+
+function onDelete(id){
+  const ok = confirm("ยืนยันลบ (soft-delete) รายการนี้? ระบบจะทำ deleted=true เพื่อรักษา audit trail");
+  if(!ok) return;
+
+  const all = getRecords();
+  const idx = all.findIndex(x=>x.id===id);
+  if(idx<0){ show("bad","ไม่พบรายการ"); return; }
+
+  all[idx].deleted = true;
+  all[idx].deleted_at = Date.now();
+  all[idx].deleted_by = safe(session.fullname || session.username);
+  all[idx].updated_at = Date.now();
+  all[idx].updated_by = safe(session.fullname || session.username);
+
+  localStorage.setItem(RECORDS_KEY, JSON.stringify(all));
+
+  // re-run base with same query
+  init();
+  show("ok","ลบ (soft-delete) เรียบร้อย");
+}
+
+/* =========================
+   7) Export
+   ========================= */
+function exportJSON(){
+  downloadText(`fa_search_result_${Date.now()}.json`, JSON.stringify(VIEW,null,2), "application/json");
+  show("ok","Export JSON เรียบร้อย");
+}
+function exportCSV(){
+  // flatten to analyst-friendly columns
+  const rows = VIEW.map(r=>({
+    id: r.id || "",
+    entity_type: r.entity?.type || "",
+    entity_name: r.entity?.name || "",
+    province: r.entity?.province || "",
+    district: r.entity?.district || "",
+    subdistrict: r.entity?.subdistrict || "",
+    fiscal_year: r.period?.fiscalYear || "",
+    period_type: r.period?.periodType || "",
+    period_value: r.period?.periodValue || "",
+
+    auditors_count: Array.isArray(r.auditors)?r.auditors.length:0,
+    reviewers_count: Array.isArray(r.reviewers)?r.reviewers.length:0,
+    director: r.director?.name || "",
+    auditee: r.auditee?.name || "",
+
+    s217_fa_status: r.s217 || "",
+    s218_close_fs: r.s218 || "",
+    s219_submit_fs: r.s219 || "",
+    s2110_letter: r.s2110 || "",
+
+    s211_summary: sum211(r),
+    s212_close_meeting: r.closeMeeting || "",
+    s213_report_pack_summary: sum213(r),
+
+    s214_opinion: r.s214 || "",
+    s215_observation: r.s215 || "",
+    s216_adjustment: r.s216 || "",
+    s217_cash_short: r.s217_cash || "",
+    s219_problem: r.s219_problem || "",
+    s220_rec_type: r.s220_rec_type || "",
+    s220_rec_text: r.s220_rec_text || "",
+
+    submitted: r.submitted ? "Y" : "N",
+    locked_356d: isLocked(r.created_at) ? "Y" : "N",
+    updated_at: r.updated_at ? new Date(r.updated_at).toISOString() : ""
+  }));
+  downloadText(`fa_search_result_${Date.now()}.csv`, toCSV(rows), "text/csv;charset=utf-8");
+  show("ok","Export CSV เรียบร้อย");
+}
+
+/* =========================
+   8) Init
+   ========================= */
+function init(){
+  const ctx = JSON.parse(localStorage.getItem(SEARCH_CTX_KEY) || "null") || {};
+  $("qSummary").textContent = "เงื่อนไข: " + buildSummaryText(ctx);
+
+  const all = getRecords();
+  BASE = applyQuery(all, ctx);
+
+  // apply default render
+  render();
+}
+function buildSummaryText(q){
+  const parts = [];
+  if(q.fy) parts.push(`ปีงบฯ=${q.fy}`);
+  if(q.periodType) parts.push(`งวด=${q.periodType}`);
+  if(q.periodValue) parts.push(`ค่า=${q.periodValue}`);
+  if(q.entPick) parts.push(`หน่วย(เลือก)=${(q.entPick.split("|")[0]||"")+" "+(q.entPick.split("|")[1]||"")}`);
+  if(q.entText) parts.push(`หน่วย(คำ)=${q.entText}`);
+  if(q.province) parts.push(`จว=${q.province}`);
+  if(q.district) parts.push(`อ=${q.district}`);
+  if(q.subdistrict) parts.push(`ต=${q.subdistrict}`);
+  if(q.keyword) parts.push(`คำ=${q.keyword}`);
+  if(q.submitted) parts.push(`ส่ง=${q.submitted}`);
+  if(q.lock) parts.push(`ล็อก=${q.lock}`);
+  if(parts.length===0) return "ไม่มีเงื่อนไข (แสดงทั้งหมด)";
+  return parts.join(" • ");
+}
+init();
+
+/* =========================
+   9) Events
+   ========================= */
+$("btnApply").addEventListener("click", render);
+$("quick").addEventListener("input", render);
+$("sort").addEventListener("change", render);
+$("show").addEventListener("change", render);
+
+$("btnExportJson").addEventListener("click", exportJSON);
+$("btnExportCsv").addEventListener("click", exportCSV);
+
+$("btnBackSearch").addEventListener("click", ()=>location.href="admin-manual-search.html");
+$("btnBackTable").addEventListener("click", ()=>location.href="admin-manual-table.html");
+$("btnHub").addEventListener("click", ()=>location.href="data-hub.html");
+$("btnCashboard").addEventListener("click", ()=>location.href="cashboard.html");
+$("btnHome").addEventListener("click", ()=>location.href="index.html");
+</script>
+</body>
+</html>
