@@ -3,14 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>คลังไฟล์จาก Upload (Admin) • ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์</title>
-
+  <title>Admin • คลังข้อมูลไฟล์อัปโหลด | ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์</title>
   <style>
     :root{
       --bg:#f4f7fb; --card:#fff; --line:#dde5f2; --text:#24364c; --muted:#6a7f9a;
-      --brand:#1e5aaa; --brand2:#2f7de1;
-      --shadow:0 10px 28px rgba(20,40,80,.08);
-      --r:18px;
+      --brand:#1e5aaa; --brand2:#2f7de1; --shadow:0 10px 28px rgba(20,40,80,.08); --r:18px;
       --ok:#1f7a3b; --bad:#b13b3b; --warn:#8a5a00; --info:#0b5aa6;
     }
     *{box-sizing:border-box}
@@ -23,29 +20,36 @@
     .title h1{margin:0;font-size:18px}
     .title small{color:var(--muted)}
     .spacer{flex:1}
-    .badge{border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa;padding:8px 12px;border-radius:14px;font-weight:900}
-
-    .wrap{max-width:1500px;margin:18px auto;padding:0 18px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;min-width:0}
-    h2{margin:0 0 10px;font-size:16px}
+    .badge{border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa;padding:8px 12px;border-radius:14px;font-weight:900;white-space:nowrap}
+    .wrap{max-width:1200px;margin:18px auto;padding:0 18px}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+    .card{
+      grid-column:span 12;background:var(--card);border:1px solid var(--line);
+      border-radius:var(--r);box-shadow:var(--shadow);padding:14px;min-width:0
+    }
+    @media(min-width:900px){
+      .col7{grid-column:span 7}
+      .col5{grid-column:span 5}
+    }
+    h2{margin:0 0 8px;font-size:16px}
     .muted{color:var(--muted);font-size:13px}
     .hr{height:1px;background:#eef2f7;margin:12px 0}
-
-    .row{display:flex;gap:10px;flex-wrap:wrap}
-    .row>*{flex:1;min-width:180px}
-
-    input,select{
-      width:100%;padding:10px 12px;border-radius:14px;border:1px solid var(--line);
-      background:#fff;font-size:14px;outline:none
+    label{display:block;font-size:12px;color:var(--muted);font-weight:900;margin:6px 0 4px}
+    input,select,textarea{
+      width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 10px;background:#fff;
+      color:var(--text);outline:none;font-size:14px
     }
+    textarea{min-height:84px;resize:vertical}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row>*{flex:1;min-width:200px}
 
     .btn{
-      border:1px solid var(--line); background:#fff; border-radius:14px;
-      padding:10px 12px; cursor:pointer; font-weight:900; color:var(--text);
-      white-space:nowrap
+      width:100%;border:1px solid var(--line);background:#fff;border-radius:14px;padding:12px 12px;
+      cursor:pointer;font-weight:900;color:var(--text);text-align:center
     }
     .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;border-color:transparent}
-    .btn.danger{background:#fff0f0;border-color:#ffd2d2;color:var(--bad)}
+    .btn.warn{border-color:#ffe7b8;background:#fff7e6;color:var(--warn)}
+    .btn.danger{border-color:#ffd2d2;background:#fff0f0;color:var(--bad)}
     .btn:disabled{opacity:.55;cursor:not-allowed}
 
     .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa}
@@ -53,416 +57,520 @@
     .pill.warn{border-color:#ffe7b8;background:#fff7e6;color:var(--warn)}
     .pill.bad{border-color:#ffd2d2;background:#fff0f0;color:var(--bad)}
     .pill.info{border-color:#cfe2ff;background:#eef6ff;color:var(--info)}
+    .tiny{font-size:12px;color:var(--muted)}
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
 
+    .tableWrap{overflow:auto;border:1px solid var(--line);border-radius:14px}
+    table{border-collapse:collapse;width:100%;min-width:980px;background:#fff}
+    th,td{border-bottom:1px solid #eef2f7;padding:10px;vertical-align:top}
+    th{position:sticky;top:0;background:#fafcff;border-bottom:1px solid var(--line);text-align:left;font-size:12px;color:var(--muted)}
+    td{font-size:13px}
+    .right{text-align:right}
+    .miniBtn{padding:7px 10px;border-radius:12px;border:1px solid var(--line);background:#fff;font-weight:900;cursor:pointer}
+    .miniBtn.primary{border-color:#cfe2ff;background:#eef6ff;color:#1e5aaa}
+    .miniBtn.warn{border-color:#ffe7b8;background:#fff7e6;color:var(--warn)}
+    .miniBtn.danger{border-color:#ffd2d2;background:#fff0f0;color:var(--bad)}
     .msg{display:none;margin-top:10px;padding:10px 12px;border-radius:14px;font-weight:900}
     .okBox{border:1px solid #c8f2d6;background:#effaf3;color:var(--ok)}
     .badBox{border:1px solid #ffd2d2;background:#fff0f0;color:var(--bad)}
     .warnBox{border:1px solid #ffe7b8;background:#fff7e6;color:var(--warn)}
-
-    table{width:100%;border-collapse:collapse}
-    th,td{border-bottom:1px solid #eef2f7;padding:8px 6px;text-align:left;font-size:12.5px;vertical-align:top}
-    th{color:#4a5f7d;white-space:nowrap;position:sticky;top:0;background:#fff;z-index:2}
-    .tiny{font-size:12px;color:var(--muted)}
-    .right{text-align:right}
-    .nowrap{white-space:nowrap}
-
-    @media (max-width:900px){ th{position:static} }
+    .noteBox{border:1px dashed #cfe2ff;background:#f6fbff;border-radius:14px;padding:10px 12px}
+    .hide{display:none}
   </style>
 </head>
 
 <body>
 <header>
   <div class="title">
-    <h1>คลังไฟล์จาก Upload (Admin)</h1>
-    <small>เก็บไฟล์จากการอัปโหลด + จัดการไฟล์ (แก้ไข/ลบ/เพิ่ม/ดาวน์โหลด/Export) • แบบไม่ต้องมีเซิร์ฟเวอร์</small>
+    <h1>Admin • คลังข้อมูลไฟล์อัปโหลด</h1>
+    <small>แยกข้อมูลเป็น “ไฟล์อัปโหลด” สำหรับ Admin ดู/แก้ไข/ลบ/Export</small>
   </div>
   <div class="spacer"></div>
-  <div class="badge" id="userBadge">กำลังตรวจสอบผู้ใช้…</div>
+  <div class="badge" id="userBadge">กำลังตรวจสอบสิทธิ…</div>
 </header>
 
 <div class="wrap">
+  <div class="grid">
 
-  <div class="card">
-    <h2>อัปโหลดไฟล์ (ครั้งละไม่เกิน 10 ไฟล์)</h2>
-    <div class="muted">ไฟล์จะถูกเก็บเป็น base64 ในเครื่องนี้ (localStorage) • ถ้าไฟล์ใหญ่เกิน ระบบจะแจ้งเตือนพื้นที่ไม่พอ</div>
+    <!-- Left: Upload + controls -->
+    <div class="card col5">
+      <h2>เพิ่มไฟล์เข้าคลัง (ครั้งละไม่เกิน 10 ไฟล์)</h2>
+      <div class="muted">รองรับทุกไฟล์ • เก็บ metadata เสมอ • เก็บตัวไฟล์ลงเครื่อง (DataURL) เฉพาะไฟล์ไม่ใหญ่</div>
 
-    <div class="row" style="margin-top:10px">
+      <div class="hr"></div>
+
+      <label>เลือกไฟล์ (ได้สูงสุด 10 ไฟล์)</label>
       <input id="files" type="file" multiple />
-      <input id="tag" placeholder="Tag/หมวด (เช่น งบการเงิน, หนังสือติดตาม, หลักฐาน)" />
-      <button class="btn primary" id="btnUpload">บันทึกไฟล์เข้าคลัง</button>
-      <button class="btn" id="btnClear">ล้างช่องเลือกไฟล์</button>
+
+      <div class="row">
+        <div>
+          <label>ชื่อผู้ที่อัปโหลด (แก้ไขได้)</label>
+          <input id="uploader" placeholder="เช่น Admin / จนท.กลุ่ม 4" />
+        </div>
+        <div>
+          <label>หมายเหตุ (ถ้ามี)</label>
+          <input id="note" placeholder="เช่น เอกสารประกอบการตรวจ, ไฟล์สำคัญ" />
+        </div>
+      </div>
+
+      <div class="noteBox tiny">
+        ⚠️ ข้อจำกัด localStorage: ถ้าไฟล์ใหญ่ ระบบจะ “ไม่เก็บตัวไฟล์” แต่จะเก็บรายการไว้ให้ติดตามแทน (เพื่อไม่ทำให้เว็บพัง/เต็มโควตา)
+      </div>
+
+      <div style="height:10px"></div>
+
+      <div class="row">
+        <button class="btn primary" id="btnAdd">บันทึกรายการไฟล์เข้าคลัง</button>
+        <button class="btn" id="btnRefresh">รีเฟรชตาราง</button>
+      </div>
+
+      <div style="height:10px"></div>
+
+      <div class="row">
+        <button class="btn warn" id="btnExportJson">Export JSON</button>
+        <button class="btn warn" id="btnExportCsv">Export CSV</button>
+      </div>
+
+      <div style="height:10px"></div>
+
+      <div class="row">
+        <button class="btn" id="btnImport">Import JSON</button>
+        <input id="importFile" class="hide" type="file" accept="application/json" />
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <button class="btn" id="goAdminHome">กลับหน้า Admin</button>
+        <button class="btn" id="goDataHub">ไป Data Hub</button>
+      </div>
+      <div class="row">
+        <button class="btn" id="goCashboard">ไป Cashboard</button>
+        <button class="btn" id="goHome">กลับหน้าหลัก</button>
+      </div>
+
+      <div class="msg okBox" id="ok"></div>
+      <div class="msg warnBox" id="warn"></div>
+      <div class="msg badBox" id="bad"></div>
     </div>
 
-    <div class="row" style="margin-top:10px">
-      <button class="btn" id="btnExportCsv">Export CSV</button>
-      <button class="btn" id="btnExportJson">Export JSON</button>
-      <button class="btn" id="btnBackHub">กลับ Data Hub</button>
-      <button class="btn" id="btnCashboard">ไป Cashboard</button>
-      <button class="btn" id="btnHome">กลับหน้าแรก</button>
+    <!-- Right: Table -->
+    <div class="card col7">
+      <h2>ตารางรายการไฟล์อัปโหลด</h2>
+      <div class="muted">
+        รวมทั้งหมด: <span class="pill info" id="countAll">0</span>
+        &nbsp;|&nbsp; เก็บตัวไฟล์ได้: <span class="pill ok" id="countStored">0</span>
+        &nbsp;|&nbsp; เก็บเฉพาะรายการ: <span class="pill warn" id="countMetaOnly">0</span>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <div>
+          <label>ค้นหา (ชื่อไฟล์/ชนิด/ผู้อัปโหลด/หมายเหตุ)</label>
+          <input id="q" placeholder="พิมพ์คำค้น…" />
+        </div>
+        <div>
+          <label>ตัวกรอง</label>
+          <select id="filterStored">
+            <option value="ALL">ทั้งหมด</option>
+            <option value="STORED">มีตัวไฟล์ (ดาวน์โหลด/ดูได้)</option>
+            <option value="META">มีเฉพาะรายการ (ตัวไฟล์ใหญ่เกิน)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="height:10px"></div>
+
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ชื่อไฟล์</th>
+              <th>ชนิด</th>
+              <th>ขนาด</th>
+              <th>วันที่อัปโหลด</th>
+              <th>ผู้อัปโหลด</th>
+              <th>หมายเหตุ</th>
+              <th>สถานะเก็บไฟล์</th>
+              <th class="right">การทำงาน</th>
+            </tr>
+          </thead>
+          <tbody id="tb"></tbody>
+        </table>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="noteBox tiny">
+        ปุ่ม “ดู” จะเปิดไฟล์ในแท็บใหม่ (ถ้ามีตัวไฟล์) • ปุ่ม “ดาวน์โหลด” จะสร้างไฟล์จาก DataURL • ปุ่ม “แก้ไข” ใช้แก้ชื่อผู้โหลด/หมายเหตุ • ปุ่ม “ลบ” จะลบจากคลัง
+      </div>
+
     </div>
 
-    <div class="msg okBox" id="ok"></div>
-    <div class="msg warnBox" id="warn"></div>
-    <div class="msg badBox" id="bad"></div>
-
-    <div class="hr"></div>
-    <div class="muted">
-      <span class="pill info" id="cnt">ไฟล์ทั้งหมด: 0</span>
-      <span class="pill info" id="space">ขนาดข้อมูลในคลัง: —</span>
-    </div>
   </div>
-
-  <div class="card" style="margin-top:14px">
-    <h2>ตารางไฟล์จาก Upload</h2>
-
-    <div class="row" style="margin:10px 0">
-      <input id="q" placeholder="ค้นหา: ชื่อไฟล์ / tag / ผู้อัปโหลด / ประเภทไฟล์" />
-      <select id="sort">
-        <option value="NEW">ล่าสุดก่อน</option>
-        <option value="OLD">เก่าก่อน</option>
-        <option value="NAME">เรียงชื่อไฟล์</option>
-        <option value="SIZE">เรียงขนาดไฟล์</option>
-      </select>
-      <select id="show">
-        <option value="200">แสดง 200 รายการ</option>
-        <option value="500">แสดง 500 รายการ</option>
-        <option value="1000">แสดง 1000 รายการ</option>
-      </select>
-      <button class="btn" id="btnApply">ประมวลผล</button>
-    </div>
-
-    <div style="overflow:auto; max-height:70vh">
-      <table>
-        <thead>
-          <tr>
-            <th>ชื่อไฟล์</th>
-            <th class="nowrap">ประเภท</th>
-            <th class="right nowrap">ขนาด</th>
-            <th class="nowrap">วันที่อัปโหลด</th>
-            <th class="nowrap">ผู้อัปโหลด</th>
-            <th>Tag</th>
-            <th class="nowrap">คำสั่ง</th>
-          </tr>
-        </thead>
-        <tbody id="rows"></tbody>
-      </table>
-    </div>
-  </div>
-
 </div>
 
 <script>
 /* =========================
-   0) Guard: login + ADMIN
+   Guard: ADMIN only
    ========================= */
 const SESSION_KEY = "fa_session_v1";
 const session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
 if(!session){ location.href="login.html"; }
-const role = (session.role || "USER").toUpperCase();
-if(role !== "ADMIN"){
-  alert("หน้านี้สำหรับผู้ดูแลระบบ (ADMIN) เท่านั้น");
-  location.href="index.html";
-}
+const role = (session.role||"USER").toUpperCase();
 document.getElementById("userBadge").textContent =
   "ผู้ใช้: " + (session.fullname || session.username) + " • บทบาท: " + role;
 
-/* =========================
-   1) Storage key
-   ========================= */
-const UPLOADS_KEY = "fa_upload_files_v1";
+if(role !== "ADMIN"){
+  alert("หน้านี้สำหรับ ADMIN เท่านั้น");
+  location.href="index.html";
+}
 
 /* =========================
-   2) Helpers
+   Storage keys
+   ========================= */
+const UPLOAD_KEY = "fa_upload_files_v1";
+
+/* =========================
+   Helpers
    ========================= */
 const $ = (id)=>document.getElementById(id);
-function safe(v){ return (v===null||v===undefined) ? "" : String(v); }
 function show(box, text){
   const el = $(box);
   el.textContent = text;
   el.style.display="block";
   setTimeout(()=>el.style.display="none", 2500);
 }
-function getUploads(){ return JSON.parse(localStorage.getItem(UPLOADS_KEY) || "[]"); }
-function setUploads(arr){ localStorage.setItem(UPLOADS_KEY, JSON.stringify(arr)); }
-function uid(){ return "UP-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2,6).toUpperCase(); }
-function contains(hay, q){
-  if(!q) return true;
-  return String(hay||"").toLowerCase().includes(q.toLowerCase());
+function getData(){ return JSON.parse(localStorage.getItem(UPLOAD_KEY) || "[]"); }
+function setData(arr){ localStorage.setItem(UPLOAD_KEY, JSON.stringify(arr)); }
+function uid(){ return "U" + Math.random().toString(36).slice(2,8).toUpperCase() + "-" + Date.now().toString(36).toUpperCase(); }
+function fmtTs(ts){
+  if(!ts) return "-";
+  const d=new Date(ts);
+  const pad=n=>String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
-function fmt(ts){ return ts ? new Date(ts).toLocaleString() : "-"; }
-function humanBytes(n){
-  n = Number(n||0);
-  const u=["B","KB","MB","GB"];
-  let i=0;
-  while(n>=1024 && i<u.length-1){ n/=1024; i++; }
-  return (i===0? n.toFixed(0) : n.toFixed(2))+" "+u[i];
+function fmtBytes(bytes){
+  if(bytes===0) return "0 B";
+  const k=1024, sizes=["B","KB","MB","GB"];
+  const i=Math.floor(Math.log(bytes)/Math.log(k));
+  return (bytes/Math.pow(k,i)).toFixed(i?1:0) + " " + sizes[i];
 }
-function approxStoreSize(){
-  const s = localStorage.getItem(UPLOADS_KEY) || "[]";
-  // rough bytes in UTF-16 ~ 2 bytes/char
-  return s.length * 2;
+function escapeHtml(s){
+  return String(s||"").replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m]));
 }
-function downloadText(filename, text, mime="application/json"){
-  const blob = new Blob([text], {type:mime});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href=url; a.download=filename;
+function downloadBlob(filename, mime, dataUrl){
+  // dataUrl: "data:xxx;base64,...."
+  const a=document.createElement("a");
+  a.href=dataUrl;
+  a.download=filename || "download";
   document.body.appendChild(a);
   a.click();
   a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url), 1000);
-}
-function toCSV(rows){
-  const esc = (v)=>('"'+String(v??"").replaceAll('"','""')+'"');
-  if(!rows.length) return "sep=,\n";
-  const cols = Object.keys(rows[0]);
-  const lines = [];
-  lines.push("sep=,");
-  lines.push(cols.map(esc).join(","));
-  for(const r of rows){
-    lines.push(cols.map(c=>esc(r[c])).join(","));
-  }
-  return lines.join("\n");
-}
-async function fileToDataURL(file){
-  return new Promise((resolve,reject)=>{
-    const fr = new FileReader();
-    fr.onload = ()=>resolve(fr.result);
-    fr.onerror = ()=>reject(new Error("อ่านไฟล์ไม่สำเร็จ"));
-    fr.readAsDataURL(file);
-  });
 }
 
 /* =========================
-   3) Upload handler
+   Policy (practical)
    ========================= */
-$("btnUpload").addEventListener("click", async ()=>{
-  const files = $("files").files;
-  if(!files || files.length===0){ show("warn","กรุณาเลือกไฟล์ก่อน"); return; }
-  if(files.length>10){ show("warn","เลือกได้ครั้งละไม่เกิน 10 ไฟล์"); return; }
-
-  const tag = $("tag").value.trim();
-  const uploader = safe(session.fullname || session.username);
-
-  const current = getUploads();
-  const now = Date.now();
-
-  try{
-    for(const f of files){
-      // แนะนำตรง ๆ: ถ้าไฟล์ใหญ่เกิน อาจเก็บไม่ไหว
-      if(f.size > 2.5 * 1024 * 1024){
-        show("warn", `ไฟล์ "${f.name}" มีขนาดใหญ่ (${humanBytes(f.size)}) อาจเกินเพดาน localStorage`);
-      }
-
-      const dataUrl = await fileToDataURL(f);
-
-      const rec = {
-        id: uid(),
-        original_name: f.name,
-        display_name: f.name,
-        mime: f.type || "application/octet-stream",
-        size: f.size || 0,
-        data_url: dataUrl,         // เก็บไฟล์จริง
-        tag: tag,
-        uploaded_at: now,
-        uploaded_by: uploader,
-        updated_at: now,
-        updated_by: uploader,
-        deleted: false
-      };
-
-      current.push(rec);
-
-      // ทดลองเขียนลง storage เพื่อเช็คเพดานจริง (ถ้าเกินจะ throw)
-      try{
-        setUploads(current);
-      }catch(e){
-        // rollback file push
-        current.pop();
-        throw new Error("พื้นที่ localStorage ไม่พอสำหรับไฟล์นี้ (แนะนำย้ายไปฐานข้อมูล/Drive หรือใช้ Backend)");
-      }
-    }
-
-    $("files").value = "";
-    show("ok","บันทึกไฟล์เข้าคลังเรียบร้อย ✅");
-    render();
-  }catch(err){
-    show("bad", err.message || "เกิดข้อผิดพลาดระหว่างอัปโหลด");
-  }
-});
-
-$("btnClear").addEventListener("click", ()=>{
-  $("files").value="";
-  show("ok","ล้างช่องเลือกไฟล์แล้ว");
-});
+const MAX_FILES_PER_BATCH = 10;
+// ถ้าเก็บ DataURL แล้วเสี่ยงเต็ม localStorage ให้จำกัดขนาดไฟล์ต่อไฟล์ (ประมาณ 1.5MB)
+const MAX_STORE_BYTES_PER_FILE = 1.5 * 1024 * 1024;
 
 /* =========================
-   4) Render table
+   Render table
    ========================= */
-let VIEW = [];
-
-function computeView(){
-  const all = getUploads().filter(x=>!x.deleted);
-  const q = $("q").value.trim();
-  const sort = $("sort").value;
-  const limit = Number($("show").value);
-
-  let arr = all.filter(r=>{
-    const hay = [r.display_name, r.original_name, r.tag, r.uploaded_by, r.mime].join(" ");
-    return contains(hay, q);
-  });
-
-  if(sort==="NEW") arr.sort((a,b)=>(b.uploaded_at||0)-(a.uploaded_at||0));
-  if(sort==="OLD") arr.sort((a,b)=>(a.uploaded_at||0)-(b.uploaded_at||0));
-  if(sort==="NAME") arr.sort((a,b)=>String(a.display_name||"").localeCompare(String(b.display_name||""),"th"));
-  if(sort==="SIZE") arr.sort((a,b)=>Number(b.size||0)-Number(a.size||0));
-
-  VIEW = arr.slice(0, limit);
-  $("cnt").textContent = `ไฟล์ทั้งหมด: ${all.length}`;
-  $("space").textContent = `ขนาดข้อมูลในคลัง: ~${humanBytes(approxStoreSize())}`;
-}
-
 function render(){
-  computeView();
-  const tb = $("rows");
+  const q = $("q").value.trim().toLowerCase();
+  const f = $("filterStored").value;
+
+  const all = getData().filter(x=>!x.deleted);
+  let rows = all.filter(x=>{
+    const hay = [
+      x.filename, x.mime, x.uploader, x.note
+    ].join(" ").toLowerCase();
+    if(q && !hay.includes(q)) return false;
+    if(f==="STORED") return !!x.dataUrl;
+    if(f==="META") return !x.dataUrl;
+    return true;
+  });
+
+  $("countAll").textContent = all.length;
+  $("countStored").textContent = all.filter(x=>!!x.dataUrl).length;
+  $("countMetaOnly").textContent = all.filter(x=>!x.dataUrl).length;
+
+  const tb = $("tb");
   tb.innerHTML = "";
 
-  if(VIEW.length===0){
-    tb.innerHTML = `<tr><td colspan="7" class="muted">ยังไม่มีไฟล์ หรือไม่พบตามคำค้น</td></tr>`;
-    return;
-  }
+  rows.sort((a,b)=> (b.uploaded_at||0) - (a.uploaded_at||0));
 
-  VIEW.forEach(r=>{
-    const tr = document.createElement("tr");
+  rows.forEach(x=>{
+    const tr=document.createElement("tr");
+    const stored = x.dataUrl ? `<span class="pill ok">มีตัวไฟล์</span>` : `<span class="pill warn">เฉพาะรายการ</span>`;
     tr.innerHTML = `
       <td>
-        <b>${safe(r.display_name)}</b>
-        <div class="tiny">ไฟล์เดิม: ${safe(r.original_name)} • ID: ${safe(r.id)}</div>
+        <div style="font-weight:900">${escapeHtml(x.filename)}</div>
+        <div class="tiny mono">ID: ${escapeHtml(x.id)}</div>
       </td>
-      <td class="nowrap">${safe(r.mime)}</td>
-      <td class="right nowrap">${humanBytes(r.size)}</td>
-      <td class="nowrap">${fmt(r.uploaded_at)}</td>
-      <td class="nowrap">${safe(r.uploaded_by)}</td>
-      <td>
-        <input data-field="tag" data-id="${r.id}" value="${safe(r.tag)}" placeholder="tag" />
-        <div class="tiny">แก้ไข tag ได้ทันที แล้วกด “บันทึก”</div>
-      </td>
-      <td class="nowrap">
-        <button class="btn" data-act="download" data-id="${r.id}">ดาวน์โหลด</button>
-        <button class="btn primary" data-act="save" data-id="${r.id}">บันทึก</button>
-        <button class="btn danger" data-act="del" data-id="${r.id}">ลบ</button>
+      <td>${escapeHtml(x.mime||"-")}</td>
+      <td>${fmtBytes(Number(x.size||0))}</td>
+      <td>${fmtTs(x.uploaded_at)}</td>
+      <td>${escapeHtml(x.uploader||"-")}</td>
+      <td>${escapeHtml(x.note||"-")}</td>
+      <td>${stored}</td>
+      <td class="right">
+        <div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap">
+          <button class="miniBtn primary" data-view="${x.id}" ${x.dataUrl?"":"disabled"}>ดู</button>
+          <button class="miniBtn primary" data-dl="${x.id}" ${x.dataUrl?"":"disabled"}>ดาวน์โหลด</button>
+          <button class="miniBtn warn" data-edit="${x.id}">แก้ไข</button>
+          <button class="miniBtn danger" data-del="${x.id}">ลบ</button>
+        </div>
       </td>
     `;
     tb.appendChild(tr);
   });
 
-  // actions
-  tb.querySelectorAll("button[data-act]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const act = btn.getAttribute("data-act");
-      const id = btn.getAttribute("data-id");
-      if(act==="download") onDownload(id);
-      if(act==="save") onSaveRow(id);
-      if(act==="del") onDelete(id);
+  // bind actions
+  tb.querySelectorAll("button[data-view]").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      const id=b.dataset.view;
+      const x=getData().find(z=>z.id===id);
+      if(!x?.dataUrl){ show("warn","ไฟล์นี้ไม่มีตัวไฟล์ (เก็บเฉพาะรายการ)"); return; }
+      window.open(x.dataUrl, "_blank");
+    });
+  });
+  tb.querySelectorAll("button[data-dl]").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      const id=b.dataset.dl;
+      const x=getData().find(z=>z.id===id);
+      if(!x?.dataUrl){ show("warn","ไฟล์นี้ไม่มีตัวไฟล์ (เก็บเฉพาะรายการ)"); return; }
+      downloadBlob(x.filename, x.mime, x.dataUrl);
+    });
+  });
+  tb.querySelectorAll("button[data-edit]").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      const id=b.dataset.edit;
+      const arr=getData();
+      const x=arr.find(z=>z.id===id);
+      if(!x){ show("bad","ไม่พบรายการ"); return; }
+      const newUploader = prompt("แก้ไขชื่อผู้อัปโหลด:", x.uploader||"") ?? x.uploader;
+      const newNote = prompt("แก้ไขหมายเหตุ:", x.note||"") ?? x.note;
+      x.uploader = (newUploader||"").trim();
+      x.note = (newNote||"").trim();
+      x.updated_at = Date.now();
+      x.updated_by = (session.fullname || session.username);
+      setData(arr);
+      show("ok","แก้ไขข้อมูลเรียบร้อย ✅");
+      render();
+    });
+  });
+  tb.querySelectorAll("button[data-del]").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      const id=b.dataset.del;
+      if(!confirm("ยืนยันลบรายการไฟล์นี้ออกจากคลัง?")) return;
+      const arr=getData();
+      const x=arr.find(z=>z.id===id);
+      if(!x){ show("bad","ไม่พบรายการ"); return; }
+      x.deleted=true;
+      x.deleted_at=Date.now();
+      x.deleted_by=(session.fullname || session.username);
+      setData(arr);
+      show("ok","ลบเรียบร้อย ✅");
+      render();
     });
   });
 }
 
-function onDownload(id){
-  const all = getUploads();
-  const r = all.find(x=>x.id===id);
-  if(!r){ show("bad","ไม่พบไฟล์"); return; }
+/* =========================
+   Add files
+   ========================= */
+async function readAsDataURL(file){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=()=>resolve(String(r.result||""));
+    r.onerror=()=>reject(r.error||new Error("FileReader error"));
+    r.readAsDataURL(file);
+  });
+}
 
-  // สร้างลิงก์ดาวน์โหลดจาก data_url
-  const a = document.createElement("a");
-  a.href = r.data_url;
-  a.download = r.display_name || r.original_name || "download";
+$("btnAdd").addEventListener("click", async ()=>{
+  const fileInput = $("files");
+  const list = Array.from(fileInput.files || []);
+  if(list.length===0){ show("warn","กรุณาเลือกไฟล์ก่อน"); return; }
+  if(list.length > MAX_FILES_PER_BATCH){
+    show("warn",`เลือกได้สูงสุด ${MAX_FILES_PER_BATCH} ไฟล์ต่อครั้ง`); return;
+  }
+
+  const uploader = ($("uploader").value || (session.fullname || session.username) || "Admin").trim();
+  const note = ($("note").value || "").trim();
+
+  const arr = getData();
+  let storedCount=0, metaOnlyCount=0;
+
+  for(const file of list){
+    const item = {
+      id: uid(),
+      filename: file.name,
+      size: file.size,
+      mime: file.type || "application/octet-stream",
+      uploaded_at: Date.now(),
+      uploaded_by: (session.fullname || session.username),
+      uploader,
+      note,
+      updated_at: null,
+      updated_by: null,
+      deleted: false,
+      dataUrl: null
+    };
+
+    // store content only if not too big
+    if(file.size <= MAX_STORE_BYTES_PER_FILE){
+      try{
+        item.dataUrl = await readAsDataURL(file);
+        storedCount++;
+      }catch(e){
+        item.dataUrl = null;
+        metaOnlyCount++;
+      }
+    }else{
+      item.dataUrl = null;
+      metaOnlyCount++;
+    }
+    arr.unshift(item);
+  }
+
+  try{
+    setData(arr);
+  }catch(e){
+    // storage quota issue -> fallback: strip dataUrl and retry
+    const safe = arr.map(x=>({ ...x, dataUrl: null }));
+    setData(safe);
+    show("warn","พื้นที่จัดเก็บเต็ม: ระบบเก็บเฉพาะรายการ (ไม่เก็บตัวไฟล์) เพื่อความปลอดภัย ✅");
+    $("files").value = "";
+    render();
+    return;
+  }
+
+  $("files").value="";
+  show("ok",`บันทึกรายการไฟล์เรียบร้อย ✅ (เก็บตัวไฟล์: ${storedCount} | เฉพาะรายการ: ${metaOnlyCount})`);
+  render();
+});
+
+$("btnRefresh").addEventListener("click", render);
+$("q").addEventListener("input", render);
+$("filterStored").addEventListener("change", render);
+
+/* =========================
+   Export / Import
+   ========================= */
+function downloadText(filename, text, mime="application/json"){
+  const blob = new Blob([text], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download=filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
-
-  show("ok","เริ่มดาวน์โหลดแล้ว ✅");
+  setTimeout(()=>URL.revokeObjectURL(url), 500);
 }
 
-function onSaveRow(id){
-  const all = getUploads();
-  const idx = all.findIndex(x=>x.id===id);
-  if(idx<0){ show("bad","ไม่พบไฟล์"); return; }
-
-  const tagInput = document.querySelector(`input[data-field="tag"][data-id="${id}"]`);
-  all[idx].tag = safe(tagInput?.value).trim();
-  all[idx].updated_at = Date.now();
-  all[idx].updated_by = safe(session.fullname || session.username);
-
-  try{
-    setUploads(all);
-    show("ok","บันทึกการแก้ไขเรียบร้อย ✅");
-    render();
-  }catch(e){
-    show("bad","บันทึกไม่สำเร็จ (อาจพื้นที่ไม่พอ)");
-  }
-}
-
-function onDelete(id){
-  if(!confirm("ยืนยันลบ (soft-delete) ไฟล์นี้?")) return;
-  const all = getUploads();
-  const idx = all.findIndex(x=>x.id===id);
-  if(idx<0){ show("bad","ไม่พบไฟล์"); return; }
-
-  all[idx].deleted = true;
-  all[idx].deleted_at = Date.now();
-  all[idx].deleted_by = safe(session.fullname || session.username);
-  all[idx].updated_at = Date.now();
-  all[idx].updated_by = safe(session.fullname || session.username);
-
-  setUploads(all);
-  show("ok","ลบไฟล์เรียบร้อย ✅");
-  render();
-}
-
-/* =========================
-   5) Export
-   ========================= */
 $("btnExportJson").addEventListener("click", ()=>{
-  // ส่งเฉพาะรายการที่ไม่ถูกลบ + รวม data_url (ใหญ่)
-  const data = getUploads().filter(x=>!x.deleted);
-  downloadText(`fa_upload_files_${Date.now()}.json`, JSON.stringify(data,null,2), "application/json");
-  show("ok","Export JSON เรียบร้อย");
+  const data = getData().filter(x=>!x.deleted);
+  downloadText(
+    `fa-upload-files-${new Date().toISOString().slice(0,10)}.json`,
+    JSON.stringify({ exported_at: Date.now(), count: data.length, data }, null, 2),
+    "application/json"
+  );
+  show("ok","Export JSON เรียบร้อย ✅");
 });
 
 $("btnExportCsv").addEventListener("click", ()=>{
-  // CSV ไม่ใส่ data_url (ใหญ่เกิน) — เก็บเฉพาะ metadata
-  const data = getUploads().filter(x=>!x.deleted).map(r=>({
-    id: r.id,
-    display_name: r.display_name,
-    original_name: r.original_name,
-    mime: r.mime,
-    size: r.size,
-    tag: r.tag,
-    uploaded_at: r.uploaded_at ? new Date(r.uploaded_at).toISOString() : "",
-    uploaded_by: r.uploaded_by,
-    updated_at: r.updated_at ? new Date(r.updated_at).toISOString() : "",
-    updated_by: r.updated_by
-  }));
-  downloadText(`fa_upload_files_${Date.now()}.csv`, toCSV(data), "text/csv;charset=utf-8");
-  show("ok","Export CSV เรียบร้อย");
+  const data = getData().filter(x=>!x.deleted);
+  const header = ["id","filename","mime","size","uploaded_at","uploader","note","stored_file"];
+  const lines = [header.join(",")];
+  data.forEach(x=>{
+    const row = [
+      x.id,
+      `"${String(x.filename||"").replaceAll('"','""')}"`,
+      x.mime||"",
+      x.size||0,
+      fmtTs(x.uploaded_at),
+      `"${String(x.uploader||"").replaceAll('"','""')}"`,
+      `"${String(x.note||"").replaceAll('"','""')}"`,
+      x.dataUrl ? "YES" : "NO"
+    ];
+    lines.push(row.join(","));
+  });
+  downloadText(
+    `fa-upload-files-${new Date().toISOString().slice(0,10)}.csv`,
+    lines.join("\n"),
+    "text/csv"
+  );
+  show("ok","Export CSV เรียบร้อย ✅");
+});
+
+$("btnImport").addEventListener("click", ()=>$("importFile").click());
+$("importFile").addEventListener("change", async (ev)=>{
+  const f = ev.target.files?.[0];
+  if(!f) return;
+  try{
+    const text = await f.text();
+    const json = JSON.parse(text);
+    const incoming = Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : []);
+    if(!Array.isArray(incoming) || incoming.length===0){
+      show("warn","ไฟล์ JSON ไม่ถูกต้อง หรือไม่มีข้อมูล"); return;
+    }
+    if(!confirm(`ยืนยัน Import จำนวน ${incoming.length} รายการ? (จะรวมกับของเดิม)`)) return;
+
+    const arr = getData();
+    // normalize + ensure id
+    incoming.forEach(x=>{
+      const item = {
+        id: x.id || uid(),
+        filename: x.filename || "unknown",
+        size: Number(x.size||0),
+        mime: x.mime || "application/octet-stream",
+        uploaded_at: Number(x.uploaded_at||Date.now()),
+        uploaded_by: x.uploaded_by || (session.fullname || session.username),
+        uploader: x.uploader || "",
+        note: x.note || "",
+        updated_at: x.updated_at || null,
+        updated_by: x.updated_by || null,
+        deleted: false,
+        dataUrl: x.dataUrl || null
+      };
+      arr.unshift(item);
+    });
+
+    try{
+      setData(arr);
+      show("ok","Import เรียบร้อย ✅");
+    }catch(e){
+      // quota -> strip file contents
+      const safe = arr.map(x=>({ ...x, dataUrl: null }));
+      setData(safe);
+      show("warn","Import สำเร็จแบบปลอดภัย: เก็บเฉพาะรายการ (ไม่เก็บตัวไฟล์) ✅");
+    }
+
+    $("importFile").value="";
+    render();
+  }catch(e){
+    show("bad","อ่าน/แปลง JSON ไม่สำเร็จ");
+  }
 });
 
 /* =========================
-   6) UI events + nav
+   Navigation
    ========================= */
-$("btnApply").addEventListener("click", render);
-$("q").addEventListener("input", render);
-$("sort").addEventListener("change", render);
-$("show").addEventListener("change", render);
-
-$("btnBackHub").addEventListener("click", ()=>location.href="data-hub.html");
-$("btnCashboard").addEventListener("click", ()=>location.href="cashboard.html");
-$("btnHome").addEventListener("click", ()=>location.href="index.html");
+$("goAdminHome").addEventListener("click", ()=>location.href="admin.html");
+$("goDataHub").addEventListener("click", ()=>location.href="data-hub.html");
+$("goCashboard").addEventListener("click", ()=>location.href="cashboard.html");
+$("goHome").addEventListener("click", ()=>location.href="index.html");
 
 /* =========================
-   7) Init
+   Init
    ========================= */
+$("uploader").value = (session.fullname || session.username || "Admin");
 render();
 </script>
 </body>
