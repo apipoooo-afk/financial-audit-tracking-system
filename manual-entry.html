@@ -3,886 +3,1298 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>บันทึก/แก้ไข/อัปเดตข้อมูล (Manual) • ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์</title>
+  <title>บันทึก/แก้ไข/อัปเดตข้อมูล (Manual Entry) • ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์</title>
+
   <style>
     :root{
-      --bg:#f5f7fb; --card:#fff; --line:#dde3ee; --text:#29384d; --muted:#6a7c95;
-      --brand:#1e5aaa; --brand2:#2f7de1; --shadow:0 10px 30px rgba(20,40,80,.08);
-      --r:18px; --danger:#b13b3b;
+      --bg:#f4f7fb; --card:#fff; --line:#dde5f2; --text:#24364c; --muted:#6a7f9a;
+      --brand:#1e5aaa; --brand2:#2f7de1;
+      --shadow:0 10px 28px rgba(20,40,80,.08);
+      --r:18px;
+
+      --ok:#1f7a3b; --bad:#b13b3b; --warn:#8a5a00; --info:#0b5aa6;
+      --chip:#eef6ff;
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Thai","Noto Sans";background:var(--bg);color:var(--text)}
     header{
-      position:sticky; top:0; z-index:10;
-      background:#fff; border-bottom:1px solid var(--line);
-      padding:14px 18px; display:flex; align-items:center; gap:12px;
+      position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);
+      padding:14px 18px;display:flex;align-items:center;gap:12px
     }
     .title{display:flex;flex-direction:column;line-height:1.05}
     .title h1{margin:0;font-size:18px}
     .title small{color:var(--muted)}
     .spacer{flex:1}
-    .badge{border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa;padding:8px 12px;border-radius:14px;font-weight:900}
+    .badge{border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa;padding:8px 12px;border-radius:14px;font-weight:900;white-space:nowrap}
 
-    .wrap{max-width:1300px;margin:18px auto;padding:0 18px}
-    .grid{display:grid;grid-template-columns:1fr 360px;gap:14px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;min-width:0}
-    h2{margin:0 0 10px;font-size:16px}
-    h3{margin:14px 0 8px;font-size:14px}
+    .wrap{max-width:1200px;margin:18px auto;padding:0 18px}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+    .card{
+      grid-column:span 12;
+      background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+      box-shadow:var(--shadow);padding:14px;min-width:0
+    }
+    @media(min-width:900px){
+      .col8{grid-column:span 8}
+      .col4{grid-column:span 4}
+      .col6{grid-column:span 6}
+    }
+    h2{margin:0 0 8px;font-size:16px}
+    h3{margin:0 0 6px;font-size:14px}
     .muted{color:var(--muted);font-size:13px}
-    label{font-weight:900;font-size:13px}
+    .hr{height:1px;background:#eef2f7;margin:12px 0}
+
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row>*{flex:1;min-width:200px}
+
+    label{display:block;font-size:12px;color:var(--muted);font-weight:900;margin:6px 0 4px}
     input,select,textarea{
-      width:100%;padding:10px 12px;border-radius:14px;border:1px solid var(--line);
-      background:#fff;font-size:14px;outline:none
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px 10px;
+      background:#fff;
+      color:var(--text);
+      outline:none;
+      font-size:14px;
     }
     textarea{min-height:90px;resize:vertical}
-    .row{display:flex;gap:10px;flex-wrap:wrap}
-    .row > div{flex:1;min-width:220px}
+
     .btn{
-      border:1px solid var(--line); background:#fff; border-radius:14px;
-      padding:10px 12px; cursor:pointer; font-weight:900; color:var(--text);
+      width:100%;
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:14px;
+      padding:12px 12px;
+      cursor:pointer;
+      font-weight:900;
+      color:var(--text);
+      text-align:center;
     }
-    .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2)); color:#fff; border-color:transparent}
-    .btn.danger{background:#fff0f0;border-color:#ffd2d2;color:var(--danger)}
+    .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;border-color:transparent}
+    .btn.warn{border-color:#ffe7b8;background:#fff7e6;color:var(--warn)}
+    .btn.danger{border-color:#ffd2d2;background:#fff0f0;color:var(--bad)}
     .btn:disabled{opacity:.55;cursor:not-allowed}
+
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid #cfe2ff;background:var(--chip);color:#1e5aaa}
+    .pill.ok{border-color:#c8f2d6;background:#effaf3;color:var(--ok)}
+    .pill.warn{border-color:#ffe7b8;background:#fff7e6;color:var(--warn)}
+    .pill.bad{border-color:#ffd2d2;background:#fff0f0;color:var(--bad)}
+    .pill.info{border-color:#cfe2ff;background:#eef6ff;color:var(--info)}
+    .tiny{font-size:12px;color:var(--muted)}
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
+
+    .tabs{display:flex;gap:8px;flex-wrap:wrap}
+    .tab{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:999px;
+      padding:8px 12px;
+      cursor:pointer;
+      font-weight:900;
+      color:var(--text);
+      user-select:none;
+    }
+    .tab.active{border-color:#cfe2ff;background:#eef6ff;color:#1e5aaa}
+    .section{display:none}
+    .section.active{display:block}
+
+    .tableWrap{overflow:auto;border:1px solid var(--line);border-radius:14px}
+    table{border-collapse:collapse;width:100%;min-width:860px;background:#fff}
+    th,td{border-bottom:1px solid #eef2f7;padding:10px;vertical-align:top}
+    th{position:sticky;top:0;background:#fafcff;border-bottom:1px solid var(--line);text-align:left;font-size:12px;color:var(--muted)}
+    td{font-size:13px}
+    .right{text-align:right}
+
     .msg{display:none;margin-top:10px;padding:10px 12px;border-radius:14px;font-weight:900}
-    .ok{border:1px solid #c8f2d6;background:#effaf3;color:#1f7a3b}
-    .bad{border:1px solid #ffd2d2;background:#fff0f0;color:var(--danger)}
-    .warn{border:1px solid #ffe7b8;background:#fff7e6;color:#8a5a00}
+    .okBox{border:1px solid #c8f2d6;background:#effaf3;color:var(--ok)}
+    .badBox{border:1px solid #ffd2d2;background:#fff0f0;color:var(--bad)}
+    .warnBox{border:1px solid #ffe7b8;background:#fff7e6;color:var(--warn)}
 
-    .section{margin-top:12px;padding-top:12px;border-top:1px dashed #e2e8f2}
-    .mini{font-size:12px;color:#7b8dab}
-    .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa}
-    .locked{border:1px solid #ffd2d2;background:#fff0f0;color:var(--danger);padding:10px 12px;border-radius:14px;font-weight:900;margin-top:10px;display:none}
-    .gridSmall{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .tablelike{display:grid;gap:10px}
-    .person{background:#f7f9fc;border:1px solid #e6ecf6;border-radius:14px;padding:10px}
-    .person .gridSmall{margin-top:8px}
-
-    .rightBox{position:sticky;top:92px;height:calc(100vh - 110px);overflow:auto}
-    .kv{display:flex;justify-content:space-between;gap:10px;margin:8px 0}
-    .kv b{white-space:nowrap}
-    .kv span{color:var(--muted);text-align:right}
-    .hr{height:1px;background:#eef2f7;margin:10px 0}
-
-    @media (max-width:1100px){
-      .grid{grid-template-columns:1fr}
-      .rightBox{position:relative;top:auto;height:auto}
-      .row > div{min-width:180px}
+    .noteBox{
+      border:1px dashed #cfe2ff;background:#f6fbff;border-radius:14px;padding:10px 12px
     }
   </style>
 </head>
+
 <body>
 <header>
   <div class="title">
-    <h1>บันทึก/แก้ไข/อัปเดตข้อมูล (Manual Data Entry)</h1>
-    <small>ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์ • ข้อมูล 2.1.1–2.1.20</small>
+    <h1>บันทึก/แก้ไข/อัปเดตข้อมูล (Manual Entry)</h1>
+    <small>ตามหัวข้อ 2.1.1–2.1.20 • ล็อกแก้ไขเมื่อครบ 356 วันจากการบันทึกครั้งแรก</small>
   </div>
   <div class="spacer"></div>
-  <div class="badge" id="userBadge">กำลังตรวจสอบสถานะผู้ใช้…</div>
+  <div class="badge" id="userBadge">กำลังตรวจสอบผู้ใช้…</div>
 </header>
 
 <div class="wrap">
   <div class="grid">
 
-    <!-- LEFT: FORM -->
-    <main class="card">
-      <h2>กำหนด “ชุดข้อมูล” ที่ต้องการบันทึก/แก้ไข</h2>
+    <!-- LEFT: Form -->
+    <div class="card col8">
+      <h2>แบบฟอร์มบันทึกข้อมูล</h2>
       <div class="muted">
-        เลือก <b>หน่วยรับตรวจ + ปีงบประมาณ + งวด</b> แล้วกด “โหลด/เริ่มบันทึก” ระบบจะโหลดเรคคอร์ดเดิมให้ (ถ้ามี)  
-        และจะ <b>ล็อกการแก้ไขเมื่อครบ 356 วัน</b> นับจากวันที่บันทึกครั้งแรกของชุดข้อมูลนั้น
+        สถานะ: <span id="modePill" class="pill info">สร้างรายการใหม่</span>
+        &nbsp;|&nbsp; Record ID: <span class="pill mono" id="rid">NEW</span>
+        &nbsp;|&nbsp; <span class="pill" id="lockPill">ยังไม่ล็อก</span>
       </div>
 
-      <div class="section">
-        <h3>2.1.1 หน่วยรับตรวจ (พร้อมที่ตั้ง)</h3>
+      <div class="hr"></div>
+
+      <div class="tabs">
+        <div class="tab active" data-tab="t1">2.1.1–2.1.2 หน่วย/งวด</div>
+        <div class="tab" data-tab="t2">2.1.3–2.1.6 บุคลากร</div>
+        <div class="tab" data-tab="t3">2.1.7–2.1.10 สถานะหลัก</div>
+        <div class="tab" data-tab="t4">2.1.11–2.1.13 เช็คลิสต์งานตรวจ</div>
+        <div class="tab" data-tab="t5">2.1.14–2.1.20 ผล/ปัญหา/ข้อเสนอแนะ</div>
+        <div class="tab" data-tab="t6">สรุป/ส่งข้อมูล</div>
+      </div>
+
+      <div class="hr"></div>
+
+      <!-- t1 -->
+      <div class="section active" id="t1">
+        <h3>2.1.1 หน่วยรับตรวจ</h3>
         <div class="row">
           <div>
-            <label>ประเภทหน่วย (ตัวอย่าง)</label>
+            <label>ประเภท อปท.</label>
             <select id="entityType">
-              <option value="อบจ.">อบจ.</option>
-              <option value="ทม.">ทม.</option>
-              <option value="ทน.">ทน.</option>
-              <option value="ทต.">ทต.</option>
-              <option value="อบต." selected>อบต.</option>
-              <option value="อื่นๆ">อื่นๆ</option>
+              <option value="">— เลือกประเภท —</option>
+              <option>อบจ</option>
+              <option>ทม</option>
+              <option>ทน</option>
+              <option>ทต</option>
+              <option>อบต</option>
             </select>
           </div>
           <div>
-            <label>ชื่อหน่วยรับตรวจ (พิมพ์ค้นหา/กรอกเอง)</label>
-            <input id="entityName" placeholder="เช่น เทศบาลเมือง..., อบต...." list="entityNameList" />
-            <datalist id="entityNameList"></datalist>
-            <div class="mini">* เฟสแรกใช้รายการตัวอย่าง + กรอกเองได้ (เฟสถัดไปค่อยเชื่อมฐานข้อมูล อปท. ทั้งประเทศ)</div>
+            <label>ชื่อหน่วยรับตรวจ</label>
+            <input id="entityName" placeholder="เช่น เทศบาลเมืองศรีสะเกษ" />
           </div>
         </div>
 
-        <div class="row" style="margin-top:10px">
+        <div class="row">
           <div>
             <label>จังหวัด</label>
-            <select id="province"></select>
+            <input id="province" placeholder="เช่น ศรีสะเกษ" />
           </div>
           <div>
             <label>อำเภอ</label>
-            <input id="district" placeholder="พิมพ์อำเภอ (เฟสถัดไปทำเป็น dropdown)" />
+            <input id="district" placeholder="เช่น เมืองศรีสะเกษ" />
           </div>
           <div>
             <label>ตำบล</label>
-            <input id="subdistrict" placeholder="พิมพ์ตำบล (เฟสถัดไปทำเป็น dropdown)" />
+            <input id="subdistrict" placeholder="เช่น เมืองเหนือ" />
           </div>
         </div>
-      </div>
 
-      <div class="section">
-        <h3>2.1.2 ปีงบประมาณ / งวด / วันเวลา</h3>
+        <div class="hr"></div>
+
+        <h3>2.1.2 ปีงบประมาณ / งวด</h3>
         <div class="row">
           <div>
             <label>ปีงบประมาณ</label>
-            <select id="fiscalYear"></select>
+            <select id="fy"></select>
           </div>
           <div>
-            <label>งวด</label>
+            <label>รูปแบบงวด</label>
             <select id="periodType">
               <option value="YEAR">รายปี</option>
-              <option value="QUARTER" selected>รายไตรมาส</option>
+              <option value="QUARTER">รายไตรมาส</option>
               <option value="MONTH">รายเดือน</option>
+              <option value="WEEK">รายสัปดาห์</option>
               <option value="DAY">รายวัน</option>
             </select>
           </div>
           <div>
-            <label>ค่า “งวด”</label>
-            <select id="periodValue"></select>
+            <label>ค่า “งวด” (เช่น Q1 / 01 / W12 / 2025-12-28)</label>
+            <input id="periodValue" placeholder="เช่น Q2 หรือ 04 หรือ W12 หรือ 2025-12-28" />
           </div>
         </div>
 
-        <div class="row" style="margin-top:10px">
-          <div>
-            <label>วันที่-เวลาบันทึก/แก้ไข (อัตโนมัติ)</label>
-            <input id="nowStamp" disabled />
-          </div>
-          <div style="display:flex;align-items:end;gap:10px">
-            <button class="btn primary" id="btnLoad">โหลด/เริ่มบันทึก</button>
-            <button class="btn" id="btnNew">เริ่มชุดใหม่</button>
-          </div>
-        </div>
-
-        <div class="locked" id="lockedBox">
-          ชุดข้อมูลนี้ถูกล็อก (ครบ 356 วันจากวันที่บันทึกครั้งแรก) — สามารถดูข้อมูลได้ แต่ไม่สามารถแก้ไขได้
+        <div class="noteBox tiny">
+          วันที่-เวลา “บันทึก/แก้ไขล่าสุด” ระบบจะเติมให้อัตโนมัติเมื่อกดบันทึกหรือส่งข้อมูล
         </div>
       </div>
 
-      <div class="section">
+      <!-- t2 -->
+      <div class="section" id="t2">
         <h3>2.1.3 ผู้ตรวจสอบ (เพิ่มได้ 5 คน)</h3>
-        <div class="tablelike" id="auditors"></div>
+        <div id="auditorBox"></div>
         <div class="row">
           <button class="btn" id="addAuditor">+ เพิ่มผู้ตรวจสอบ</button>
         </div>
-      </div>
 
-      <div class="section">
+        <div class="hr"></div>
+
         <h3>2.1.4 ผู้สอบทาน (เพิ่มได้ 2 คน)</h3>
-        <div class="tablelike" id="reviewers"></div>
+        <div id="reviewerBox"></div>
         <div class="row">
           <button class="btn" id="addReviewer">+ เพิ่มผู้สอบทาน</button>
         </div>
-      </div>
 
-      <div class="section">
+        <div class="hr"></div>
+
         <h3>2.1.5 ผู้อำนวยการสำนัก (1 คน)</h3>
-        <div class="tablelike" id="director"></div>
-      </div>
+        <div class="row">
+          <div><label>ชื่อ-สกุล</label><input id="directorName" /></div>
+          <div><label>ตำแหน่ง</label><input id="directorPos" /></div>
+          <div><label>สังกัดสำนักงาน</label><input id="directorOffice" /></div>
+        </div>
+        <div class="row">
+          <div><label>วันที่ได้รับมอบหมาย (วัน/เดือน/ปี)</label><input id="directorAssign" type="date" /></div>
+        </div>
 
-      <div class="section">
+        <div class="hr"></div>
+
         <h3>2.1.6 ผู้รับตรวจ (1 คน)</h3>
-        <div class="tablelike" id="auditee"></div>
+        <div class="row">
+          <div><label>ชื่อ-สกุล</label><input id="auditeeName" /></div>
+          <div><label>ตำแหน่ง</label><input id="auditeePos" /></div>
+          <div><label>สังกัดสำนักงาน</label><input id="auditeeOffice" /></div>
+        </div>
+        <div class="row">
+          <div><label>วันที่ดำรงตำแหน่ง (วัน/เดือน/ปี)</label><input id="auditeeSince" type="date" /></div>
+        </div>
       </div>
 
-      <div class="section">
-        <h2>สถานะ/ผล/ปัญหา/ข้อเสนอแนะ (2.1.7–2.1.20)</h2>
-
+      <!-- t3 -->
+      <div class="section" id="t3">
         <h3>2.1.7 สถานะการตรวจสอบ FA</h3>
-        <select id="status217">
+        <label>เลือกสถานะ</label>
+        <select id="s217">
+          <option value="">— เลือก —</option>
           <option>ยุติการติดตามผล</option>
           <option>อยู่ระหว่างติดตามผลการตรวจสอบ</option>
           <option>ออกรายงานการตรวจแล้ว</option>
           <option>อยู่ระหว่างจัดพิมพ์รายงาน</option>
           <option>อยู่ระหว่างสอบทานของ ผตจ.</option>
           <option>อยู่ระหว่างสอบทาน ผอก.</option>
-          <option selected>อยู่ระหว่างตรวจสอบ</option>
+          <option>อยู่ระหว่างตรวจสอบ</option>
           <option>ยังไม่ตรวจ</option>
           <option>ไม่ทราบสถานะ</option>
         </select>
 
-        <h3>2.1.8 สถานะการปิดงบการเงิน</h3>
-        <select id="status218">
-          <option selected>ปิดงบการเงินแล้ว</option>
-          <option>ยังไม่ปิดงบการเงิน</option>
-          <option>ไม่ทราบสถานะ</option>
-        </select>
+        <div class="hr"></div>
 
-        <h3>2.1.9 สถานะการส่งรายงานการเงิน</h3>
-        <select id="status219">
-          <option selected>ส่งรายงานการเงินแล้ว</option>
-          <option>ยังไม่ส่งรายงานการเงิน</option>
-          <option>ไม่ทราบสถานะ</option>
-        </select>
-
-        <h3>2.1.10 สถานะการส่งหนังสือติดตามการส่งรายงานการเงิน</h3>
-        <select id="status2110">
-          <option>จัดทำหนังสือแล้ว</option>
-          <option selected>ยังไม่จัดทำหนังสือ</option>
-          <option>ไม่ทราบสถานะ</option>
-        </select>
-
-        <div class="section">
-          <h3>2.1.12 การประชุมปิดตรวจสอบ FA</h3>
-          <select id="closeMeeting212">
-            <option selected>ยังไม่ประชุมปิดตรวจ</option>
-            <option>ประชุมปิดตรวจสอบแล้ว</option>
-            <option>ไม่ทราบ</option>
-            <option>ยังตรวจสอบไม่เสร็จ</option>
-          </select>
-        </div>
-
-        <div class="section">
-          <h3>2.1.14 ผลการตรวจสอบ FA</h3>
-          <select id="opinion214">
-            <option>แบบไม่มีเงื่อนไข</option>
-            <option>แบบมีเงื่อนไข</option>
-            <option>ไม่รับรองรายงาน</option>
-            <option>ไม่ให้ความเห็น</option>
-            <option>ไม่ทราบ</option>
-            <option selected>ยังไม่ออกรายงาน</option>
-          </select>
-
-          <h3>2.1.15 ข้อสังเกตการตรวจสอบ FA</h3>
-          <select id="finding215">
-            <option selected>ไม่มีข้อสังเกต</option>
-            <option>มีข้อสังเกต</option>
-            <option>ไม่ทราบ</option>
-            <option>ยังไม่ออกรายงาน</option>
-          </select>
-
-          <h3>2.1.16 การปรับปรุงบัญชี</h3>
-          <select id="adjust216">
-            <option>มีการปรับปรุงมากกว่า 51 รายการ</option>
-            <option>มีการปรับปรุง 40-50 รายการ</option>
-            <option>มีการปรับปรุง 30-39 รายการ</option>
-            <option>มีการปรับปรุง 20-29 รายการ</option>
-            <option>มีการปรับปรุง 10-19 รายการ</option>
-            <option>มีการปรับปรุง 5-9 รายการ</option>
-            <option>มีการปรับปรุงน้อยกว่า 5 รายการ</option>
-            <option selected>ไม่มีการปรับปรุง</option>
-            <option>ยังไม่ทราบ</option>
-          </select>
-
-          <h3>2.1.17 เงินขาดบัญชี</h3>
-          <select id="cashShort217">
-            <option selected>ไม่มี</option>
-            <option>มี</option>
-            <option>ยังไม่ทราบ</option>
-          </select>
-        </div>
-
-        <div class="section">
-          <h3>2.1.19 ปัญหาการตรวจ FA</h3>
-          <select id="problem219">
-            <option>มีปัญหาเรื่องคน</option>
-            <option>มีปัญหาเรื่องงาน</option>
-            <option>มีปัญหาเรื่องระยะเวลา</option>
-            <option>มีปัญหาเรื่องเครื่องมืออุปกรณ์</option>
-            <option>มีปัญหาเรื่องงบประมาณ</option>
-            <option>มีปัญหาเรื่องหน่วยรับตรวจ</option>
-            <option selected>ไม่มีปัญหาเรื่อง</option>
-            <option>ไม่ทราบ</option>
-          </select>
-
-          <h3>2.1.20 ข้อเสนอแนะ FA</h3>
-          <div class="muted">เลือกประเภทข้อเสนอแนะ และพิมพ์รายละเอียด (ถ้ามี)</div>
-          <select id="recType220">
-            <option selected>แก้ไขปัญหาเรื่องคน</option>
-            <option>แก้ไขปัญหาเรื่องงาน</option>
-            <option>แก้ไขปัญหาเรื่องระยะเวลา</option>
-            <option>แก้ไขปัญหาเรื่องเครื่องมืออุปกรณ์</option>
-            <option>แก้ไขปัญหาเรื่องงบประมาณ</option>
-            <option>แก้ไขปัญหาเรื่องหน่วยรับตรวจ</option>
-            <option>แก้ไขปัญหาอื่นๆ</option>
-          </select>
-          <textarea id="recText220" placeholder="พิมพ์รายละเอียดข้อเสนอแนะ (ถ้ามี)"></textarea>
+        <div class="row">
+          <div>
+            <h3>2.1.8 สถานะการปิดงบการเงิน</h3>
+            <select id="s218">
+              <option value="">— เลือก —</option>
+              <option>ปิดงบการเงินแล้ว</option>
+              <option>ยังไม่ปิดงบการเงิน</option>
+              <option>ไม่ทราบสถานะ</option>
+            </select>
+          </div>
+          <div>
+            <h3>2.1.9 สถานะการส่งรายงานการเงิน</h3>
+            <select id="s219">
+              <option value="">— เลือก —</option>
+              <option>ส่งรายงานการเงินแล้ว</option>
+              <option>ยังไม่ส่งรายงานการเงิน</option>
+              <option>ไม่ทราบสถานะ</option>
+            </select>
+          </div>
+          <div>
+            <h3>2.1.10 สถานะการทำหนังสือติดตาม</h3>
+            <select id="s2110">
+              <option value="">— เลือก —</option>
+              <option>จัดทำหนังสือแล้ว</option>
+              <option>ยังไม่จัดทำหนังสือ</option>
+              <option>ไม่ทราบสถานะ</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      <!-- ACTION BUTTONS -->
-      <div class="section">
+      <!-- t4 -->
+      <div class="section" id="t4">
+        <h3>2.1.11 รายละเอียดการตรวจสอบ (งานสนาม/เอกสารหลัก)</h3>
         <div class="row">
-          <button class="btn primary" id="btnSave">บันทึกข้อมูล</button>
+          <div>
+            <label>การเปิดตรวจ</label>
+            <select id="chk_open">
+              <option>ไม่ทราบ</option>
+              <option>เปิดตรวจแล้ว</option>
+              <option>อยู่ระหว่างดำเนินการ</option>
+              <option>ยังไม่ดำเนินการ</option>
+            </select>
+          </div>
+          <div>
+            <label>แจ้งหนังสือยืนยันการปฏิบัติงาน</label>
+            <select id="chk_confirm_work">
+              <option>ไม่ทราบ</option>
+              <option>ดำเนินการแล้ว</option>
+              <option>อยู่ระหว่างดำเนินการ</option>
+              <option>ยังไม่ดำเนินการ</option>
+            </select>
+          </div>
+          <div>
+            <label>ขอยืนยันยอดบัญชีเงินฝากธนาคาร</label>
+            <select id="chk_bank_confirm">
+              <option>ไม่ทราบ</option>
+              <option>ดำเนินการแล้ว</option>
+              <option>อยู่ระหว่างดำเนินการ</option>
+              <option>ยังไม่ดำเนินการ</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>หนังสือยืนยันสถานุบาล</label>
+            <select id="chk_kindergarten_confirm">
+              <option>ไม่ทราบ</option>
+              <option>ดำเนินการแล้ว</option>
+              <option>อยู่ระหว่างดำเนินการ</option>
+              <option>ยังไม่ดำเนินการ</option>
+            </select>
+          </div>
+          <div>
+            <label>จัดทำ อปท.3</label>
+            <select id="chk_opt3">
+              <option>ไม่ทราบ</option>
+              <option>ดำเนินการแล้ว</option>
+              <option>อยู่ระหว่างดำเนินการ</option>
+              <option>ยังไม่ดำเนินการ</option>
+            </select>
+          </div>
+          <div>
+            <label>จัดทำ อปท.5</label>
+            <select id="chk_opt5">
+              <option>ไม่ทราบ</option>
+              <option>ดำเนินการแล้ว</option>
+              <option>อยู่ระหว่างดำเนินการ</option>
+              <option>ยังไม่ดำเนินการ</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>จัดทำ อปท.6</label>
+            <select id="chk_opt6">
+              <option>ไม่ทราบ</option>
+              <option>ดำเนินการแล้ว</option>
+              <option>อยู่ระหว่างดำเนินการ</option>
+              <option>ยังไม่ดำเนินการ</option>
+            </select>
+          </div>
+          <div>
+            <label>จัดทำ อปท.7</label>
+            <select id="chk_opt7">
+              <option>ไม่ทราบ</option>
+              <option>ดำเนินการแล้ว</option>
+              <option>อยู่ระหว่างดำเนินการ</option>
+              <option>ยังไม่ดำเนินการ</option>
+            </select>
+          </div>
+          <div>
+            <label>จัดทำ อปท.8.1</label>
+            <select id="chk_opt81">
+              <option>ไม่ทราบ</option>
+              <option>ดำเนินการแล้ว</option>
+              <option>อยู่ระหว่างดำเนินการ</option>
+              <option>ยังไม่ดำเนินการ</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="noteBox tiny">
+          หมายเหตุ: รายการ อปท.8.x ทั้งหมด (8.2–8.17) และตัวเลือก 5 ระดับ (8.18+ / 3.1.x) มีจำนวนมากมาก — ในไฟล์นี้ผมทำ “โหมดใช้งานจริงแบบเบา”:
+          <br>✅ ใส่ช่องสรุป “เอกสาร/แบบฟอร์มหลักที่เกี่ยวข้อง” ให้กรอกเพิ่มได้ และเราจะขยายเป็นรายการเต็มแบบคุณกำหนดในไฟล์ถัดไป (เช็คบ็อกซ์ยาว) โดยไม่ทำให้มือถือช้าจนใช้งานไม่ได้
+        </div>
+
+        <div class="hr"></div>
+
+        <h3>รายการเอกสาร/แบบฟอร์มเพิ่มเติม (พิมพ์เองได้)</h3>
+        <label>ระบุแบบฟอร์มที่ทำแล้ว/ค้าง/ไม่ต้องทำ (เช่น อปท.8.2, 8.3, 8.18, 3.1.1 ฯลฯ) + สถานะ</label>
+        <textarea id="formsFreeText" placeholder="ตัวอย่าง:
+- อปท.8.2: ดำเนินการแล้ว
+- อปท.8.18: ไม่ต้องทำ
+- อปท.3.1.1: อยู่ระหว่างดำเนินการ"></textarea>
+
+        <div class="hr"></div>
+
+        <h3>2.1.12 การประชุมปิดตรวจ</h3>
+        <select id="s2112">
+          <option value="">— เลือก —</option>
+          <option>ยังไม่ประชุมปิดตรวจ</option>
+          <option>ประชุมปิดตรวจสอบแล้ว</option>
+          <option>ไม่ทราบ</option>
+          <option>ยังตรวจสอบไม่เสร็จ</option>
+        </select>
+
+        <div class="hr"></div>
+
+        <h3>2.1.13 รายละเอียดการจัดทำรายงาน (5 ระดับ)</h3>
+        <div class="row">
+          <div>
+            <label>หมายเหตุประกอบงบการเงิน</label>
+            <select id="r_note">
+              <option>ไม่ทราบ</option>
+              <option>ดำเนินการแล้ว</option>
+              <option>อยู่ระหว่างดำเนินการ</option>
+              <option>ยังไม่ดำเนินการ</option>
+              <option>ไม่ต้องทำ</option>
+            </select>
+          </div>
+          <div>
+            <label>งบแสดงการเปลี่ยนแปลงสินทรัพย์สุทธิ/สิทธิ</label>
+            <select id="r_netasset">
+              <option>ไม่ทราบ</option>
+              <option>ดำเนินการแล้ว</option>
+              <option>อยู่ระหว่างดำเนินการ</option>
+              <option>ยังไม่ดำเนินการ</option>
+              <option>ไม่ต้องทำ</option>
+            </select>
+          </div>
+          <div>
+            <label>งบแสดงผลการดำเนินงาน</label>
+            <select id="r_ops">
+              <option>ไม่ทราบ</option>
+              <option>ดำเนินการแล้ว</option>
+              <option>อยู่ระหว่างดำเนินการ</option>
+              <option>ยังไม่ดำเนินการ</option>
+              <option>ไม่ต้องทำ</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>งบแสดงฐานะทางการเงิน</label>
+            <select id="r_finpos">
+              <option>ไม่ทราบ</option>
+              <option>ดำเนินการแล้ว</option>
+              <option>อยู่ระหว่างดำเนินการ</option>
+              <option>ยังไม่ดำเนินการ</option>
+              <option>ไม่ต้องทำ</option>
+            </select>
+          </div>
+          <div>
+            <label>รายงานการตรวจสอบการเงิน</label>
+            <select id="r_auditreport">
+              <option>ไม่ทราบ</option>
+              <option>ดำเนินการแล้ว</option>
+              <option>อยู่ระหว่างดำเนินการ</option>
+              <option>ยังไม่ดำเนินการ</option>
+              <option>ไม่ต้องทำ</option>
+            </select>
+          </div>
+          <div>
+            <label>บันทึกเสนอรายงานการตรวจสอบการเงิน</label>
+            <select id="r_memo">
+              <option>ไม่ทราบ</option>
+              <option>ดำเนินการแล้ว</option>
+              <option>อยู่ระหว่างดำเนินการ</option>
+              <option>ยังไม่ดำเนินการ</option>
+              <option>ไม่ต้องทำ</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>ร่างหนังสือแจ้งหน่วยรับตรวจ (ส่งรายงาน)</label>
+            <select id="r_letter">
+              <option>ไม่ทราบ</option>
+              <option>ดำเนินการแล้ว</option>
+              <option>อยู่ระหว่างดำเนินการ</option>
+              <option>ยังไม่ดำเนินการ</option>
+              <option>ไม่ต้องทำ</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- t5 -->
+      <div class="section" id="t5">
+        <div class="row">
+          <div>
+            <h3>2.1.14 ผลการตรวจสอบ</h3>
+            <select id="s2114">
+              <option value="">— เลือก —</option>
+              <option>แบบไม่มีเงื่อนไข</option>
+              <option>แบบมีเงื่อนไข</option>
+              <option>ไม่รับรองรายงาน</option>
+              <option>ไม่ให้ความเห็น</option>
+              <option>ไม่ทราบ</option>
+              <option>ยังไม่ออกรายงาน</option>
+            </select>
+          </div>
+          <div>
+            <h3>2.1.15 ข้อสังเกตการตรวจสอบ</h3>
+            <select id="s2115">
+              <option value="">— เลือก —</option>
+              <option>ไม่มีข้อสังเกต</option>
+              <option>มีข้อสังเกต</option>
+              <option>ไม่ทราบ</option>
+              <option>ยังไม่ออกรายงาน</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <h3>2.1.16 การปรับปรุงบัญชี</h3>
+        <select id="s2116">
+          <option value="">— เลือก —</option>
+          <option>มีการปรับปรุงมากกว่า 51 รายการ</option>
+          <option>มีการปรับปรุง 40-50 รายการ</option>
+          <option>มีการปรับปรุง 30-39 รายการ</option>
+          <option>มีการปรับปรุง 20-29 รายการ</option>
+          <option>มีการปรับปรุง 10-19 รายการ</option>
+          <option>มีการปรับปรุง 5-9 รายการ</option>
+          <option>มีการปรับปรุงน้อยกว่า 5 รายการ</option>
+          <option>ไม่มีการปรับปรุง</option>
+          <option>ยังไม่ทราบ</option>
+        </select>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          <div>
+            <h3>2.1.17 เงินขาดบัญชี</h3>
+            <select id="s2117">
+              <option value="">— เลือก —</option>
+              <option>ไม่มี</option>
+              <option>มี</option>
+              <option>ยังไม่ทราบ</option>
+            </select>
+          </div>
+          <div>
+            <h3>2.1.19 ปัญหาการตรวจ</h3>
+            <select id="s2119">
+              <option value="">— เลือก —</option>
+              <option>มีปัญหาเรื่องคน</option>
+              <option>มีปัญหาเรื่องงาน</option>
+              <option>มีปัญหาเรื่องระยะเวลา</option>
+              <option>มีปัญหาเรื่องเครื่องมืออุปกรณ์</option>
+              <option>มีปัญหาเรื่องงบประมาณ</option>
+              <option>มีปัญหาเรื่องหน่วยรับตรวจ</option>
+              <option>ไม่มีปัญหา</option>
+              <option>ไม่ทราบ</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <h3>2.1.20 ข้อเสนอแนะ (เลือกหมวด + พิมพ์รายละเอียด)</h3>
+        <div class="row">
+          <div>
+            <label>หมวดข้อเสนอแนะ</label>
+            <select id="recType">
+              <option value="">— เลือก —</option>
+              <option value="คน">แก้ไขปัญหาเรื่องคน</option>
+              <option value="งาน">แก้ไขปัญหาเรื่องงาน</option>
+              <option value="ระยะเวลา">แก้ไขปัญหาเรื่องระยะเวลา</option>
+              <option value="เครื่องมือ">แก้ไขปัญหาเรื่องเครื่องมืออุปกรณ์</option>
+              <option value="งบประมาณ">แก้ไขปัญหาเรื่องงบประมาณ</option>
+              <option value="หน่วยรับตรวจ">แก้ไขปัญหาเรื่องหน่วยรับตรวจ</option>
+              <option value="อื่นๆ">แก้ไขปัญหาอื่นๆ</option>
+            </select>
+          </div>
+        </div>
+        <label>รายละเอียดข้อเสนอแนะ</label>
+        <textarea id="recText" placeholder="พิมพ์ข้อเสนอแนะ/แนวทางแก้ไข"></textarea>
+      </div>
+
+      <!-- t6 -->
+      <div class="section" id="t6">
+        <h3>สรุป/ส่งข้อมูลเข้าระบบ</h3>
+        <div class="noteBox">
+          <div class="tiny">
+            ✅ ปุ่ม “บันทึกข้อมูล” = เก็บเป็น Draft (แก้ไขได้) <br>
+            ✅ ปุ่ม “ส่งข้อมูลเข้าระบบ” = ตีตรา Submitted (แสดงใน Cashboard/รายงาน) <br>
+            🔒 หากครบ 356 วันจากวันบันทึกครั้งแรก = ล็อกแก้ไข (อ่านอย่างเดียว) <br>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="row">
+          <button class="btn primary" id="btnSave">บันทึกข้อมูล (Draft)</button>
+          <button class="btn warn" id="btnSubmit">ส่งข้อมูลเข้าระบบ (Submit)</button>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <div class="row">
           <button class="btn" id="btnView">ดูผลการบันทึกข้อมูล</button>
-          <button class="btn primary" id="btnSubmit">ส่งข้อมูลเข้าระบบ</button>
-          <button class="btn" id="btnEdit">กลับไปแก้ไขข้อมูล</button>
-          <button class="btn" onclick="location.href='cashboard.html'">ไปหน้า Cashboard</button>
-          <button class="btn" onclick="location.href='index.html'">กลับไปหน้าหลัก</button>
+          <button class="btn" id="btnBackEdit">กลับไปแก้ไขข้อมูล</button>
         </div>
 
-        <div class="msg ok" id="ok"></div>
-        <div class="msg bad" id="bad"></div>
-        <div class="msg warn" id="warn"></div>
-      </div>
-    </main>
+        <div style="height:10px"></div>
 
-    <!-- RIGHT: SUMMARY / STATUS -->
-    <aside class="card rightBox">
-      <h2>สรุปชุดข้อมูล</h2>
-      <div class="kv"><b>หน่วยรับตรวจ</b><span id="sumEntity">-</span></div>
-      <div class="kv"><b>ที่ตั้ง</b><span id="sumLoc">-</span></div>
-      <div class="kv"><b>ปีงบฯ/งวด</b><span id="sumPeriod">-</span></div>
-      <div class="hr"></div>
-      <div class="kv"><b>สร้างครั้งแรก</b><span id="sumCreated">-</span></div>
-      <div class="kv"><b>แก้ไขล่าสุด</b><span id="sumUpdated">-</span></div>
-      <div class="kv"><b>สถานะล็อก</b><span id="sumLock">-</span></div>
-      <div class="hr"></div>
-      <h3>สถานะสำคัญ (2.1.7–2.1.20)</h3>
-      <div class="kv"><b>2.1.7</b><span id="sum217">-</span></div>
-      <div class="kv"><b>2.1.8</b><span id="sum218">-</span></div>
-      <div class="kv"><b>2.1.9</b><span id="sum219">-</span></div>
-      <div class="kv"><b>2.1.10</b><span id="sum2110">-</span></div>
-      <div class="kv"><b>2.1.14</b><span id="sum214">-</span></div>
-      <div class="kv"><b>2.1.15</b><span id="sum215">-</span></div>
-      <div class="kv"><b>2.1.16</b><span id="sum216">-</span></div>
-      <div class="kv"><b>2.1.17</b><span id="sum217c">-</span></div>
-      <div class="kv"><b>2.1.19</b><span id="sum219p">-</span></div>
-      <div class="kv"><b>2.1.20</b><span id="sum220">-</span></div>
-
-      <div class="section">
-        <h3>ลิงก์ที่เกี่ยวข้อง</h3>
         <div class="row">
-          <button class="btn" onclick="location.href='upload.html'">ไปหน้าอัปโหลด</button>
-          <button class="btn" onclick="location.href='manual-review.html'">ไปหน้าตรวจทาน/ส่งข้อมูล</button>
-          <button class="btn" onclick="location.href='vault-overview.html'">ไปคลังข้อมูล (ภาพรวม)</button>
+          <button class="btn" id="btnToCashboard">ไปหน้า Cashboard</button>
+          <button class="btn" id="btnHome">กลับหน้าหลัก</button>
         </div>
-        <div class="mini">* ไฟล์บางหน้าจะสร้างให้ต่อในลำดับถัดไป</div>
       </div>
-    </aside>
+
+      <div class="msg okBox" id="ok"></div>
+      <div class="msg warnBox" id="warn"></div>
+      <div class="msg badBox" id="bad"></div>
+    </div>
+
+    <!-- RIGHT: Recent Records + Load/Edit -->
+    <div class="card col4">
+      <h2>รายการล่าสุด (จากเครื่องนี้)</h2>
+      <div class="muted">เลือกเพื่อ “แก้ไข/ดู” รายการเดิม • ถ้าล็อกแล้วจะแก้ไม่ได้</div>
+
+      <div class="hr"></div>
+
+      <label>ค้นหาเร็ว (ชื่อหน่วย/จังหวัด/ปีงบฯ)</label>
+      <input id="quickSearch" placeholder="พิมพ์คำค้น…" />
+
+      <div style="height:10px"></div>
+
+      <div class="row">
+        <button class="btn" id="btnRefresh">รีเฟรชรายการ</button>
+        <button class="btn danger" id="btnNew">+ สร้างรายการใหม่</button>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>หน่วย</th>
+              <th>ปีงบฯ</th>
+              <th>งวด</th>
+              <th>อัปเดตล่าสุด</th>
+              <th>สถานะ</th>
+              <th class="right">โหลด</th>
+            </tr>
+          </thead>
+          <tbody id="recentTbody"></tbody>
+        </table>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <button class="btn" id="goAdmin">ไปหน้า Admin</button>
+        <button class="btn" id="goDataHub">ไป Data Hub</button>
+      </div>
+
+      <div class="hr"></div>
+      <div class="tiny">
+        Key เก็บข้อมูล: <span class="pill info mono">fa_manual_records_v1</span><br>
+        กฎล็อก: <span class="pill warn">356 วัน</span> จาก <span class="pill mono">created_at</span>
+      </div>
+    </div>
 
   </div>
 </div>
 
 <script>
 /* =========================
-   A) Auth guard
+   Guard: login (USER/ADMIN)
    ========================= */
 const SESSION_KEY = "fa_session_v1";
 const session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
 if(!session){ location.href="login.html"; }
 document.getElementById("userBadge").textContent =
-  "ผู้ใช้: " + (session.fullname || session.username) + " • บทบาท: " + (session.role || "USER");
+  "ผู้ใช้: " + (session.fullname || session.username) + " • บทบาท: " + (session.role||"USER").toUpperCase();
 
 /* =========================
-   B) Storage keys
+   Storage keys
    ========================= */
-const RECORDS_KEY = "fa_manual_records_v1";   // array of records
-const SUBMIT_KEY  = "fa_manual_submissions_v1"; // audit submit log
+const MANUAL_KEY = "fa_manual_records_v1";
 
 /* =========================
-   C) Helpers
+   Helpers
    ========================= */
 const $ = (id)=>document.getElementById(id);
-function nowStr(){ return new Date().toLocaleString(); }
-function isoNow(){ return Date.now(); }
-function show(kind, text){
-  ["ok","bad","warn"].forEach(k=>{ $(k).style.display="none"; $(k).textContent=""; });
-  const el = $(kind);
+function show(box, text){
+  const el = $(box);
   el.textContent = text;
   el.style.display="block";
-  setTimeout(()=>{ el.style.display="none"; }, 2600);
+  setTimeout(()=>el.style.display="none", 2400);
 }
-function ymd(ts){
+function getManual(){ return JSON.parse(localStorage.getItem(MANUAL_KEY) || "[]"); }
+function setManual(arr){ localStorage.setItem(MANUAL_KEY, JSON.stringify(arr)); }
+
+function uid(){
+  return "M" + Math.random().toString(36).slice(2,8).toUpperCase() + "-" + Date.now().toString(36).toUpperCase();
+}
+function nowTs(){ return Date.now(); }
+function fmtTs(ts){
   if(!ts) return "-";
-  return new Date(ts).toLocaleString();
+  const d = new Date(ts);
+  const pad = (n)=>String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
-function safe(s){ return (s===null||s===undefined||s==="") ? "-" : String(s); }
-function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
+function isLocked(created_at){
+  if(!created_at) return false;
+  const days = (Date.now() - created_at)/86400000;
+  return days >= 356;
+}
+function lockLabel(created_at){
+  if(!created_at) return {locked:false, text:"ยังไม่ล็อก"};
+  const days = (Date.now() - created_at)/86400000;
+  if(days>=356) return {locked:true, text:`ล็อกแล้ว (ครบ ${Math.floor(days)} วัน)`};
+  return {locked:false, text:`แก้ไขได้ (ผ่านไป ${Math.floor(days)} วัน)`};
+}
 
 /* =========================
-   D) Year / Period / Province init
+   FY options 2560-2580
    ========================= */
-(function initYears(){
-  const fy = $("fiscalYear");
+(function buildFY(){
+  const fySel = $("fy");
   for(let y=2560;y<=2580;y++){
     const op=document.createElement("option");
-    op.value=y; op.textContent=String(y);
-    if(y===2568) op.selected=true;
-    fy.appendChild(op);
+    op.value=String(y); op.textContent=String(y);
+    fySel.appendChild(op);
   }
-})();
-const provinceList = [
-  "กรุงเทพมหานคร","กระบี่","กาญจนบุรี","กาฬสินธุ์","กำแพงเพชร","ขอนแก่น","จันทบุรี","ฉะเชิงเทรา","ชลบุรี","ชัยนาท",
-  "ชัยภูมิ","ชุมพร","เชียงราย","เชียงใหม่","ตรัง","ตราด","ตาก","นครนายก","นครปฐม","นครพนม",
-  "นครราชสีมา","นครศรีธรรมราช","นครสวรรค์","นนทบุรี","นราธิวาส","น่าน","บึงกาฬ","บุรีรัมย์","ปทุมธานี","ประจวบคีรีขันธ์",
-  "ปราจีนบุรี","ปัตตานี","พระนครศรีอยุธยา","พะเยา","พังงา","พัทลุง","พิจิตร","พิษณุโลก","เพชรบุรี","เพชรบูรณ์",
-  "แพร่","ภูเก็ต","มหาสารคาม","มุกดาหาร","แม่ฮ่องสอน","ยโสธร","ยะลา","ร้อยเอ็ด","ระนอง","ระยอง",
-  "ราชบุรี","ลพบุรี","ลำปาง","ลำพูน","เลย","ศรีสะเกษ","สกลนคร","สงขลา","สตูล","สมุทรปราการ",
-  "สมุทรสงคราม","สมุทรสาคร","สระแก้ว","สระบุรี","สิงห์บุรี","สุโขทัย","สุพรรณบุรี","สุราษฎร์ธานี","สุรินทร์","หนองคาย",
-  "หนองบัวลำภู","อ่างทอง","อำนาจเจริญ","อุดรธานี","อุตรดิตถ์","อุทัยธานี","อุบลราชธานี"
-];
-(function initProvince(){
-  const p=$("province");
-  provinceList.forEach((name)=>{
-    const op=document.createElement("option");
-    op.value=name; op.textContent=name;
-    if(name==="ศรีสะเกษ") op.selected=true;
-    p.appendChild(op);
-  });
-})();
-
-function refreshPeriodValue(){
-  const pt = $("periodType").value;
-  const pv = $("periodValue");
-  pv.innerHTML="";
-  const add=(v,t=v)=>{ const op=document.createElement("option"); op.value=v; op.textContent=t; pv.appendChild(op); };
-  if(pt==="YEAR"){ add("FY","ทั้งปี"); }
-  if(pt==="QUARTER"){ ["Q1","Q2","Q3","Q4"].forEach(q=>add(q,q)); }
-  if(pt==="MONTH"){ for(let m=1;m<=12;m++) add(String(m).padStart(2,"0"), "เดือน " + m); }
-  if(pt==="DAY"){ add("TODAY","วันนี้"); add("CUSTOM","ระบุวัน (ใช้เวลาบันทึก)"); }
-}
-$("periodType").addEventListener("change", refreshPeriodValue);
-refreshPeriodValue();
-
-setInterval(()=>{ $("nowStamp").value = nowStr(); }, 1000);
-
-/* =========================
-   E) Entity suggestions (sample)
-   ========================= */
-(function seedEntityDatalist(){
-  const dl = $("entityNameList");
-  const samples = [
-    "เทศบาลเมืองศรีสะเกษ","เทศบาลตำบลห้วยทับทัน","องค์การบริหารส่วนตำบลโพธิ์","องค์การบริหารส่วนตำบลเมืองแคน",
-    "องค์การบริหารส่วนจังหวัดศรีสะเกษ","เทศบาลนครอุบลราชธานี"
-  ];
-  samples.forEach(s=>{
-    const op=document.createElement("option"); op.value=s; dl.appendChild(op);
-  });
+  fySel.value = String(new Date().getFullYear()+543); // Thai year guess; if off, user selects
 })();
 
 /* =========================
-   F) People blocks
+   Tabs
    ========================= */
-function personBlock(roleKey, idx, title){
-  const wrap=document.createElement("div");
-  wrap.className="person";
-  wrap.dataset.role=roleKey;
-  wrap.dataset.idx=idx;
+document.querySelectorAll(".tab").forEach(t=>{
+  t.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    document.getElementById(t.dataset.tab).classList.add("active");
+  });
+});
 
-  wrap.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-      <b>${title}</b>
-      <button class="btn danger btnRemove" type="button">ลบ</button>
-    </div>
-    <div class="gridSmall">
-      <div>
-        <label>ชื่อ-สกุล</label>
-        <input class="p_name" placeholder="ชื่อ-สกุล" />
+/* =========================
+   People blocks (auditors/reviewers)
+   ========================= */
+let auditors = [];
+let reviewers = [];
+
+function personRow(prefix, idx, max, arrName){
+  const groupSel = Array.from({length:10},(_,i)=>`กลุ่มตรวจสอบที่ ${i+1}`);
+  return `
+    <div class="card" style="box-shadow:none;border-style:dashed;margin:8px 0">
+      <div class="row">
+        <div><label>ชื่อ-สกุล</label><input id="${prefix}_name_${idx}" placeholder="ชื่อ-สกุล" /></div>
+        <div><label>ตำแหน่ง</label><input id="${prefix}_pos_${idx}" placeholder="ตำแหน่ง" /></div>
       </div>
-      <div>
-        <label>ตำแหน่ง</label>
-        <input class="p_pos" placeholder="ตำแหน่ง" />
+      <div class="row">
+        <div>
+          <label>สังกัดกลุ่มที่</label>
+          <select id="${prefix}_group_${idx}">
+            <option value="">— เลือก —</option>
+            ${groupSel.map(x=>`<option>${x}</option>`).join("")}
+          </select>
+        </div>
+        <div><label>สังกัดสำนักงาน</label><input id="${prefix}_office_${idx}" placeholder="เช่น สตง. จังหวัด…" /></div>
+        <div><label>วันที่ได้รับมอบหมาย</label><input id="${prefix}_assign_${idx}" type="date" /></div>
       </div>
-      <div>
-        <label>สังกัดกลุ่มที่</label>
-        <select class="p_group">
-          ${Array.from({length:10},(_,i)=>`<option value="กลุ่มตรวจสอบที่ ${i+1}">กลุ่มตรวจสอบที่ ${i+1}</option>`).join("")}
-        </select>
-      </div>
-      <div>
-        <label>สังกัดสำนักงาน</label>
-        <input class="p_office" placeholder="เช่น สตง. จังหวัด..." />
-      </div>
-      <div>
-        <label>วันที่ได้รับมอบหมาย/วันที่ดำรงตำแหน่ง</label>
-        <input class="p_date" type="date" />
-      </div>
-      <div>
-        <label>หน้าที่รับผิดชอบ (สำหรับผู้ตรวจ)</label>
-        <input class="p_duty" placeholder="เช่น ตรวจรายได้/รายจ่าย/สินทรัพย์" />
+      ${prefix==="aud" ? `
+      <div class="row">
+        <div><label>หน้าที่รับผิดชอบตรวจสอบ</label><input id="${prefix}_duty_${idx}" placeholder="เช่น รายได้/รายจ่าย/สินทรัพย์…" /></div>
+      </div>` : ``}
+
+      <div class="row">
+        <button class="btn danger" type="button" onclick="removePerson('${arrName}',${idx})">ลบรายการนี้</button>
       </div>
     </div>
   `;
-  wrap.querySelector(".btnRemove").addEventListener("click", ()=>{
-    wrap.remove();
-    updateSummary();
-  });
-  return wrap;
 }
 
-function renderPeople(){
-  const aud = $("auditors");
-  const rev = $("reviewers");
-  const dir = $("director");
-  const auditee = $("auditee");
+window.removePerson = function(arrName, idx){
+  if(arrName==="auditors"){
+    auditors.splice(idx,1);
+    renderAuditors();
+  }else{
+    reviewers.splice(idx,1);
+    renderReviewers();
+  }
+};
 
-  aud.innerHTML=""; rev.innerHTML=""; dir.innerHTML=""; auditee.innerHTML="";
-  // default rows
-  aud.appendChild(personBlock("auditor",0,"ผู้ตรวจสอบ #1"));
-  rev.appendChild(personBlock("reviewer",0,"ผู้สอบทาน #1"));
-
-  const d = personBlock("director",0,"ผู้อำนวยการสำนัก");
-  d.querySelector(".btnRemove").style.display="none";
-  dir.appendChild(d);
-
-  const a = personBlock("auditee",0,"ผู้รับตรวจ");
-  a.querySelector(".btnRemove").style.display="none";
-  auditee.appendChild(a);
+function renderAuditors(){
+  const box = $("auditorBox");
+  box.innerHTML = auditors.map((_,i)=>personRow("aud", i, 5, "auditors")).join("");
+  if(auditors.length===0){
+    box.innerHTML = `<div class="noteBox tiny">ยังไม่มีผู้ตรวจสอบ — กด “เพิ่มผู้ตรวจสอบ”</div>`;
+  }
 }
-renderPeople();
-
+function renderReviewers(){
+  const box = $("reviewerBox");
+  box.innerHTML = reviewers.map((_,i)=>personRow("rev", i, 2, "reviewers")).join("");
+  if(reviewers.length===0){
+    box.innerHTML = `<div class="noteBox tiny">ยังไม่มีผู้สอบทาน — กด “เพิ่มผู้สอบทาน”</div>`;
+  }
+}
 $("addAuditor").addEventListener("click", ()=>{
-  const c=$("auditors").children.length;
-  if(c>=5){ show("warn","เพิ่มผู้ตรวจสอบได้ไม่เกิน 5 คน"); return; }
-  $("auditors").appendChild(personBlock("auditor",c,`ผู้ตรวจสอบ #${c+1}`));
+  if(auditors.length>=5){ show("warn","เพิ่มผู้ตรวจสอบได้สูงสุด 5 คน"); return; }
+  auditors.push({});
+  renderAuditors();
 });
 $("addReviewer").addEventListener("click", ()=>{
-  const c=$("reviewers").children.length;
-  if(c>=2){ show("warn","เพิ่มผู้สอบทานได้ไม่เกิน 2 คน"); return; }
-  $("reviewers").appendChild(personBlock("reviewer",c,`ผู้สอบทาน #${c+1}`));
+  if(reviewers.length>=2){ show("warn","เพิ่มผู้สอบทานได้สูงสุด 2 คน"); return; }
+  reviewers.push({});
+  renderReviewers();
 });
+renderAuditors(); renderReviewers();
 
 /* =========================
-   G) Record identity & lock logic (356 days)
+   Record state
    ========================= */
-function buildRecordId(){
-  const t = $("entityType").value.trim();
-  const n = $("entityName").value.trim();
-  const p = $("province").value.trim();
-  const d = $("district").value.trim();
-  const s = $("subdistrict").value.trim();
-  const fy = $("fiscalYear").value;
-  const pt = $("periodType").value;
-  const pv = $("periodValue").value;
-  // ทำให้ ID คงที่เพื่อโหลด/แก้ไขได้
-  return [
-    "REC", t, n, p, d, s, "FY"+fy, pt+pv
-  ].map(x=>String(x||"").replace(/\s+/g,"_")).join("|");
+let currentId = null; // record id loaded or null=new
+let createdAt = null;
+
+function setModeNew(){
+  currentId = null;
+  createdAt = null;
+  $("rid").textContent = "NEW";
+  $("modePill").textContent = "สร้างรายการใหม่";
+  $("modePill").className = "pill info";
+  $("lockPill").textContent = "ยังไม่ล็อก";
+  $("lockPill").className = "pill";
+
+  // clear fields
+  $("entityType").value="";
+  $("entityName").value="";
+  $("province").value="";
+  $("district").value="";
+  $("subdistrict").value="";
+  // keep FY default
+  $("periodType").value="YEAR";
+  $("periodValue").value="";
+
+  auditors = []; reviewers = [];
+  renderAuditors(); renderReviewers();
+
+  $("directorName").value=""; $("directorPos").value=""; $("directorOffice").value=""; $("directorAssign").value="";
+  $("auditeeName").value=""; $("auditeePos").value=""; $("auditeeOffice").value=""; $("auditeeSince").value="";
+
+  $("s217").value=""; $("s218").value=""; $("s219").value=""; $("s2110").value="";
+  $("chk_open").value="ไม่ทราบ";
+  $("chk_confirm_work").value="ไม่ทราบ";
+  $("chk_bank_confirm").value="ไม่ทราบ";
+  $("chk_kindergarten_confirm").value="ไม่ทราบ";
+  $("chk_opt3").value="ไม่ทราบ";
+  $("chk_opt5").value="ไม่ทราบ";
+  $("chk_opt6").value="ไม่ทราบ";
+  $("chk_opt7").value="ไม่ทราบ";
+  $("chk_opt81").value="ไม่ทราบ";
+  $("formsFreeText").value="";
+  $("s2112").value="";
+
+  $("r_note").value="ไม่ทราบ";
+  $("r_netasset").value="ไม่ทราบ";
+  $("r_ops").value="ไม่ทราบ";
+  $("r_finpos").value="ไม่ทราบ";
+  $("r_auditreport").value="ไม่ทราบ";
+  $("r_memo").value="ไม่ทราบ";
+  $("r_letter").value="ไม่ทราบ";
+
+  $("s2114").value="";
+  $("s2115").value="";
+  $("s2116").value="";
+  $("s2117").value="";
+  $("s2119").value="";
+  $("recType").value="";
+  $("recText").value="";
+
+  unlockUI(true);
 }
 
-function getRecords(){
-  return JSON.parse(localStorage.getItem(RECORDS_KEY) || "[]");
-}
-function saveRecords(arr){
-  localStorage.setItem(RECORDS_KEY, JSON.stringify(arr));
-}
-
-function isLocked(created_at){
-  if(!created_at) return false;
-  const days = (Date.now() - created_at) / 86400000;
-  return days >= 356; // ตามที่กำหนด
-}
-
-/* =========================
-   H) Form read/write
-   ========================= */
-let activeRecord = null; // loaded record object
-let readOnly = false;
-
-function readPeople(containerId){
-  const boxes = Array.from($(containerId).querySelectorAll(".person"));
-  return boxes.map(b=>({
-    name: b.querySelector(".p_name").value.trim(),
-    position: b.querySelector(".p_pos").value.trim(),
-    group: b.querySelector(".p_group").value,
-    office: b.querySelector(".p_office").value.trim(),
-    assigned_date: b.querySelector(".p_date").value || "",
-    duty: b.querySelector(".p_duty").value.trim()
-  })).filter(x=> x.name || x.position || x.office || x.duty || x.assigned_date);
-}
-function writePeople(containerId, arr, roleKey, max, label){
-  const container = $(containerId);
-  container.innerHTML="";
-  const take = (arr||[]).slice(0,max);
-  if(take.length===0){
-    // fallback default row
-    const b = personBlock(roleKey,0,label+" #1");
-    if(roleKey==="director"||roleKey==="auditee") b.querySelector(".btnRemove").style.display="none";
-    container.appendChild(b);
-    return;
-  }
-  take.forEach((p,i)=>{
-    const b = personBlock(roleKey,i, (max===1?label: `${label} #${i+1}`));
-    if(roleKey==="director"||roleKey==="auditee") b.querySelector(".btnRemove").style.display="none";
-    b.querySelector(".p_name").value = p.name||"";
-    b.querySelector(".p_pos").value = p.position||"";
-    b.querySelector(".p_group").value = p.group || "กลุ่มตรวจสอบที่ 1";
-    b.querySelector(".p_office").value = p.office||"";
-    b.querySelector(".p_date").value = p.assigned_date||"";
-    b.querySelector(".p_duty").value = p.duty||"";
-    container.appendChild(b);
+function unlockUI(canEdit){
+  const disabled = !canEdit;
+  document.querySelectorAll("input,select,textarea").forEach(el=>{
+    // quickSearch should remain active
+    if(el.id==="quickSearch") return;
+    el.disabled = disabled;
   });
+  $("btnSave").disabled = disabled;
+  $("btnSubmit").disabled = disabled;
+  $("addAuditor").disabled = disabled;
+  $("addReviewer").disabled = disabled;
 }
 
-function collectForm(){
-  const rec = {
-    id: buildRecordId(),
+function collectPeople(prefix, count){
+  const out=[];
+  for(let i=0;i<count;i++){
+    const name = $(prefix+"_name_"+i)?.value?.trim() || "";
+    const pos = $(prefix+"_pos_"+i)?.value?.trim() || "";
+    const group = $(prefix+"_group_"+i)?.value?.trim() || "";
+    const office = $(prefix+"_office_"+i)?.value?.trim() || "";
+    const assign = $(prefix+"_assign_"+i)?.value || "";
+    const duty = prefix==="aud" ? ($(prefix+"_duty_"+i)?.value?.trim() || "") : undefined;
 
-    entity: {
-      type: $("entityType").value,
+    // ignore fully empty rows
+    if(!name && !pos && !group && !office && !assign && (!duty||duty==="")) continue;
+    out.push({name,pos,group,office,assign,duty});
+  }
+  return out;
+}
+
+function buildRecord(submitFlag){
+  const r = {
+    id: currentId || uid(),
+    created_at: createdAt || nowTs(),
+    updated_at: nowTs(),
+    updated_by: (session.fullname || session.username),
+    deleted:false,
+    submitted: !!submitFlag,
+    submitted_at: submitFlag ? nowTs() : null,
+
+    entity:{
+      type: $("entityType").value.trim(),
       name: $("entityName").value.trim(),
-      province: $("province").value,
+      province: $("province").value.trim(),
       district: $("district").value.trim(),
       subdistrict: $("subdistrict").value.trim()
     },
-
-    period: {
-      fiscalYear: Number($("fiscalYear").value),
+    period:{
+      fiscalYear: Number($("fy").value||0),
       periodType: $("periodType").value,
-      periodValue: $("periodValue").value
+      periodValue: $("periodValue").value.trim()
     },
 
-    // people
-    auditors: readPeople("auditors").slice(0,5),
-    reviewers: readPeople("reviewers").slice(0,2),
-    director: readPeople("director").slice(0,1),
-    auditee: readPeople("auditee").slice(0,1),
+    auditors: collectPeople("aud", auditors.length),
+    reviewers: collectPeople("rev", reviewers.length),
 
-    // statuses 2.1.7-2.1.20 (subset that you required explicitly)
-    s217: $("status217").value,
-    s218: $("status218").value,
-    s219: $("status219").value,
-    s2110: $("status2110").value,
-    s212: $("closeMeeting212").value,
-    s214: $("opinion214").value,
-    s215: $("finding215").value,
-    s216: $("adjust216").value,
-    s217_cash: $("cashShort217").value,
-    s219_problem: $("problem219").value,
-    s220_rec_type: $("recType220").value,
-    s220_rec_text: $("recText220").value.trim(),
+    director:{
+      name:$("directorName").value.trim(),
+      pos:$("directorPos").value.trim(),
+      office:$("directorOffice").value.trim(),
+      assign:$("directorAssign").value
+    },
+    auditee:{
+      name:$("auditeeName").value.trim(),
+      pos:$("auditeePos").value.trim(),
+      office:$("auditeeOffice").value.trim(),
+      since:$("auditeeSince").value
+    },
 
-    // audit meta
-    created_at: activeRecord?.created_at || Date.now(),
-    updated_at: Date.now(),
-    created_by: activeRecord?.created_by || (session.fullname || session.username),
-    updated_by: (session.fullname || session.username),
+    // 2.1.7-2.1.10
+    s217:$("s217").value,
+    s218:$("s218").value,
+    s219:$("s219").value,
+    s2110:$("s2110").value,
 
-    // submit meta
-    submitted: activeRecord?.submitted || false,
-    submitted_at: activeRecord?.submitted_at || null
-  };
-  return rec;
-}
+    // 2.1.11 (core checks + free text for long list)
+    checks:{
+      open:$("chk_open").value,
+      confirm_work:$("chk_confirm_work").value,
+      bank_confirm:$("chk_bank_confirm").value,
+      kindergarten_confirm:$("chk_kindergarten_confirm").value,
+      opt3:$("chk_opt3").value,
+      opt5:$("chk_opt5").value,
+      opt6:$("chk_opt6").value,
+      opt7:$("chk_opt7").value,
+      opt81:$("chk_opt81").value,
+      forms_free_text:$("formsFreeText").value.trim()
+    },
 
-function applyForm(rec){
-  // entity
-  $("entityType").value = rec.entity?.type || "อบต.";
-  $("entityName").value = rec.entity?.name || "";
-  $("province").value = rec.entity?.province || $("province").value;
-  $("district").value = rec.entity?.district || "";
-  $("subdistrict").value = rec.entity?.subdistrict || "";
+    // 2.1.12
+    s2112:$("s2112").value,
 
-  // period
-  $("fiscalYear").value = String(rec.period?.fiscalYear || 2568);
-  $("periodType").value = rec.period?.periodType || "QUARTER";
-  refreshPeriodValue();
-  $("periodValue").value = rec.period?.periodValue || $("periodValue").value;
+    // 2.1.13
+    report:{
+      note:$("r_note").value,
+      netasset:$("r_netasset").value,
+      ops:$("r_ops").value,
+      finpos:$("r_finpos").value,
+      auditreport:$("r_auditreport").value,
+      memo:$("r_memo").value,
+      letter:$("r_letter").value
+    },
 
-  // people
-  writePeople("auditors", rec.auditors, "auditor", 5, "ผู้ตรวจสอบ");
-  writePeople("reviewers", rec.reviewers, "reviewer", 2, "ผู้สอบทาน");
-  writePeople("director", rec.director, "director", 1, "ผู้อำนวยการสำนัก");
-  writePeople("auditee", rec.auditee, "auditee", 1, "ผู้รับตรวจ");
-
-  // statuses
-  $("status217").value = rec.s217 || $("status217").value;
-  $("status218").value = rec.s218 || $("status218").value;
-  $("status219").value = rec.s219 || $("status219").value;
-  $("status2110").value = rec.s2110 || $("status2110").value;
-  $("closeMeeting212").value = rec.s212 || $("closeMeeting212").value;
-  $("opinion214").value = rec.s214 || $("opinion214").value;
-  $("finding215").value = rec.s215 || $("finding215").value;
-  $("adjust216").value = rec.s216 || $("adjust216").value;
-  $("cashShort217").value = rec.s217_cash || $("cashShort217").value;
-  $("problem219").value = rec.s219_problem || $("problem219").value;
-  $("recType220").value = rec.s220_rec_type || $("recType220").value;
-  $("recText220").value = rec.s220_rec_text || "";
-
-  activeRecord = rec;
-  setReadOnly(isLocked(rec.created_at));
-  updateSummary();
-}
-
-function setReadOnly(flag){
-  readOnly = !!flag;
-  $("lockedBox").style.display = readOnly ? "block" : "none";
-
-  // disable inputs if locked
-  const inputs = document.querySelectorAll("main input, main select, main textarea, main button");
-  inputs.forEach(el=>{
-    // allow navigation buttons always
-    const id = el.id || "";
-    const allow = ["btnView","btnEdit","btnLoad","btnNew"].includes(id) || el.getAttribute("onclick");
-    if(allow) return;
-
-    if(el.tagName==="BUTTON"){
-      if(["btnSave","btnSubmit","addAuditor","addReviewer"].includes(id)) el.disabled = readOnly;
-    }else{
-      el.disabled = readOnly;
+    // 2.1.14-2.1.20
+    s2114:$("s2114").value,
+    s2115:$("s2115").value,
+    s2116:$("s2116").value,
+    s2117:$("s2117").value,
+    s2119:$("s2119").value,
+    recommendation:{
+      type:$("recType").value,
+      text:$("recText").value.trim()
     }
-  });
-
-  // remove buttons inside person blocks
-  document.querySelectorAll(".btnRemove").forEach(b=>{
-    b.style.display = readOnly ? "none" : "inline-block";
-  });
+  };
+  return r;
 }
 
-/* =========================
-   I) Load / New / Save / View / Submit
-   ========================= */
-function validateKeyFields(){
-  if(!$("entityName").value.trim()) { show("bad","กรุณากรอกชื่อหน่วยรับตรวจ"); return false; }
-  return true;
+function validateCore(){
+  const problems=[];
+  if(!$("entityName").value.trim()) problems.push("กรุณาระบุชื่อหน่วยรับตรวจ");
+  if(!$("province").value.trim()) problems.push("กรุณาระบุจังหวัด");
+  const fy = Number($("fy").value||0);
+  if(!(fy>=2560 && fy<=2580)) problems.push("ปีงบประมาณต้องอยู่ระหว่าง 2560–2580");
+  if(!$("periodValue").value.trim()) problems.push("กรุณาระบุค่า “งวด” (เช่น Q1/04/W12/2025-12-28)");
+  return problems;
 }
 
-$("btnLoad").addEventListener("click", ()=>{
-  if(!validateKeyFields()) return;
+function saveRecord(submitFlag){
+  const all = getManual();
 
-  const id = buildRecordId();
-  const records = getRecords();
-  const found = records.find(r=>r.id===id);
-
-  if(found){
-    applyForm(found);
-    show("ok","โหลดข้อมูลเดิมเรียบร้อย");
-  }else{
-    activeRecord = null;
-    setReadOnly(false);
-    updateSummary();
-    show("ok","ยังไม่มีข้อมูลเดิม — เริ่มบันทึกชุดใหม่ได้เลย");
-  }
-});
-
-$("btnNew").addEventListener("click", ()=>{
-  activeRecord = null;
-  setReadOnly(false);
-  renderPeople();
-  $("recText220").value="";
-  show("ok","เริ่มชุดใหม่เรียบร้อย");
-  updateSummary();
-});
-
-$("btnSave").addEventListener("click", ()=>{
-  if(readOnly){ show("bad","ไม่สามารถบันทึกได้: ชุดข้อมูลถูกล็อกครบ 356 วันแล้ว"); return; }
-  if(!validateKeyFields()) return;
-
-  const rec = collectForm();
-  const records = getRecords();
-  const idx = records.findIndex(r=>r.id===rec.id);
-  if(idx>=0) records[idx]=rec; else records.push(rec);
-  saveRecords(records);
-
-  activeRecord = rec;
-  setReadOnly(isLocked(rec.created_at));
-  updateSummary();
-  show("ok","บันทึกข้อมูลเรียบร้อย ✅");
-});
-
-$("btnView").addEventListener("click", ()=>{
-  if(!validateKeyFields()) return;
-  const id = buildRecordId();
-  const records = getRecords();
-  const found = records.find(r=>r.id===id) || collectForm();
-  // modal simple
-  const text = JSON.stringify(found, null, 2);
-  const w = window.open("", "_blank");
-  w.document.write(`<pre style="white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,Menlo,Consolas; padding:14px">${escapeHtml(text)}</pre>`);
-  show("ok","เปิดหน้าดูผลการบันทึกข้อมูลแล้ว");
-});
-
-$("btnSubmit").addEventListener("click", ()=>{
-  if(readOnly){ show("bad","ไม่สามารถส่งได้: ชุดข้อมูลถูกล็อกครบ 356 วันแล้ว"); return; }
-  if(!validateKeyFields()) return;
-
-  // ต้องบันทึกก่อนเพื่อให้มี created_at คงที่
-  const rec = collectForm();
-  let records = getRecords();
-  const idx = records.findIndex(r=>r.id===rec.id);
-  if(idx>=0){
-    rec.created_at = records[idx].created_at;
-    rec.created_by = records[idx].created_by;
-  }
-  rec.submitted = true;
-  rec.submitted_at = Date.now();
-  rec.updated_at = Date.now();
-
-  if(idx>=0) records[idx]=rec; else records.push(rec);
-  saveRecords(records);
-
-  // submit log
-  const log = JSON.parse(localStorage.getItem(SUBMIT_KEY) || "[]");
-  log.push({ id: rec.id, submitted_at: rec.submitted_at, by: (session.fullname||session.username) });
-  localStorage.setItem(SUBMIT_KEY, JSON.stringify(log));
-
-  activeRecord = rec;
-  setReadOnly(isLocked(rec.created_at));
-  updateSummary();
-  show("ok","ส่งข้อมูลเรียบร้อย ✅ (พร้อมให้ Cashboard ดึงไปแสดง)");
-});
-
-$("btnEdit").addEventListener("click", ()=>{
-  if(!activeRecord){ show("warn","ยังไม่ได้โหลด/สร้างเรคคอร์ด — สามารถแก้ไขในฟอร์มได้ทันที"); return; }
-  if(isLocked(activeRecord.created_at)){
-    show("bad","ชุดข้อมูลนี้ถูกล็อก (ครบ 356 วัน) ไม่สามารถกลับไปแก้ไขได้");
-    setReadOnly(true);
+  // lock rule
+  if(createdAt && isLocked(createdAt)){
+    show("bad","รายการนี้ล็อกแล้ว (ครบ 356 วัน) ไม่สามารถแก้ไขได้");
     return;
   }
-  setReadOnly(false);
-  show("ok","เข้าสู่โหมดแก้ไขข้อมูลแล้ว");
-});
+
+  const core = validateCore();
+  if(core.length){
+    show("warn","ข้อมูลยังไม่ครบ: " + core[0]);
+    // jump to tab t1
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
+    document.querySelector('.tab[data-tab="t1"]').classList.add("active");
+    $("t1").classList.add("active");
+    return;
+  }
+
+  const r = buildRecord(submitFlag);
+
+  // if new
+  const idx = all.findIndex(x=>x.id===r.id);
+  if(idx>=0){
+    // keep created_at
+    r.created_at = all[idx].created_at || r.created_at;
+    // if already submitted once, keep submitted flag
+    if(all[idx].submitted) r.submitted = true;
+    if(all[idx].submitted_at && !r.submitted_at) r.submitted_at = all[idx].submitted_at;
+
+    all[idx] = r;
+  }else{
+    all.unshift(r);
+  }
+  setManual(all);
+
+  // update state
+  currentId = r.id;
+  createdAt = r.created_at;
+  $("rid").textContent = r.id;
+  $("modePill").textContent = "กำลังแก้ไขรายการ";
+  $("modePill").className = "pill warn";
+
+  const lk = lockLabel(createdAt);
+  $("lockPill").textContent = lk.text;
+  $("lockPill").className = lk.locked ? "pill bad" : "pill ok";
+
+  if(submitFlag){
+    show("ok","ส่งข้อมูลเรียบร้อย ✅");
+  }else{
+    show("ok","บันทึกข้อมูลเรียบร้อย ✅");
+  }
+
+  refreshRecent();
+}
+
+function loadRecord(id){
+  const all = getManual();
+  const r = all.find(x=>x.id===id);
+  if(!r){ show("bad","ไม่พบรายการ"); return; }
+
+  currentId = r.id;
+  createdAt = r.created_at || null;
+
+  $("rid").textContent = r.id;
+  $("modePill").textContent = "กำลังแก้ไขรายการ";
+  $("modePill").className = "pill warn";
+
+  const lk = lockLabel(createdAt);
+  $("lockPill").textContent = lk.text;
+  $("lockPill").className = lk.locked ? "pill bad" : "pill ok";
+
+  // fill
+  $("entityType").value = r.entity?.type || "";
+  $("entityName").value = r.entity?.name || "";
+  $("province").value = r.entity?.province || "";
+  $("district").value = r.entity?.district || "";
+  $("subdistrict").value = r.entity?.subdistrict || "";
+
+  $("fy").value = String(r.period?.fiscalYear || $("fy").value);
+  $("periodType").value = r.period?.periodType || "YEAR";
+  $("periodValue").value = r.period?.periodValue || "";
+
+  auditors = Array.isArray(r.auditors)? r.auditors : [];
+  reviewers = Array.isArray(r.reviewers)? r.reviewers : [];
+  renderAuditors(); renderReviewers();
+
+  // after rendering, set values
+  auditors.forEach((p,i)=>{
+    $("aud_name_"+i).value = p.name||"";
+    $("aud_pos_"+i).value = p.pos||"";
+    $("aud_group_"+i).value = p.group||"";
+    $("aud_office_"+i).value = p.office||"";
+    $("aud_assign_"+i).value = p.assign||"";
+    $("aud_duty_"+i).value = p.duty||"";
+  });
+  reviewers.forEach((p,i)=>{
+    $("rev_name_"+i).value = p.name||"";
+    $("rev_pos_"+i).value = p.pos||"";
+    $("rev_group_"+i).value = p.group||"";
+    $("rev_office_"+i).value = p.office||"";
+    $("rev_assign_"+i).value = p.assign||"";
+  });
+
+  $("directorName").value = r.director?.name||"";
+  $("directorPos").value = r.director?.pos||"";
+  $("directorOffice").value = r.director?.office||"";
+  $("directorAssign").value = r.director?.assign||"";
+
+  $("auditeeName").value = r.auditee?.name||"";
+  $("auditeePos").value = r.auditee?.pos||"";
+  $("auditeeOffice").value = r.auditee?.office||"";
+  $("auditeeSince").value = r.auditee?.since||"";
+
+  $("s217").value = r.s217||"";
+  $("s218").value = r.s218||"";
+  $("s219").value = r.s219||"";
+  $("s2110").value = r.s2110||"";
+
+  $("chk_open").value = r.checks?.open || "ไม่ทราบ";
+  $("chk_confirm_work").value = r.checks?.confirm_work || "ไม่ทราบ";
+  $("chk_bank_confirm").value = r.checks?.bank_confirm || "ไม่ทราบ";
+  $("chk_kindergarten_confirm").value = r.checks?.kindergarten_confirm || "ไม่ทราบ";
+  $("chk_opt3").value = r.checks?.opt3 || "ไม่ทราบ";
+  $("chk_opt5").value = r.checks?.opt5 || "ไม่ทราบ";
+  $("chk_opt6").value = r.checks?.opt6 || "ไม่ทราบ";
+  $("chk_opt7").value = r.checks?.opt7 || "ไม่ทราบ";
+  $("chk_opt81").value = r.checks?.opt81 || "ไม่ทราบ";
+  $("formsFreeText").value = r.checks?.forms_free_text || "";
+
+  $("s2112").value = r.s2112||"";
+
+  $("r_note").value = r.report?.note || "ไม่ทราบ";
+  $("r_netasset").value = r.report?.netasset || "ไม่ทราบ";
+  $("r_ops").value = r.report?.ops || "ไม่ทราบ";
+  $("r_finpos").value = r.report?.finpos || "ไม่ทราบ";
+  $("r_auditreport").value = r.report?.auditreport || "ไม่ทราบ";
+  $("r_memo").value = r.report?.memo || "ไม่ทราบ";
+  $("r_letter").value = r.report?.letter || "ไม่ทราบ";
+
+  $("s2114").value = r.s2114||"";
+  $("s2115").value = r.s2115||"";
+  $("s2116").value = r.s2116||"";
+  $("s2117").value = r.s2117||"";
+  $("s2119").value = r.s2119||"";
+  $("recType").value = r.recommendation?.type||"";
+  $("recText").value = r.recommendation?.text||"";
+
+  // lock UI
+  unlockUI(!lk.locked);
+
+  // show status pill
+  if(r.submitted){
+    $("modePill").textContent = "ส่งแล้ว (Submitted)";
+    $("modePill").className = "pill ok";
+  }
+
+  show("ok","โหลดรายการเรียบร้อย ✅");
+}
 
 /* =========================
-   J) Summary side panel
+   Recent list
    ========================= */
-function updateSummary(){
-  const name = $("entityName").value.trim();
-  const et = $("entityType").value;
-  const loc = `${$("province").value} / ${$("district").value||"-"} / ${$("subdistrict").value||"-"}`;
-  const fy = $("fiscalYear").value;
-  const pt = $("periodType").value;
-  const pv = $("periodValue").value;
-  const ptLabel = (pt==="YEAR"?"รายปี":pt==="QUARTER"?"รายไตรมาส":pt==="MONTH"?"รายเดือน":"รายวัน");
-
-  $("sumEntity").textContent = safe(et+" "+name);
-  $("sumLoc").textContent = safe(loc);
-  $("sumPeriod").textContent = safe(`ปีงบฯ ${fy} • ${ptLabel} ${pv}`);
-
-  const created = activeRecord?.created_at || null;
-  const updated = activeRecord?.updated_at || null;
-
-  $("sumCreated").textContent = created ? ymd(created) : "-";
-  $("sumUpdated").textContent = updated ? ymd(updated) : "-";
-  const locked = created ? (isLocked(created) ? "ล็อกแล้ว" : "แก้ไขได้") : "ยังไม่บันทึก";
-  $("sumLock").textContent = locked;
-
-  $("sum217").textContent = $("status217").value;
-  $("sum218").textContent = $("status218").value;
-  $("sum219").textContent = $("status219").value;
-  $("sum2110").textContent = $("status2110").value;
-  $("sum214").textContent = $("opinion214").value;
-  $("sum215").textContent = $("finding215").value;
-  $("sum216").textContent = $("adjust216").value;
-  $("sum217c").textContent = $("cashShort217").value;
-  $("sum219p").textContent = $("problem219").value;
-
-  const rec = $("recType220").value + ( $("recText220").value.trim() ? " • " + $("recText220").value.trim().slice(0,60) : "" );
-  $("sum220").textContent = rec;
+function matchesQuick(r, q){
+  if(!q) return true;
+  q = q.toLowerCase();
+  const s = [
+    r.entity?.name, r.entity?.province, r.entity?.district, r.entity?.subdistrict,
+    r.entity?.type, r.period?.fiscalYear, r.period?.periodType, r.period?.periodValue
+  ].join(" ").toLowerCase();
+  return s.includes(q);
 }
 
-["entityType","entityName","province","district","subdistrict","fiscalYear","periodType","periodValue",
- "status217","status218","status219","status2110","closeMeeting212","opinion214","finding215","adjust216","cashShort217",
- "problem219","recType220","recText220"
-].forEach(id=>{
-  $(id).addEventListener("input", updateSummary);
-  $(id).addEventListener("change", updateSummary);
+function refreshRecent(){
+  const q = $("quickSearch").value.trim();
+  const all = getManual().filter(x=>!x.deleted).filter(r=>matchesQuick(r,q));
+
+  const tbody = $("recentTbody");
+  tbody.innerHTML = "";
+
+  all.slice(0,30).forEach(r=>{
+    const lk = lockLabel(r.created_at);
+    const status = r.submitted ? `<span class="pill ok">Submitted</span>` : `<span class="pill info">Draft</span>`;
+    const lockpill = lk.locked ? `<span class="pill bad">Locked</span>` : `<span class="pill ok">Editable</span>`;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>
+        <div style="font-weight:900">${(r.entity?.type||"")}${r.entity?.name?(" • "+r.entity.name):""}</div>
+        <div class="tiny">${r.entity?.province||"-"} / ${r.entity?.district||"-"} / ${r.entity?.subdistrict||"-"}</div>
+      </td>
+      <td>${r.period?.fiscalYear||"-"}</td>
+      <td>${r.period?.periodType||"-"} ${r.period?.periodValue||""}</td>
+      <td>${fmtTs(r.updated_at)}</td>
+      <td>${status} ${lockpill}</td>
+      <td class="right"><button class="btn" style="padding:8px 10px" data-load="${r.id}">โหลด</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll("button[data-load]").forEach(b=>{
+    b.addEventListener("click", ()=>loadRecord(b.dataset.load));
+  });
+}
+$("btnRefresh").addEventListener("click", refreshRecent);
+$("quickSearch").addEventListener("input", refreshRecent);
+
+/* =========================
+   Actions
+   ========================= */
+$("btnNew").addEventListener("click", ()=>{
+  if(confirm("ต้องการสร้างรายการใหม่? (ข้อมูลที่ยังไม่บันทึกจะหาย)")){
+    setModeNew();
+    refreshRecent();
+  }
 });
-updateSummary();
 
-function escapeHtml(s){
-  return String(s||"").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
+$("btnSave").addEventListener("click", ()=>saveRecord(false));
+$("btnSubmit").addEventListener("click", ()=>{
+  if(!confirm("ยืนยันส่งข้อมูลเข้าระบบ? (ระบบจะถือเป็น Submitted)")) return;
+  saveRecord(true);
+});
+$("btnView").addEventListener("click", ()=>{
+  if(!currentId){ show("warn","ยังไม่มีรายการให้ดู (กรุณาบันทึกก่อน)"); return; }
+  const all = getManual();
+  const r = all.find(x=>x.id===currentId);
+  if(!r){ show("bad","ไม่พบรายการ"); return; }
+  alert(
+    "สรุปรายการ\n\n" +
+    `หน่วย: ${(r.entity?.type||"")} ${r.entity?.name||""}\n` +
+    `พื้นที่: ${r.entity?.province||"-"} / ${r.entity?.district||"-"} / ${r.entity?.subdistrict||"-"}\n` +
+    `ปีงบฯ: ${r.period?.fiscalYear||"-"}  งวด: ${r.period?.periodType||"-"} ${r.period?.periodValue||""}\n` +
+    `สถานะ FA (2.1.7): ${r.s217||"-"}\n` +
+    `ปิดงบ (2.1.8): ${r.s218||"-"}\n` +
+    `ส่งรายงาน (2.1.9): ${r.s219||"-"}\n` +
+    `หนังสือติดตาม (2.1.10): ${r.s2110||"-"}\n` +
+    `ผลตรวจ (2.1.14): ${r.s2114||"-"}\n` +
+    `ข้อสังเกต (2.1.15): ${r.s2115||"-"}\n` +
+    `เงินขาดบัญชี (2.1.17): ${r.s2117||"-"}\n` +
+    `ปัญหาการตรวจ (2.1.19): ${r.s2119||"-"}\n\n` +
+    `อัปเดตล่าสุด: ${fmtTs(r.updated_at)}\n` +
+    `บันทึกครั้งแรก: ${fmtTs(r.created_at)}\n` +
+    `Submitted: ${r.submitted?"ใช่":"ไม่"}`
+  );
+});
+
+$("btnBackEdit").addEventListener("click", ()=>{
+  // jump to first tab
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
+  document.querySelector('.tab[data-tab="t1"]').classList.add("active");
+  $("t1").classList.add("active");
+});
+
+$("btnToCashboard").addEventListener("click", ()=>location.href="cashboard.html");
+$("btnHome").addEventListener("click", ()=>location.href="index.html");
+$("goAdmin").addEventListener("click", ()=>location.href="admin.html");
+$("goDataHub").addEventListener("click", ()=>location.href="data-hub.html");
+
+/* =========================
+   Init
+   ========================= */
+setModeNew();
+refreshRecent();
 </script>
 </body>
 </html>
