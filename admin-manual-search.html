@@ -3,14 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ค้นหา Manual Data (Admin) • 2.2 ค้นหาข้อมูล • ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์</title>
-
+  <title>Admin • ค้นหาข้อมูล Manual | ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์</title>
   <style>
     :root{
       --bg:#f4f7fb; --card:#fff; --line:#dde5f2; --text:#24364c; --muted:#6a7f9a;
-      --brand:#1e5aaa; --brand2:#2f7de1;
-      --shadow:0 10px 28px rgba(20,40,80,.08);
-      --r:18px;
+      --brand:#1e5aaa; --brand2:#2f7de1; --shadow:0 10px 28px rgba(20,40,80,.08); --r:18px;
       --ok:#1f7a3b; --bad:#b13b3b; --warn:#8a5a00; --info:#0b5aa6;
     }
     *{box-sizing:border-box}
@@ -19,401 +16,404 @@
       position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);
       padding:14px 18px;display:flex;align-items:center;gap:12px
     }
-    .title{display:flex;flex-direction:column;line-height:1.05}
+    .title{display:flex;flex-direction:column;line-height:1.1}
     .title h1{margin:0;font-size:18px}
     .title small{color:var(--muted)}
     .spacer{flex:1}
-    .badge{border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa;padding:8px 12px;border-radius:14px;font-weight:900}
+    .badge{border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa;padding:8px 12px;border-radius:14px;font-weight:900;white-space:nowrap}
 
-    .wrap{max-width:1200px;margin:18px auto;padding:0 18px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;min-width:0}
-    h2{margin:0 0 10px;font-size:16px}
-    h3{margin:12px 0 8px;font-size:14px}
+    .wrap{max-width:1100px;margin:18px auto;padding:0 18px}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+    .card{
+      grid-column:span 12;background:var(--card);border:1px solid var(--line);
+      border-radius:var(--r);box-shadow:var(--shadow);padding:14px;min-width:0
+    }
+    @media(min-width:980px){
+      .col6{grid-column:span 6}
+    }
+    h2{margin:0 0 8px;font-size:16px}
     .muted{color:var(--muted);font-size:13px}
     .hr{height:1px;background:#eef2f7;margin:12px 0}
 
-    input,select,textarea{
-      width:100%;padding:10px 12px;border-radius:14px;border:1px solid var(--line);
-      background:#fff;font-size:14px;outline:none
+    label{display:block;font-size:12px;color:var(--muted);font-weight:900;margin:6px 0 4px}
+    input,select{
+      width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 10px;background:#fff;
+      color:var(--text);outline:none;font-size:14px
     }
-    textarea{min-height:88px;resize:vertical}
     .row{display:flex;gap:10px;flex-wrap:wrap}
-    .row>*{flex:1;min-width:180px}
+    .row>*{flex:1;min-width:220px}
 
     .btn{
-      border:1px solid var(--line); background:#fff; border-radius:14px;
-      padding:10px 12px; cursor:pointer; font-weight:900; color:var(--text);
-      white-space:nowrap
+      width:100%;border:1px solid var(--line);background:#fff;border-radius:14px;padding:12px 12px;
+      cursor:pointer;font-weight:900;color:var(--text);text-align:center
     }
     .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;border-color:transparent}
+    .btn.warn{border-color:#ffe7b8;background:#fff7e6;color:var(--warn)}
     .btn:disabled{opacity:.55;cursor:not-allowed}
 
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa}
+    .pill.info{border-color:#cfe2ff;background:#eef6ff;color:var(--info)}
+
+    .noteBox{border:1px dashed #cfe2ff;background:#f6fbff;border-radius:14px;padding:10px 12px}
     .msg{display:none;margin-top:10px;padding:10px 12px;border-radius:14px;font-weight:900}
     .okBox{border:1px solid #c8f2d6;background:#effaf3;color:var(--ok)}
     .badBox{border:1px solid #ffd2d2;background:#fff0f0;color:var(--bad)}
     .warnBox{border:1px solid #ffe7b8;background:#fff7e6;color:var(--warn)}
-
-    .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa}
-    .pill.info{border-color:#cfe2ff;background:#eef6ff;color:var(--info)}
   </style>
 </head>
 
 <body>
 <header>
   <div class="title">
-    <h1>ค้นหา Manual Data (Admin) — 2.2</h1>
-    <small>ค้นหาตามปีงบฯ / หน่วยรับตรวจ / พื้นที่ / คำค้น (keyword) แล้วไปหน้า 2.3 ผลการค้นหา</small>
+    <h1>Admin • ค้นหาข้อมูล Manual</h1>
+    <small>2.2.1–2.2.4 ค้นหาตามปีงบ / หน่วยรับตรวจ / ที่ตั้ง / คำค้น</small>
   </div>
   <div class="spacer"></div>
-  <div class="badge" id="userBadge">กำลังตรวจสอบผู้ใช้…</div>
+  <div class="badge" id="userBadge">กำลังตรวจสอบสิทธิ…</div>
 </header>
 
 <div class="wrap">
-  <div class="card">
-    <h2>2.2 ตัวกรองการค้นหา</h2>
-    <div class="muted">Tip: ใส่เงื่อนไขเท่าที่จำเป็น (ยิ่งแคบ ยิ่งเร็ว) • ระบบจะค้นจากข้อมูลที่ไม่ถูกลบ (deleted=false)</div>
+  <div class="grid">
 
-    <div class="hr"></div>
-
-    <h3>2.2.1 ค้นหาตามปีงบประมาณ</h3>
-    <div class="row">
-      <select id="fy">
-        <option value="">ทุกปีงบฯ</option>
-      </select>
-      <select id="periodType">
-        <option value="">ทุกงวด</option>
-        <option value="YEAR">รายปี</option>
-        <option value="QUARTER">รายไตรมาส</option>
-        <option value="MONTH">รายเดือน</option>
-        <option value="DAY">รายวัน</option>
-      </select>
-      <select id="periodValue">
-        <option value="">ทุกค่า (งวด)</option>
-      </select>
+    <!-- Search by FY -->
+    <div class="card col6">
+      <h2>2.2.1 ค้นหาตามปีงบประมาณ</h2>
+      <div class="muted">เลือกปีงบประมาณ 2560–2580 แล้วกดค้นหา</div>
+      <div class="hr"></div>
+      <div class="row">
+        <div>
+          <label>ปีงบประมาณ</label>
+          <select id="fyOnly">
+            <option value="">— เลือกปีงบประมาณ —</option>
+          </select>
+        </div>
+        <div>
+          <label>งวด (ตัวเลือกเสริม)</label>
+          <select id="periodOnly">
+            <option value="">ทั้งหมด</option>
+            <option value="YEAR">รายปี</option>
+            <option value="Q1">ไตรมาส 1</option>
+            <option value="Q2">ไตรมาส 2</option>
+            <option value="Q3">ไตรมาส 3</option>
+            <option value="Q4">ไตรมาส 4</option>
+            <option value="M01">ม.ค.</option><option value="M02">ก.พ.</option><option value="M03">มี.ค.</option>
+            <option value="M04">เม.ย.</option><option value="M05">พ.ค.</option><option value="M06">มิ.ย.</option>
+            <option value="M07">ก.ค.</option><option value="M08">ส.ค.</option><option value="M09">ก.ย.</option>
+            <option value="M10">ต.ค.</option><option value="M11">พ.ย.</option><option value="M12">ธ.ค.</option>
+          </select>
+        </div>
+      </div>
+      <div style="height:10px"></div>
+      <button class="btn primary" id="btnFySearch">ค้นหาตามปีงบ</button>
+      <div class="msg warnBox" id="fyWarn"></div>
     </div>
 
-    <div class="hr"></div>
-
-    <h3>2.2.2 ค้นหาตามชื่อหน่วยรับตรวจ</h3>
-    <div class="row">
-      <select id="entityPick">
-        <option value="">ทุกหน่วยรับตรวจ</option>
-      </select>
-      <input id="entityText" placeholder="พิมพ์ค้นหาจากคำ (เช่น ศรีสะเกษ / คำว่า “เทศบาล”)">
+    <!-- Search by Entity -->
+    <div class="card col6">
+      <h2>2.2.2 ค้นหาตามชื่อหน่วยรับตรวจ</h2>
+      <div class="muted">เลือกประเภท/พิมพ์ชื่อ/ค้นหาจากคำ</div>
+      <div class="hr"></div>
+      <div class="row">
+        <div>
+          <label>ประเภท อปท.</label>
+          <select id="etype">
+            <option value="">ทั้งหมด</option>
+            <option value="อบจ">อบจ</option>
+            <option value="ทม">ทม</option>
+            <option value="ทน">ทน</option>
+            <option value="ทต">ทต</option>
+            <option value="อบต">อบต</option>
+          </select>
+        </div>
+        <div>
+          <label>คำค้นชื่อหน่วย (พิมพ์)</label>
+          <input id="ename" placeholder="เช่น เทศบาลเมืองศรีสะเกษ" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>ปีงบ (ตัวเลือกเสริม)</label>
+          <select id="fyEntity">
+            <option value="">ทั้งหมด</option>
+          </select>
+        </div>
+        <div>
+          <label>สถานะ FA (2.1.7) (ตัวเลือกเสริม)</label>
+          <select id="faStatus">
+            <option value="">ทั้งหมด</option>
+            <option value="ยุติการติดตามผล">ยุติการติดตามผล</option>
+            <option value="อยู่ระหว่างติดตามผลการตรวจสอบ">อยู่ระหว่างติดตามผลการตรวจสอบ</option>
+            <option value="ออกรายงานการตรวจแล้ว">ออกรายงานการตรวจแล้ว</option>
+            <option value="อยู่ระหว่างจัดพิมพ์รายงาน">อยู่ระหว่างจัดพิมพ์รายงาน</option>
+            <option value="อยู่ระหว่างสอบทานของ ผตจ.">อยู่ระหว่างสอบทานของ ผตจ.</option>
+            <option value="อยู่ระหว่างสอบทาน ผอก.">อยู่ระหว่างสอบทาน ผอก.</option>
+            <option value="อยู่ระหว่างตรวจสอบ">อยู่ระหว่างตรวจสอบ</option>
+            <option value="ยังไม่ตรวจ">ยังไม่ตรวจ</option>
+            <option value="ไม่ทราบสถานะ">ไม่ทราบสถานะ</option>
+          </select>
+        </div>
+      </div>
+      <div style="height:10px"></div>
+      <button class="btn primary" id="btnEntitySearch">ค้นหาตามหน่วย</button>
+      <div class="msg warnBox" id="entWarn"></div>
     </div>
 
-    <div class="hr"></div>
-
-    <h3>2.2.3 ค้นหาตามที่ตั้ง</h3>
-    <div class="row">
-      <input id="province" placeholder="จังหวัด (พิมพ์ได้ เช่น ศรีสะเกษ)" list="provList" />
-      <datalist id="provList"></datalist>
-
-      <input id="district" placeholder="อำเภอ (พิมพ์ได้)" list="distList" />
-      <datalist id="distList"></datalist>
-
-      <input id="subdistrict" placeholder="ตำบล (พิมพ์ได้)" list="subdList" />
-      <datalist id="subdList"></datalist>
+    <!-- Search by Location -->
+    <div class="card col6">
+      <h2>2.2.3 ค้นหาตามที่ตั้ง (จังหวัด/อำเภอ/ตำบล)</h2>
+      <div class="muted">พิมพ์อย่างน้อย 1 ช่อง แล้วค้นหา</div>
+      <div class="hr"></div>
+      <div class="row">
+        <div>
+          <label>จังหวัด</label>
+          <input id="prov" placeholder="เช่น ศรีสะเกษ" />
+        </div>
+        <div>
+          <label>อำเภอ</label>
+          <input id="dist" placeholder="เช่น เมืองศรีสะเกษ" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>ตำบล</label>
+          <input id="subd" placeholder="เช่น โพธิ์" />
+        </div>
+        <div>
+          <label>ปีงบ (ตัวเลือกเสริม)</label>
+          <select id="fyLoc">
+            <option value="">ทั้งหมด</option>
+          </select>
+        </div>
+      </div>
+      <div style="height:10px"></div>
+      <button class="btn primary" id="btnLocSearch">ค้นหาตามที่ตั้ง</button>
+      <div class="msg warnBox" id="locWarn"></div>
     </div>
 
-    <div class="hr"></div>
-
-    <h3>2.2.4 ค้นหาตามคำ (Keyword)</h3>
-    <div class="row">
-      <input id="keyword" placeholder="เช่น “อยู่ระหว่างตรวจสอบ”, “มีข้อสังเกต”, “ปรับปรุงบัญชี”">
-      <select id="submitted">
-        <option value="">รวมทั้งหมด (ส่ง/ไม่ส่ง)</option>
-        <option value="Y">เฉพาะส่งแล้ว</option>
-        <option value="N">เฉพาะยังไม่ส่ง</option>
-      </select>
-      <select id="lock">
-        <option value="">รวมทั้งหมด (ล็อก/ไม่ล็อก)</option>
-        <option value="OPEN">เฉพาะยังไม่ล็อก</option>
-        <option value="LOCKED">เฉพาะล็อก (>=356 วัน)</option>
-      </select>
+    <!-- Search by Keyword -->
+    <div class="card col6">
+      <h2>2.2.4 ค้นหาตามคำ</h2>
+      <div class="muted">ค้นหาจากคำทั่วไป (ชื่อหน่วย/ผู้ตรวจ/หมายเหตุ/ปัญหา/ข้อเสนอแนะ ฯลฯ)</div>
+      <div class="hr"></div>
+      <div class="row">
+        <div>
+          <label>คำค้น (Keyword)</label>
+          <input id="kw" placeholder="เช่น เงินขาดบัญชี / ปิดงบ / อปท.8.10 / ปัญหาเรื่องคน" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>ปีงบ (ตัวเลือกเสริม)</label>
+          <select id="fyKw">
+            <option value="">ทั้งหมด</option>
+          </select>
+        </div>
+        <div>
+          <label>ประเภท อปท. (ตัวเลือกเสริม)</label>
+          <select id="etypeKw">
+            <option value="">ทั้งหมด</option>
+            <option value="อบจ">อบจ</option>
+            <option value="ทม">ทม</option>
+            <option value="ทน">ทน</option>
+            <option value="ทต">ทต</option>
+            <option value="อบต">อบต</option>
+          </select>
+        </div>
+      </div>
+      <div style="height:10px"></div>
+      <button class="btn primary" id="btnKwSearch">ค้นหาตามคำ</button>
+      <div class="msg warnBox" id="kwWarn"></div>
     </div>
 
-    <div class="row" style="margin-top:10px">
-      <button class="btn primary" id="btnSearch">ค้นหา (ไปหน้า 2.3)</button>
-      <button class="btn" id="btnPreview">พรีวิวผลแบบเร็ว</button>
-      <button class="btn" id="btnReset">รีเซ็ต</button>
+    <!-- Footer nav -->
+    <div class="card">
+      <div class="row">
+        <div class="noteBox" style="flex:2">
+          <div class="muted">
+            เคล็ดลับ: ถ้าต้องการ “กว้างแต่แม่น” ให้ใช้ค้นหาตามคำ + ปีงบ (เสริม)  
+            ถ้าต้องการ “เป๊ะตามพื้นที่” ให้ใช้ค้นหาตามที่ตั้ง
+          </div>
+          <div style="margin-top:8px">
+            <span class="pill info" id="stat">พร้อมค้นหา</span>
+          </div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:10px">
+          <button class="btn" id="goAdminHome">กลับหน้า Admin</button>
+          <button class="btn" id="goTable">ไปตาราง Manual (Excel)</button>
+          <button class="btn" id="goDataHub">ไป Data Hub</button>
+          <button class="btn" id="goCashboard">ไป Cashboard</button>
+          <button class="btn" id="goHome">กลับหน้าหลัก</button>
+        </div>
+      </div>
     </div>
 
-    <div class="row" style="margin-top:10px">
-      <button class="btn" id="btnTable">กลับตารางข้อมูลทั้งหมด</button>
-      <button class="btn" id="btnHub">กลับ Data Hub</button>
-      <button class="btn" id="btnCashboard">ไป Cashboard</button>
-      <button class="btn" id="btnHome">กลับหน้าแรก</button>
-    </div>
-
-    <div class="msg okBox" id="ok"></div>
-    <div class="msg warnBox" id="warn"></div>
-    <div class="msg badBox" id="bad"></div>
-
-    <div class="hr"></div>
-    <div class="muted">
-      <span class="pill info" id="dbCount">ฐานข้อมูล: 0 รายการ</span>
-      <span class="pill info" id="matchCount">คาดว่าเข้าเงื่อนไข: —</span>
-    </div>
   </div>
 </div>
 
 <script>
 /* =========================
-   0) Guard: login + ADMIN
+   Guard: ADMIN only
    ========================= */
 const SESSION_KEY = "fa_session_v1";
 const session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
 if(!session){ location.href="login.html"; }
-const role = (session.role || "USER").toUpperCase();
-if(role !== "ADMIN"){
-  alert("หน้านี้สำหรับผู้ดูแลระบบ (ADMIN) เท่านั้น");
-  location.href = "index.html";
-}
+const role = (session.role||"USER").toUpperCase();
 document.getElementById("userBadge").textContent =
   "ผู้ใช้: " + (session.fullname || session.username) + " • บทบาท: " + role;
 
+if(role !== "ADMIN"){
+  alert("หน้านี้สำหรับ ADMIN เท่านั้น");
+  location.href="index.html";
+}
+
 /* =========================
-   1) Storage
+   Keys
    ========================= */
-const RECORDS_KEY = "fa_manual_records_v1";
-const SEARCH_CTX_KEY = "fa_admin_search_ctx_v1";
-
-function getRecords(){ return JSON.parse(localStorage.getItem(RECORDS_KEY) || "[]"); }
+const MANUAL_KEY = "fa_manual_records_v1";
+const SEARCH_KEY = "fa_admin_manual_search_v1"; // ส่งเงื่อนไขไปหน้า results
 
 /* =========================
-   2) Helpers
+   Helpers
    ========================= */
 const $ = (id)=>document.getElementById(id);
-function safe(v){ return (v===null||v===undefined) ? "" : String(v); }
 function show(box, text){
   const el = $(box);
   el.textContent = text;
-  el.style.display = "block";
-  setTimeout(()=>{ el.style.display="none"; }, 2500);
+  el.style.display="block";
+  setTimeout(()=>el.style.display="none", 2400);
 }
-function isLocked(created_at){
-  if(!created_at) return false;
-  const days = (Date.now() - created_at)/86400000;
-  return days >= 356;
+function getData(){ return JSON.parse(localStorage.getItem(MANUAL_KEY) || "[]"); }
+function countActive(){
+  const all = getData();
+  return all.filter(x=>!x?.deleted).length;
 }
-function contains(hay, q){
-  if(!q) return true;
-  return String(hay||"").toLowerCase().includes(q.toLowerCase());
+function setSearch(payload){
+  localStorage.setItem(SEARCH_KEY, JSON.stringify(payload));
+}
+function goResults(){
+  location.href="admin-manual-results.html";
+}
+function buildFyOptions(){
+  const start=2560, end=2580;
+  const fyOnly = $("fyOnly");
+  const fyEntity = $("fyEntity");
+  const fyLoc = $("fyLoc");
+  const fyKw = $("fyKw");
+  for(let y=start;y<=end;y++){
+    const o=document.createElement("option");
+    o.value=String(y); o.textContent=String(y);
+    fyOnly.appendChild(o);
+
+    const o2=o.cloneNode(true);
+    const o3=o.cloneNode(true);
+    const o4=o.cloneNode(true);
+    fyEntity.appendChild(o2);
+    fyLoc.appendChild(o3);
+    fyKw.appendChild(o4);
+  }
 }
 
 /* =========================
-   3) Init dropdowns
+   Actions: search modes
    ========================= */
-(function initYear(){
-  for(let y=2560;y<=2580;y++){
-    const op=document.createElement("option");
-    op.value=String(y); op.textContent="ปีงบฯ "+y;
-    $("fy").appendChild(op);
+$("btnFySearch").addEventListener("click", ()=>{
+  const fy = $("fyOnly").value;
+  const period = $("periodOnly").value;
+  if(!fy){
+    show("fyWarn","กรุณาเลือกปีงบประมาณ");
+    return;
   }
-})();
-
-function rebuildPeriodValue(){
-  const t = $("periodType").value;
-  const pv = $("periodValue");
-  pv.innerHTML = `<option value="">ทุกค่า (งวด)</option>`;
-  if(!t) return;
-
-  if(t==="YEAR"){
-    pv.innerHTML += `<option value="ALL">ทั้งปี</option>`;
-  }
-  if(t==="QUARTER"){
-    ["Q1","Q2","Q3","Q4"].forEach(q=>{
-      pv.innerHTML += `<option value="${q}">${q}</option>`;
-    });
-  }
-  if(t==="MONTH"){
-    for(let m=1;m<=12;m++){
-      const mm=String(m).padStart(2,"0");
-      pv.innerHTML += `<option value="${mm}">เดือน ${mm}</option>`;
-    }
-  }
-  if(t==="DAY"){
-    pv.innerHTML += `<option value="TODAY">รายวัน (TODAY)</option>`;
-  }
-}
-$("periodType").addEventListener("change", ()=>{
-  rebuildPeriodValue();
-  calcPreview();
+  setSearch({
+    mode:"FY",
+    fy,
+    period: period || "",
+    created_at: Date.now(),
+    by: (session.fullname || session.username)
+  });
+  goResults();
 });
-$("periodValue").addEventListener("change", calcPreview);
-$("fy").addEventListener("change", calcPreview);
 
-function buildFromDB(){
-  const all = getRecords().filter(r=>!r.deleted);
+$("btnEntitySearch").addEventListener("click", ()=>{
+  const etype = $("etype").value;
+  const ename = $("ename").value.trim();
+  const fy = $("fyEntity").value;
+  const faStatus = $("faStatus").value;
 
-  // entity list
-  const pick = $("entityPick");
-  pick.innerHTML = `<option value="">ทุกหน่วยรับตรวจ</option>`;
-  const setEnt = new Set();
-  all.forEach(r=>{
-    const key = `${safe(r.entity?.type)}|${safe(r.entity?.name)}|${safe(r.entity?.province)}|${safe(r.entity?.district)}|${safe(r.entity?.subdistrict)}`;
-    if(r.entity?.name) setEnt.add(key);
+  if(!ename && !etype){
+    show("entWarn","กรุณาพิมพ์ชื่อหน่วย หรือเลือกประเภท อปท. อย่างน้อย 1 อย่าง");
+    return;
+  }
+
+  setSearch({
+    mode:"ENTITY",
+    entity_type: etype || "",
+    entity_name_q: ename || "",
+    fy: fy || "",
+    fa_status: faStatus || "",
+    created_at: Date.now(),
+    by: (session.fullname || session.username)
   });
-  [...setEnt].sort((a,b)=>a.localeCompare(b,"th")).forEach(k=>{
-    const [type,name,prov,dist,subd] = k.split("|");
-    const op=document.createElement("option");
-    op.value=k;
-    op.textContent = `${type} ${name} • ${prov}/${dist}/${subd}`.trim();
-    pick.appendChild(op);
-  });
+  goResults();
+});
 
-  // datalists
-  const prov = $("provList"), dist = $("distList"), subd = $("subdList");
-  prov.innerHTML=""; dist.innerHTML=""; subd.innerHTML="";
-  const P=new Set(), D=new Set(), S=new Set();
-  all.forEach(r=>{
-    if(r.entity?.province) P.add(r.entity.province);
-    if(r.entity?.district) D.add(r.entity.district);
-    if(r.entity?.subdistrict) S.add(r.entity.subdistrict);
-  });
-  [...P].sort((a,b)=>a.localeCompare(b,"th")).forEach(v=>{ const o=document.createElement("option"); o.value=v; prov.appendChild(o); });
-  [...D].sort((a,b)=>a.localeCompare(b,"th")).forEach(v=>{ const o=document.createElement("option"); o.value=v; dist.appendChild(o); });
-  [...S].sort((a,b)=>a.localeCompare(b,"th")).forEach(v=>{ const o=document.createElement("option"); o.value=v; subd.appendChild(o); });
+$("btnLocSearch").addEventListener("click", ()=>{
+  const prov = $("prov").value.trim();
+  const dist = $("dist").value.trim();
+  const subd = $("subd").value.trim();
+  const fy = $("fyLoc").value;
 
-  $("dbCount").textContent = `ฐานข้อมูล: ${all.length} รายการ`;
-}
-buildFromDB();
-rebuildPeriodValue();
+  if(!prov && !dist && !subd){
+    show("locWarn","กรุณากรอกอย่างน้อย 1 ช่อง: จังหวัด / อำเภอ / ตำบล");
+    return;
+  }
+
+  setSearch({
+    mode:"LOCATION",
+    province_q: prov || "",
+    district_q: dist || "",
+    subdistrict_q: subd || "",
+    fy: fy || "",
+    created_at: Date.now(),
+    by: (session.fullname || session.username)
+  });
+  goResults();
+});
+
+$("btnKwSearch").addEventListener("click", ()=>{
+  const kw = $("kw").value.trim();
+  const fy = $("fyKw").value;
+  const etype = $("etypeKw").value;
+
+  if(!kw){
+    show("kwWarn","กรุณาพิมพ์คำค้น");
+    return;
+  }
+
+  setSearch({
+    mode:"KEYWORD",
+    keyword: kw,
+    fy: fy || "",
+    entity_type: etype || "",
+    created_at: Date.now(),
+    by: (session.fullname || session.username)
+  });
+  goResults();
+});
 
 /* =========================
-   4) Build query + preview count
+   Navigation
    ========================= */
-function buildQuery(){
-  const fy = $("fy").value || "";
-  const periodType = $("periodType").value || "";
-  const periodValue = $("periodValue").value || "";
-
-  const entPick = $("entityPick").value || "";
-  const entText = $("entityText").value.trim();
-
-  const province = $("province").value.trim();
-  const district = $("district").value.trim();
-  const subdistrict = $("subdistrict").value.trim();
-
-  const keyword = $("keyword").value.trim();
-  const submitted = $("submitted").value || "";
-  const lock = $("lock").value || "";
-
-  return {
-    fy, periodType, periodValue,
-    entPick, entText,
-    province, district, subdistrict,
-    keyword, submitted, lock,
-    ts: Date.now()
-  };
-}
-
-function applyQuery(all, q){
-  let arr = all.filter(r=>!r.deleted);
-
-  if(q.fy) arr = arr.filter(r => String(r.period?.fiscalYear||"")===String(q.fy));
-  if(q.periodType) arr = arr.filter(r => String(r.period?.periodType||"")===String(q.periodType));
-  if(q.periodValue) arr = arr.filter(r => String(r.period?.periodValue||"")===String(q.periodValue));
-
-  if(q.entPick){
-    const [type,name,prov,dist,subd] = q.entPick.split("|");
-    arr = arr.filter(r =>
-      safe(r.entity?.type)===type &&
-      safe(r.entity?.name)===name &&
-      safe(r.entity?.province)===prov &&
-      safe(r.entity?.district)===dist &&
-      safe(r.entity?.subdistrict)===subd
-    );
-  }
-  if(q.entText){
-    arr = arr.filter(r=>{
-      const hay = [r.entity?.type, r.entity?.name].join(" ");
-      return contains(hay, q.entText);
-    });
-  }
-
-  if(q.province) arr = arr.filter(r=>contains(r.entity?.province, q.province));
-  if(q.district) arr = arr.filter(r=>contains(r.entity?.district, q.district));
-  if(q.subdistrict) arr = arr.filter(r=>contains(r.entity?.subdistrict, q.subdistrict));
-
-  if(q.submitted==="Y") arr = arr.filter(r=>!!r.submitted);
-  if(q.submitted==="N") arr = arr.filter(r=>!r.submitted);
-
-  if(q.lock==="LOCKED") arr = arr.filter(r=>isLocked(r.created_at));
-  if(q.lock==="OPEN") arr = arr.filter(r=>!isLocked(r.created_at));
-
-  if(q.keyword){
-    arr = arr.filter(r=>{
-      const hay = [
-        r.s217, r.s218, r.s219, r.s2110,
-        r.s214, r.s215, r.s216, r.s217_cash,
-        r.s219_problem, r.s220_rec_type, r.s220_rec_text,
-        JSON.stringify(r.details||{}),
-        JSON.stringify(r.reportPack||{}),
-        JSON.stringify(r.auditors||[]),
-        JSON.stringify(r.reviewers||[])
-      ].join(" ");
-      return contains(hay, q.keyword);
-    });
-  }
-
-  return arr;
-}
-
-function calcPreview(){
-  const all = getRecords();
-  const q = buildQuery();
-  const m = applyQuery(all, q);
-  $("matchCount").textContent = `คาดว่าเข้าเงื่อนไข: ${m.length} รายการ`;
-}
-["entityPick","entityText","province","district","subdistrict","keyword","submitted","lock"]
-  .forEach(id=>{
-    $(id).addEventListener("input", calcPreview);
-    $(id).addEventListener("change", calcPreview);
-  });
-
-calcPreview();
+$("goAdminHome").addEventListener("click", ()=>location.href="admin.html");
+$("goTable").addEventListener("click", ()=>location.href="admin-manual-table.html");
+$("goDataHub").addEventListener("click", ()=>location.href="data-hub.html");
+$("goCashboard").addEventListener("click", ()=>location.href="cashboard.html");
+$("goHome").addEventListener("click", ()=>location.href="index.html");
 
 /* =========================
-   5) Buttons
+   Init
    ========================= */
-$("btnSearch").addEventListener("click", ()=>{
-  const q = buildQuery();
-  localStorage.setItem(SEARCH_CTX_KEY, JSON.stringify(q));
-  location.href = "admin-manual-search-result.html";
-});
-
-$("btnPreview").addEventListener("click", ()=>{
-  calcPreview();
-  show("ok","พรีวิวผลแบบเร็วเรียบร้อย");
-});
-
-$("btnReset").addEventListener("click", ()=>{
-  $("fy").value="";
-  $("periodType").value="";
-  rebuildPeriodValue();
-  $("periodValue").value="";
-
-  $("entityPick").value="";
-  $("entityText").value="";
-
-  $("province").value="";
-  $("district").value="";
-  $("subdistrict").value="";
-
-  $("keyword").value="";
-  $("submitted").value="";
-  $("lock").value="";
-
-  calcPreview();
-  show("ok","รีเซ็ตเรียบร้อย");
-});
-
-$("btnTable").addEventListener("click", ()=>location.href="admin-manual-table.html");
-$("btnHub").addEventListener("click", ()=>location.href="data-hub.html");
-$("btnCashboard").addEventListener("click", ()=>location.href="cashboard.html");
-$("btnHome").addEventListener("click", ()=>location.href="index.html");
+buildFyOptions();
+$("stat").textContent = `ข้อมูล Manual ปัจจุบัน: ${countActive()} รายการ`;
 </script>
 </body>
 </html>
