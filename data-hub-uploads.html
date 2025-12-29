@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Data Hub • คลังไฟล์อัปโหลด (Admin) | ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์</title>
+  <style>
+    :root{
+      --bg:#f4f7fb; --card:#fff; --line:#dde5f2; --text:#24364c; --muted:#6a7f9a;
+      --brand:#1e5aaa; --brand2:#2f7de1; --shadow:0 10px 28px rgba(20,40,80,.08); --r:18px;
+      --ok:#1f7a3b; --bad:#b13b3b; --warn:#8a5a00; --info:#0b5aa6;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Thai","Noto Sans";background:var(--bg);color:var(--text)}
+    header{
+      position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);
+      padding:14px 18px;display:flex;align-items:center;gap:12px
+    }
+    .title{display:flex;flex-direction:column;line-height:1.1}
+    .title h1{margin:0;font-size:18px}
+    .title small{color:var(--muted)}
+    .spacer{flex:1}
+    .badge{border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa;padding:8px 12px;border-radius:14px;font-weight:900;white-space:nowrap}
+
+    .wrap{max-width:1250px;margin:18px auto;padding:0 18px}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+    .card{
+      grid-column:span 12;background:var(--card);border:1px solid var(--line);
+      border-radius:var(--r);box-shadow:var(--shadow);padding:14px;min-width:0
+    }
+
+    h2{margin:0 0 8px;font-size:16px}
+    .muted{color:var(--muted);font-size:13px}
+    .hr{height:1px;background:#eef2f7;margin:12px 0}
+
+    label{display:block;font-size:12px;color:var(--muted);font-weight:900;margin:6px 0 4px}
+    input,select,textarea{
+      width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 10px;background:#fff;
+      color:var(--text);outline:none;font-size:14px
+    }
+    textarea{min-height:82px;resize:vertical}
+
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+    .row>*{min-width:220px}
+
+    .btn{
+      border:1px solid var(--line);background:#fff;border-radius:14px;padding:10px 12px;
+      cursor:pointer;font-weight:900;color:var(--text);text-align:center
+    }
+    .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;border-color:transparent}
+    .btn.warn{border-color:#ffe7b8;background:#fff7e6;color:var(--warn)}
+    .btn.danger{border-color:#ffd2d2;background:#fff0f0;color:var(--bad)}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa}
+    .pill.ok{border-color:#c8f2d6;background:#effaf3;color:var(--ok)}
+    .pill.warn{border-color:#ffe7b8;background:#fff7e6;color:var(--warn)}
+    .pill.bad{border-color:#ffd2d2;background:#fff0f0;color:var(--bad)}
+    .pill.info{border-color:#cfe2ff;background:#eef6ff;color:var(--info)}
+    .tiny{font-size:12px;color:var(--muted)}
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
+
+    .tableWrap{overflow:auto;border:1px solid var(--line);border-radius:14px}
+    table{border-collapse:collapse;width:100%;min-width:1200px;background:#fff}
+    th,td{border-bottom:1px solid #eef2f7;padding:10px;vertical-align:top}
+    th{position:sticky;top:0;background:#fafcff;border-bottom:1px solid var(--line);text-align:left;font-size:12px;color:var(--muted)}
+    td{font-size:13px}
+    .right{text-align:right}
+
+    .miniBtn{padding:7px 10px;border-radius:12px;border:1px solid var(--line);background:#fff;font-weight:900;cursor:pointer}
+    .miniBtn.primary{border-color:#cfe2ff;background:#eef6ff;color:#1e5aaa}
+    .miniBtn.warn{border-color:#ffe7b8;background:#fff7e6;color:var(--warn)}
+    .miniBtn.danger{border-color:#ffd2d2;background:#fff0f0;color:var(--bad)}
+    .miniBtn:disabled{opacity:.5;cursor:not-allowed}
+
+    .msg{display:none;margin-top:10px;padding:10px 12px;border-radius:14px;font-weight:900}
+    .okBox{border:1px solid #c8f2d6;background:#effaf3;color:var(--ok)}
+    .badBox{border:1px solid #ffd2d2;background:#fff0f0;color:var(--bad)}
+    .warnBox{border:1px solid #ffe7b8;background:#fff7e6;color:var(--warn)}
+    .noteBox{border:1px dashed #cfe2ff;background:#f6fbff;border-radius:14px;padding:10px 12px}
+
+    /* modal */
+    .modalOverlay{
+      position:fixed;inset:0;background:rgba(10,20,40,.45);display:none;align-items:center;justify-content:center;z-index:50
+    }
+    .modal{
+      width:min(980px,92vw);max-height:88vh;overflow:auto;background:#fff;border-radius:18px;border:1px solid var(--line);
+      box-shadow:0 18px 60px rgba(0,0,0,.18);padding:14px
+    }
+    .modalTop{display:flex;gap:10px;align-items:center}
+    .modalTop h3{margin:0;font-size:16px}
+    .pre{
+      white-space:pre-wrap;background:#fbfdff;border:1px solid #e6eefb;border-radius:14px;padding:10px;
+      font-family:ui-monospace, monospace;font-size:12px
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="title">
+    <h1>Data Hub • คลังไฟล์อัปโหลด (Admin)</h1>
+    <small>จัดการไฟล์จากการ Upload: แก้ไข/ลบ/เพิ่ม/บันทึก/ดู/Export</small>
+  </div>
+  <div class="spacer"></div>
+  <div class="badge" id="userBadge">กำลังตรวจสอบสิทธิ…</div>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div>
+          <h2 style="margin-bottom:4px">อัปโหลดไฟล์ใหม่ (ได้ครั้งละ 10 ไฟล์)</h2>
+          <div class="tiny">เลือกโหมดการเก็บ: <b>เก็บไฟล์ด้วย</b> (ฐาน64) หรือ <b>เมทาดาทาอย่างเดียว</b></div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="btn" id="goDataHub">กลับหน้า Data Hub</button>
+          <button class="btn" id="goManualHub">ไปคลัง Manual</button>
+          <button class="btn" id="goCashboard">ไป Cashboard</button>
+          <button class="btn" id="goHome">กลับหน้าหลัก</button>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <div style="flex:1">
+          <label>เลือกไฟล์ (สูงสุด 10 ไฟล์)</label>
+          <input id="fileInput" type="file" multiple />
+          <div class="tiny">แนะนำ: ไฟล์ใหญ่ ๆ ให้ใช้ “เมทาดาทาอย่างเดียว” เพื่อกัน localStorage เต็ม</div>
+        </div>
+
+        <div style="flex:1">
+          <label>โหมดการเก็บ</label>
+          <select id="storeMode">
+            <option value="META">เมทาดาทาอย่างเดียว (ไม่เก็บไฟล์จริง)</option>
+            <option value="DATA">เก็บไฟล์ด้วย (Base64/DataURL)</option>
+          </select>
+        </div>
+
+        <div style="flex:1">
+          <label>ผู้ใช้อัปโหลด (ดึงจาก session)</label>
+          <input id="uploader" disabled />
+        </div>
+
+        <div style="flex:1">
+          <button class="btn primary" id="btnUpload">เพิ่มเข้าคลังข้อมูล</button>
+        </div>
+      </div>
+
+      <div class="msg okBox" id="ok"></div>
+      <div class="msg warnBox" id="warn"></div>
+      <div class="msg badBox" id="bad"></div>
+
+      <div class="hr"></div>
+
+      <div class="noteBox tiny">
+        <b>ข้อเท็จจริงเชิงระบบ:</b> localStorage มีเพดานพื้นที่จำกัดในแต่ละเบราว์เซอร์  
+        ถ้าเริ่มขึ้นแจ้งเตือน “พื้นที่เต็ม” ให้สลับเป็นโหมดเมทาดาทาอย่างเดียว หรือ Export ออกไปเก็บภายนอก
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div>
+          <h2 style="margin-bottom:4px">รายการไฟล์ในคลังข้อมูล</h2>
+          <div class="tiny mono" id="stat">กำลังโหลด…</div>
+          <div style="margin-top:8px">
+            <span class="pill info">ทั้งหมด: <span id="countAll">0</span></span>
+            <span class="pill ok">เก็บไฟล์ด้วย: <span id="countData">0</span></span>
+            <span class="pill warn">เมทาดาทา: <span id="countMeta">0</span></span>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="btn warn" id="btnExportJson">Export JSON</button>
+          <button class="btn warn" id="btnExportCsv">Export CSV</button>
+          <button class="btn" id="btnImport">Import JSON</button>
+          <input id="importFile" type="file" accept="application/json" style="display:none" />
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <div style="flex:2">
+          <label>ค้นหา (ชื่อไฟล์/ผู้ใช้อัปโหลด/โน้ต/แท็ก)</label>
+          <input id="q" placeholder="พิมพ์คำค้น…" />
+        </div>
+        <div style="flex:1">
+          <label>กรองโหมด</label>
+          <select id="filterMode">
+            <option value="">ทั้งหมด</option>
+            <option value="DATA">เก็บไฟล์ด้วย</option>
+            <option value="META">เมทาดาทาอย่างเดียว</option>
+          </select>
+        </div>
+        <div style="flex:1">
+          <button class="btn primary" id="btnApply">แสดงผล</button>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ชื่อไฟล์</th>
+              <th>ชนิด</th>
+              <th>ขนาด</th>
+              <th>โหมด</th>
+              <th>วันที่อัปโหลด</th>
+              <th>ผู้อัปโหลด</th>
+              <th>แท็ก</th>
+              <th>โน้ต (Admin)</th>
+              <th class="right">การทำงาน</th>
+            </tr>
+          </thead>
+          <tbody id="tb"></tbody>
+        </table>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row" style="justify-content:flex-end">
+        <button class="miniBtn" id="btnPrev">ก่อนหน้า</button>
+        <span class="pill info" id="pageInfo">หน้า 1</span>
+        <button class="miniBtn" id="btnNext">ถัดไป</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal: View/Download -->
+<div class="modalOverlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modalTop">
+      <h3 id="modalTitle">ดูไฟล์</h3>
+      <div class="spacer"></div>
+      <button class="miniBtn" id="btnClose">ปิด</button>
+    </div>
+    <div class="hr"></div>
+    <div class="noteBox tiny" id="modalInfo"></div>
+    <div class="hr"></div>
+    <div id="previewArea" class="noteBox" style="min-height:120px"></div>
+    <div class="hr"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+      <button class="btn warn" id="btnDownload" disabled>ดาวน์โหลดไฟล์</button>
+      <button class="btn danger" id="btnRemoveData" disabled>ลบ “ไฟล์จริง” ออก (เหลือเมทาดาทา)</button>
+    </div>
+    <div class="hr"></div>
+    <div class="tiny">JSON ของรายการ</div>
+    <div class="pre" id="jsonPreview"></div>
+  </div>
+</div>
+
+<script>
+/* =========================
+   Guard: ADMIN only
+   ========================= */
+const SESSION_KEY = "fa_session_v1";
+const session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+if(!session){ location.href="login.html"; }
+const role = (session.role||"USER").toUpperCase();
+document.getElementById("userBadge").textContent =
+  "ผู้ใช้: " + (session.fullname || session.username) + " • บทบาท: " + role;
+if(role !== "ADMIN"){
+  alert("หน้านี้สำหรับ ADMIN เท่านั้น");
+  location.href="index.html";
+}
+
+document.getElementById("uploader").value = (session.fullname || session.username);
+
+/* =========================
+   Keys
+   ========================= */
+const UPLOAD_KEY = "fa_upload_files_v1"; // array of file records
+
+/* =========================
+   Helpers
+   ========================= */
+const $ = (id)=>document.getElementById(id);
+function show(box, text){
+  const el=$(box); el.textContent=text; el.style.display="block";
+  setTimeout(()=>el.style.display="none", 2400);
+}
+function escapeHtml(s){
+  return String(s??"").replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m]));
+}
+function fmtTs(ts){
+  if(!ts) return "-";
+  const d=new Date(ts);
+  const pad=n=>String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function bytes(n){
+  if(n==null) return "-";
+  const units=["B","KB","MB","GB"];
+  let x=Number(n), i=0;
+  while(x>=1024 && i<units.length-1){ x/=1024; i++; }
+  return `${x.toFixed(i===0?0:2)} ${units[i]}`;
+}
+function getData(){ return JSON.parse(localStorage.getItem(UPLOAD_KEY) || "[]"); }
+function setData(arr){ localStorage.setItem(UPLOAD_KEY, JSON.stringify(arr)); }
+function uid(prefix="U"){
+  return prefix + Math.random().toString(36).slice(2,8).toUpperCase() + Date.now().toString(36).slice(-4).toUpperCase();
+}
+function safeNormalize(rec){
+  const r = Object.assign({
+    id: uid("F"),
+    file_name: "",
+    mime: "",
+    size: 0,
+    store_mode: "META", // META|DATA
+    uploaded_at: Date.now(),
+    uploaded_by: (session.fullname || session.username),
+    tags: "",
+    admin_note: "",
+    data_url: null, // if store_mode=DATA
+    deleted: false
+  }, rec||{});
+  return r;
+}
+
+function downloadText(filename, text, mime="application/json"){
+  const blob = new Blob([text], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 500);
+}
+
+/* =========================
+   Upload process
+   ========================= */
+async function fileToDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    const fr = new FileReader();
+    fr.onload = ()=>resolve(fr.result);
+    fr.onerror = ()=>reject(fr.error);
+    fr.readAsDataURL(file);
+  });
+}
+
+$("btnUpload").addEventListener("click", async ()=>{
+  const files = $("fileInput").files;
+  if(!files || files.length===0){
+    show("warn","กรุณาเลือกไฟล์");
+    return;
+  }
+  if(files.length>10){
+    show("warn","เลือกได้สูงสุด 10 ไฟล์/ครั้ง");
+    return;
+  }
+
+  const mode = $("storeMode").value; // META/DATA
+  const all = getData().map(safeNormalize).filter(x=>!x.deleted);
+
+  try{
+    for(const f of files){
+      const rec = safeNormalize({
+        id: uid("F"),
+        file_name: f.name,
+        mime: f.type || "application/octet-stream",
+        size: f.size,
+        store_mode: mode,
+        uploaded_at: Date.now(),
+        uploaded_by: (session.fullname || session.username),
+        tags: "",
+        admin_note: ""
+      });
+
+      if(mode==="DATA"){
+        // เก็บไฟล์จริง
+        rec.data_url = await fileToDataUrl(f);
+      }else{
+        rec.data_url = null;
+      }
+
+      all.unshift(rec);
+    }
+    setData(all);
+    $("fileInput").value = "";
+    show("ok","เพิ่มเข้าคลังข้อมูลเรียบร้อย ✅");
+    page=1;
+    apply();
+  }catch(e){
+    show("bad","บันทึกไม่สำเร็จ (พื้นที่อาจเต็ม/ไฟล์ใหญ่เกินไป) ลองใช้โหมดเมทาดาทาอย่างเดียว");
+  }
+});
+
+/* =========================
+   Render + filter + paging
+   ========================= */
+let page=1;
+const PAGE_SIZE=20;
+let viewRows=[];
+
+function computeStat(all){
+  const active = all.filter(x=>!x.deleted);
+  const data = active.filter(x=>x.store_mode==="DATA");
+  const meta = active.filter(x=>x.store_mode!=="DATA");
+  $("countAll").textContent = active.length;
+  $("countData").textContent = data.length;
+  $("countMeta").textContent = meta.length;
+
+  // rough storage size (json length)
+  const raw = localStorage.getItem(UPLOAD_KEY) || "[]";
+  $("stat").textContent = `ประมาณการขนาดข้อมูลในเบราว์เซอร์: ${bytes(raw.length)} (เป็นจำนวนตัวอักษร JSON)`;
+}
+
+function apply(){
+  const all = getData().map(safeNormalize);
+  setData(all);
+
+  const q = $("q").value.trim().toLowerCase();
+  const fm = $("filterMode").value;
+
+  const active = all.filter(x=>!x.deleted);
+
+  viewRows = active.filter(x=>{
+    if(fm && x.store_mode!==fm) return false;
+    if(!q) return true;
+    const hay = [
+      x.file_name, x.uploaded_by, x.tags, x.admin_note, x.mime, String(x.size||0)
+    ].join(" ").toLowerCase();
+    return hay.includes(q);
+  }).sort((a,b)=>(b.uploaded_at||0)-(a.uploaded_at||0));
+
+  computeStat(all);
+
+  const totalPages = Math.max(1, Math.ceil(viewRows.length / PAGE_SIZE));
+  if(page>totalPages) page=totalPages;
+  if(page<1) page=1;
+  $("pageInfo").textContent = `หน้า ${page} / ${totalPages}`;
+
+  const start=(page-1)*PAGE_SIZE;
+  const slice=viewRows.slice(start, start+PAGE_SIZE);
+
+  const tb=$("tb");
+  tb.innerHTML="";
+
+  slice.forEach(r=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML = `
+      <td><input data-k="file_name" data-id="${r.id}" value="${escapeHtml(r.file_name)}" /></td>
+      <td class="mono">${escapeHtml(r.mime||"-")}</td>
+      <td class="mono">${bytes(r.size)}</td>
+      <td><span class="pill ${r.store_mode==="DATA"?"ok":"warn"}">${r.store_mode}</span></td>
+      <td class="mono">${fmtTs(r.uploaded_at)}</td>
+      <td>${escapeHtml(r.uploaded_by||"-")}</td>
+      <td><input data-k="tags" data-id="${r.id}" placeholder="เช่น งบการเงิน, อปท.8.x" value="${escapeHtml(r.tags||"")}" /></td>
+      <td><input data-k="admin_note" data-id="${r.id}" placeholder="หมายเหตุ admin" value="${escapeHtml(r.admin_note||"")}" /></td>
+      <td class="right">
+        <div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap">
+          <button class="miniBtn primary" data-view="${r.id}">ดู</button>
+          <button class="miniBtn warn" data-save="${r.id}">บันทึก</button>
+          <button class="miniBtn danger" data-del="${r.id}">ลบ</button>
+        </div>
+      </td>
+    `;
+    tb.appendChild(tr);
+  });
+
+  // input changes stage
+  tb.querySelectorAll("input[data-k]").forEach(el=>{
+    el.addEventListener("input", ()=>{
+      const id=el.dataset.id, k=el.dataset.k, v=el.value;
+      stage(id,k,v);
+    });
+  });
+
+  tb.querySelectorAll("button[data-save]").forEach(b=>{
+    b.addEventListener("click", ()=>save(b.dataset.save));
+  });
+  tb.querySelectorAll("button[data-del]").forEach(b=>{
+    b.addEventListener("click", ()=>del(b.dataset.del));
+  });
+  tb.querySelectorAll("button[data-view]").forEach(b=>{
+    b.addEventListener("click", ()=>openModal(b.dataset.view));
+  });
+
+  $("btnPrev").disabled = (page<=1);
+  $("btnNext").disabled = (page>=totalPages);
+}
+
+const staged = new Map(); // id -> {k:v}
+function stage(id,k,v){
+  const o = staged.get(id) || {};
+  o[k]=v;
+  staged.set(id,o);
+}
+function save(id){
+  const all = getData().map(safeNormalize);
+  const rec = all.find(x=>x.id===id);
+  if(!rec){ show("bad","ไม่พบรายการ"); return; }
+
+  const ch = staged.get(id);
+  if(!ch){ show("warn","ไม่มีการเปลี่ยนแปลงให้บันทึก"); return; }
+
+  Object.entries(ch).forEach(([k,v])=>{ rec[k]=String(v||""); });
+  rec.updated_at = Date.now();
+  rec.updated_by = (session.fullname || session.username);
+
+  setData(all);
+  staged.delete(id);
+  show("ok","บันทึกเรียบร้อย ✅");
+  apply();
+}
+function del(id){
+  const all = getData().map(safeNormalize);
+  const rec = all.find(x=>x.id===id);
+  if(!rec){ show("bad","ไม่พบรายการ"); return; }
+  if(!confirm("ยืนยันลบรายการไฟล์นี้?")) return;
+
+  rec.deleted=true;
+  rec.deleted_at=Date.now();
+  rec.deleted_by=(session.fullname || session.username);
+
+  setData(all);
+  staged.delete(id);
+  show("ok","ลบเรียบร้อย ✅");
+  apply();
+}
+
+/* =========================
+   Modal: view/download
+   ========================= */
+let currentModalId=null;
+
+function openModal(id){
+  const all = getData().map(safeNormalize);
+  const rec = all.find(x=>x.id===id);
+  if(!rec){ show("bad","ไม่พบรายการ"); return; }
+  currentModalId = id;
+
+  $("modalTitle").textContent = `ดูไฟล์: ${rec.file_name}`;
+  $("modalInfo").textContent = `โหมด=${rec.store_mode} • ขนาด=${bytes(rec.size)} • อัปโหลด=${fmtTs(rec.uploaded_at)} • โดย=${rec.uploaded_by}`;
+
+  $("jsonPreview").textContent = JSON.stringify(rec, null, 2);
+
+  const area = $("previewArea");
+  area.innerHTML = "";
+
+  $("btnDownload").disabled = true;
+  $("btnRemoveData").disabled = true;
+
+  if(rec.store_mode==="DATA" && rec.data_url){
+    $("btnDownload").disabled = false;
+    $("btnRemoveData").disabled = false;
+
+    // preview basic
+    if((rec.mime||"").startsWith("image/")){
+      const img = document.createElement("img");
+      img.src = rec.data_url;
+      img.style.maxWidth="100%";
+      img.style.borderRadius="14px";
+      area.appendChild(img);
+    }else if((rec.mime||"").startsWith("text/")){
+      fetch(rec.data_url).then(r=>r.text()).then(t=>{
+        const pre = document.createElement("pre");
+        pre.className="pre";
+        pre.textContent = t.slice(0, 5000);
+        area.appendChild(pre);
+      }).catch(()=>{
+        area.innerHTML = "<div class='tiny'>ไม่สามารถพรีวิวข้อความได้</div>";
+      });
+    }else{
+      area.innerHTML = "<div class='tiny'>ไฟล์ชนิดนี้ไม่รองรับพรีวิว — กดดาวน์โหลดได้</div>";
+    }
+  }else{
+    area.innerHTML = "<div class='tiny'>รายการนี้เก็บเฉพาะเมทาดาทา (ไม่ได้เก็บไฟล์จริง)</div>";
+  }
+
+  $("modalOverlay").style.display="flex";
+}
+
+$("btnClose").addEventListener("click", ()=> $("modalOverlay").style.display="none");
+$("modalOverlay").addEventListener("click", (e)=>{ if(e.target.id==="modalOverlay") $("modalOverlay").style.display="none"; });
+
+$("btnDownload").addEventListener("click", ()=>{
+  const all = getData().map(safeNormalize);
+  const rec = all.find(x=>x.id===currentModalId);
+  if(!rec || !rec.data_url){ show("warn","ไม่มีไฟล์จริงให้ดาวน์โหลด"); return; }
+  const a=document.createElement("a");
+  a.href=rec.data_url;
+  a.download=rec.file_name || "download";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+});
+
+$("btnRemoveData").addEventListener("click", ()=>{
+  const all = getData().map(safeNormalize);
+  const rec = all.find(x=>x.id===currentModalId);
+  if(!rec){ show("bad","ไม่พบรายการ"); return; }
+  if(!confirm("ยืนยันลบไฟล์จริงออก (เหลือเมทาดาทาเท่านั้น)?")) return;
+
+  rec.store_mode="META";
+  rec.data_url=null;
+  rec.updated_at=Date.now();
+  rec.updated_by=(session.fullname || session.username);
+
+  setData(all);
+  show("ok","ลบไฟล์จริงออกแล้ว ✅");
+  $("modalOverlay").style.display="none";
+  apply();
+});
+
+/* =========================
+   Export / Import
+   ========================= */
+$("btnExportJson").addEventListener("click", ()=>{
+  const all = getData().map(safeNormalize).filter(x=>!x.deleted);
+  downloadText(
+    `fa-upload-library-${new Date().toISOString().slice(0,10)}.json`,
+    JSON.stringify({ exported_at: Date.now(), count: all.length, data: all }, null, 2),
+    "application/json"
+  );
+  show("ok","Export JSON เรียบร้อย ✅");
+});
+
+$("btnExportCsv").addEventListener("click", ()=>{
+  const all = getData().map(safeNormalize).filter(x=>!x.deleted);
+  const header = ["id","file_name","mime","size","store_mode","uploaded_at","uploaded_by","tags","admin_note"];
+  const lines=[header.join(",")];
+  all.forEach(r=>{
+    const row = [
+      r.id,
+      `"${String(r.file_name||"").replaceAll('"','""')}"`,
+      `"${String(r.mime||"").replaceAll('"','""')}"`,
+      r.size||0,
+      r.store_mode||"META",
+      fmtTs(r.uploaded_at),
+      `"${String(r.uploaded_by||"").replaceAll('"','""')}"`,
+      `"${String(r.tags||"").replaceAll('"','""')}"`,
+      `"${String(r.admin_note||"").replaceAll('"','""')}"`,
+    ];
+    lines.push(row.join(","));
+  });
+  downloadText(
+    `fa-upload-library-${new Date().toISOString().slice(0,10)}.csv`,
+    lines.join("\n"),
+    "text/csv"
+  );
+  show("ok","Export CSV เรียบร้อย ✅");
+});
+
+$("btnImport").addEventListener("click", ()=> $("importFile").click());
+$("importFile").addEventListener("change", async (ev)=>{
+  const f = ev.target.files?.[0];
+  if(!f) return;
+  try{
+    const text = await f.text();
+    const json = JSON.parse(text);
+    const incoming = Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : []);
+    if(!Array.isArray(incoming) || incoming.length===0){
+      show("warn","ไฟล์ JSON ไม่ถูกต้อง หรือไม่มีข้อมูล");
+      return;
+    }
+    if(!confirm(`ยืนยัน Import จำนวน ${incoming.length} รายการ? (จะรวมกับของเดิม)`)) return;
+
+    const all = getData().map(safeNormalize).filter(x=>!x.deleted);
+    incoming.forEach(x=> all.unshift(safeNormalize(x)));
+    setData(all);
+    $("importFile").value="";
+    show("ok","Import เรียบร้อย ✅");
+    page=1;
+    apply();
+  }catch(e){
+    show("bad","อ่าน/แปลง JSON ไม่สำเร็จ");
+  }
+});
+
+/* =========================
+   Nav
+   ========================= */
+$("goDataHub").addEventListener("click", ()=>location.href="data-hub.html");
+$("goManualHub").addEventListener("click", ()=>location.href="admin-manual-table.html");
+$("goCashboard").addEventListener("click", ()=>location.href="cashboard.html");
+$("goHome").addEventListener("click", ()=>location.href="index.html");
+
+$("btnApply").addEventListener("click", ()=>{ page=1; apply(); });
+$("btnPrev").addEventListener("click", ()=>{ page--; apply(); });
+$("btnNext").addEventListener("click", ()=>{ page++; apply(); });
+
+/* =========================
+   Init
+   ========================= */
+apply();
+</script>
+</body>
+</html>
