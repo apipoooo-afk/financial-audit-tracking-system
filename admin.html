@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>เมนูผู้ดูแลระบบ (Admin) • ระบบติดตามผลการตรวจสอบการเงิน (FA) แบบเรียลไทม์</title>
+
+  <style>
+    :root{
+      --bg:#f4f7fb; --card:#fff; --line:#dde5f2; --text:#24364c; --muted:#6a7f9a;
+      --brand:#1e5aaa; --brand2:#2f7de1;
+      --shadow:0 10px 28px rgba(20,40,80,.08);
+      --r:18px;
+      --ok:#1f7a3b; --bad:#b13b3b; --warn:#8a5a00; --info:#0b5aa6;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Thai","Noto Sans";background:var(--bg);color:var(--text)}
+    header{
+      position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);
+      padding:14px 18px;display:flex;align-items:center;gap:12px
+    }
+    .title{display:flex;flex-direction:column;line-height:1.05}
+    .title h1{margin:0;font-size:18px}
+    .title small{color:var(--muted)}
+    .spacer{flex:1}
+    .badge{border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa;padding:8px 12px;border-radius:14px;font-weight:900}
+
+    .wrap{max-width:1200px;margin:18px auto;padding:0 18px}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+    .card{
+      grid-column:span 12;
+      background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+      box-shadow:var(--shadow);padding:14px;min-width:0
+    }
+    @media(min-width:900px){
+      .col6{grid-column:span 6}
+      .col4{grid-column:span 4}
+      .col8{grid-column:span 8}
+    }
+
+    h2{margin:0 0 8px;font-size:16px}
+    h3{margin:0 0 6px;font-size:14px}
+    .muted{color:var(--muted);font-size:13px}
+    .hr{height:1px;background:#eef2f7;margin:12px 0}
+
+    .btn{
+      width:100%;
+      border:1px solid var(--line); background:#fff; border-radius:14px;
+      padding:12px 12px; cursor:pointer; font-weight:900; color:var(--text);
+      text-align:left
+    }
+    .btn.primary{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;border-color:transparent}
+    .btn.danger{background:#fff0f0;border-color:#ffd2d2;color:var(--bad)}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row>*{flex:1;min-width:190px}
+
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px;border:1px solid #cfe2ff;background:#eef6ff;color:#1e5aaa}
+    .pill.ok{border-color:#c8f2d6;background:#effaf3;color:var(--ok)}
+    .pill.warn{border-color:#ffe7b8;background:#fff7e6;color:var(--warn)}
+    .pill.bad{border-color:#ffd2d2;background:#fff0f0;color:var(--bad)}
+    .pill.info{border-color:#cfe2ff;background:#eef6ff;color:var(--info)}
+    .tiny{font-size:12px;color:var(--muted)}
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
+
+    .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .kpi .box{border:1px solid var(--line);border-radius:16px;padding:12px;background:#fff}
+    .kpi .box b{font-size:18px}
+
+    .msg{display:none;margin-top:10px;padding:10px 12px;border-radius:14px;font-weight:900}
+    .okBox{border:1px solid #c8f2d6;background:#effaf3;color:var(--ok)}
+    .badBox{border:1px solid #ffd2d2;background:#fff0f0;color:var(--bad)}
+    .warnBox{border:1px solid #ffe7b8;background:#fff7e6;color:var(--warn)}
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="title">
+    <h1>เมนูผู้ดูแลระบบ (Admin)</h1>
+    <small>จัดการข้อมูลระบบ • คลังไฟล์ Upload • ตาราง Manual • ค้นหา • Export/Import • ไป Cashboard</small>
+  </div>
+  <div class="spacer"></div>
+  <div class="badge" id="userBadge">กำลังตรวจสอบผู้ใช้…</div>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+
+    <div class="card col8">
+      <h2>ภาพรวมข้อมูล (Admin KPI)</h2>
+      <div class="muted">ใช้ข้อมูลจากเครื่องนี้ (localStorage) • ทำไว้เพื่อ “ควบคุมคุณภาพข้อมูล” และ “Audit Trail”</div>
+
+      <div class="hr"></div>
+      <div class="kpi">
+        <div class="box">
+          <div class="tiny">Manual Records</div>
+          <b id="kManual">0</b>
+        </div>
+        <div class="box">
+          <div class="tiny">Submitted</div>
+          <b id="kSubmitted">0</b>
+        </div>
+        <div class="box">
+          <div class="tiny">Locked (>=356 วัน)</div>
+          <b id="kLocked">0</b>
+        </div>
+        <div class="box">
+          <div class="tiny">Upload Files</div>
+          <b id="kFiles">0</b>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <button class="btn primary" id="goCashboard">ไป Cashboard (ภาพรวม 2.1.7–2.1.20)</button>
+        <button class="btn" id="goDataHub">ไป Data Hub</button>
+        <button class="btn" id="goHome">กลับหน้าแรก</button>
+      </div>
+
+      <div class="msg okBox" id="ok"></div>
+      <div class="msg warnBox" id="warn"></div>
+      <div class="msg badBox" id="bad"></div>
+    </div>
+
+    <div class="card col4">
+      <h2>ทางลัดเมนู Admin</h2>
+      <div class="muted">เลือกไปหน้าเครื่องมือที่ต้องการ</div>
+
+      <div class="hr"></div>
+
+      <button class="btn" id="goUploads">
+        📦 คลังไฟล์ Upload
+        <div class="tiny">ดูไฟล์/ดาวน์โหลด/แก้ไข tag/ลบ/Export</div>
+      </button>
+
+      <div style="height:10px"></div>
+
+      <button class="btn" id="goManualTable">
+        🧾 ตาราง Manual Data (Excel-like)
+        <div class="tiny">ดูทั้งหมด • แก้ไข/ลบ/Export • เคารพล็อก 356 วัน</div>
+      </button>
+
+      <div style="height:10px"></div>
+
+      <button class="btn" id="goManualSearch">
+        🔎 ค้นหา Manual Data (2.2 → 2.3)
+        <div class="tiny">ปีงบฯ / หน่วย / พื้นที่ / keyword</div>
+      </button>
+
+      <div class="hr"></div>
+
+      <button class="btn" id="goManualEntry">
+        ✍️ ไปหน้าบันทึก Manual (ผู้ใช้ทั่วไป)
+        <div class="tiny">ให้ผู้ใช้คีย์ข้อมูลและส่งเข้าระบบ</div>
+      </button>
+
+      <div style="height:10px"></div>
+
+      <button class="btn danger" id="btnLogout">
+        ออกจากระบบ (Logout)
+        <div class="tiny">ลบ session ออกจากเครื่องนี้</div>
+      </button>
+    </div>
+
+    <div class="card col6">
+      <h2>เครื่องมือสำรองข้อมูล (Backup & Restore)</h2>
+      <div class="muted">สำหรับ Admin ใช้ย้ายข้อมูล/สำรองเครื่อง</div>
+      <div class="hr"></div>
+
+      <div class="row">
+        <button class="btn primary" id="btnExportAll">Export ทั้งระบบ (JSON)</button>
+        <button class="btn" id="btnImportAll">Import ทั้งระบบ (JSON)</button>
+        <input id="importFile" type="file" accept="application/json" style="display:none" />
+      </div>
+
+      <div class="hr"></div>
+      <div class="muted">
+        Key Manual: <span class="pill info mono">fa_manual_records_v1</span> •
+        Key Upload: <span class="pill info mono">fa_upload_files_v1</span>
+      </div>
+    </div>
+
+    <div class="card col6">
+      <h2>ควบคุมคุณภาพข้อมูล (Data Quality Quick Check)</h2>
+      <div class="muted">เช็คความผิดปกติแบบเร็ว: ช่องสำคัญว่าง/ปีงบฯผิดช่วง/หน่วยซ้ำ</div>
+      <div class="hr"></div>
+
+      <div class="row">
+        <button class="btn" id="btnDQ">รันตรวจคุณภาพข้อมูล</button>
+        <button class="btn" id="btnFixSuggest">ดูข้อเสนอแนะการแก้ไข</button>
+      </div>
+
+      <div class="hr"></div>
+      <div class="muted" id="dqOut">ยังไม่ได้รัน</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* =========================
+   Guard: login + ADMIN
+   ========================= */
+const SESSION_KEY = "fa_session_v1";
+const session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+if(!session){ location.href="login.html"; }
+const role = (session.role || "USER").toUpperCase();
+if(role !== "ADMIN"){
+  alert("หน้านี้สำหรับผู้ดูแลระบบ (ADMIN) เท่านั้น");
+  location.href="index.html";
+}
+document.getElementById("userBadge").textContent =
+  "ผู้ใช้: " + (session.fullname || session.username) + " • บทบาท: " + role;
+
+/* =========================
+   Keys
+   ========================= */
+const MANUAL_KEY = "fa_manual_records_v1";
+const UPLOAD_KEY = "fa_upload_files_v1";
+
+/* =========================
+   Helpers
+   ========================= */
+const $ = (id)=>document.getElementById(id);
+function show(box, text){
+  const el = $(box);
+  el.textContent = text;
+  el.style.display="block";
+  setTimeout(()=>el.style.display="none", 2500);
+}
+function getJSON(key){ return JSON.parse(localStorage.getItem(key) || "[]"); }
+function isLocked(created_at){
+  if(!created_at) return false;
+  const days = (Date.now() - created_at)/86400000;
+  return days >= 356;
+}
+function downloadText(filename, text, mime="application/json"){
+  const blob = new Blob([text], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href=url; a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+/* =========================
+   KPI
+   ========================= */
+function refreshKPI(){
+  const manual = getJSON(MANUAL_KEY).filter(x=>!x.deleted);
+  const uploads = getJSON(UPLOAD_KEY).filter(x=>!x.deleted);
+
+  const submitted = manual.filter(x=>!!x.submitted).length;
+  const locked = manual.filter(x=>isLocked(x.created_at)).length;
+
+  $("kManual").textContent = manual.length;
+  $("kSubmitted").textContent = submitted;
+  $("kLocked").textContent = locked;
+  $("kFiles").textContent = uploads.length;
+}
+refreshKPI();
+
+/* =========================
+   Nav
+   ========================= */
+$("goCashboard").addEventListener("click", ()=>location.href="cashboard.html");
+$("goDataHub").addEventListener("click", ()=>location.href="data-hub.html");
+$("goHome").addEventListener("click", ()=>location.href="index.html");
+
+$("goUploads").addEventListener("click", ()=>location.href="admin-upload-files.html");
+$("goManualTable").addEventListener("click", ()=>location.href="admin-manual-table.html");
+$("goManualSearch").addEventListener("click", ()=>location.href="admin-manual-search.html");
+$("goManualEntry").addEventListener("click", ()=>location.href="manual-entry.html");
+
+/* =========================
+   Logout
+   ========================= */
+$("btnLogout").addEventListener("click", ()=>{
+  if(!confirm("ยืนยันออกจากระบบ?")) return;
+  localStorage.removeItem(SESSION_KEY);
+  location.href="login.html";
+});
+
+/* =========================
+   Export/Import All
+   ========================= */
+$("btnExportAll").addEventListener("click", ()=>{
+  const payload = {
+    exported_at: Date.now(),
+    exported_by: (session.fullname || session.username),
+    manual_records: getJSON(MANUAL_KEY),
+    upload_files: getJSON(UPLOAD_KEY)
+  };
+  downloadText(`fa_admin_backup_${Date.now()}.json`, JSON.stringify(payload,null,2), "application/json");
+  show("ok","Export ทั้งระบบเรียบร้อย ✅");
+});
+
+$("btnImportAll").addEventListener("click", ()=>$("importFile").click());
+
+$("importFile").addEventListener("change", async ()=>{
+  const f = $("importFile").files?.[0];
+  if(!f) return;
+  try{
+    const payload = JSON.parse(await f.text());
+    const inManual = Array.isArray(payload.manual_records) ? payload.manual_records : [];
+    const inUpload = Array.isArray(payload.upload_files) ? payload.upload_files : [];
+
+    const curManual = getJSON(MANUAL_KEY);
+    const curUpload = getJSON(UPLOAD_KEY);
+
+    const mIds = new Set(curManual.map(x=>x.id));
+    const uIds = new Set(curUpload.map(x=>x.id));
+
+    const addManual = inManual.filter(x=>x && x.id && !mIds.has(x.id));
+    const addUpload = inUpload.filter(x=>x && x.id && !uIds.has(x.id));
+
+    localStorage.setItem(MANUAL_KEY, JSON.stringify(curManual.concat(addManual)));
+    localStorage.setItem(UPLOAD_KEY, JSON.stringify(curUpload.concat(addUpload)));
+
+    show("ok", `Import สำเร็จ ✅ เพิ่ม Manual ${addManual.length} • Upload ${addUpload.length}`);
+    $("importFile").value="";
+    refreshKPI();
+  }catch(e){
+    show("bad","Import ไม่สำเร็จ: รูปแบบไฟล์ไม่ถูกต้อง");
+  }
+});
+
+/* =========================
+   Data Quality quick checks
+   ========================= */
+let lastDQ = null;
+
+$("btnDQ").addEventListener("click", ()=>{
+  const manual = getJSON(MANUAL_KEY).filter(x=>!x.deleted);
+  const issues = [];
+
+  // required-ish fields for core
+  manual.forEach((r,idx)=>{
+    const id = r.id || `row#${idx+1}`;
+    const fy = Number(r.period?.fiscalYear||0);
+    if(!(fy>=2560 && fy<=2580)) issues.push({id, type:"FY_RANGE", msg:`ปีงบฯผิดช่วง: ${fy}`});
+    if(!r.entity?.name) issues.push({id, type:"ENTITY_EMPTY", msg:`ชื่อหน่วยรับตรวจว่าง`});
+    if(!r.entity?.province) issues.push({id, type:"PROVINCE_EMPTY", msg:`จังหวัดว่าง`});
+    if(!r.s217) issues.push({id, type:"FA_STATUS_EMPTY", msg:`2.1.7 สถานะ FA ว่าง`});
+  });
+
+  // possible duplicates (same entity+fy+period)
+  const seen = new Map();
+  manual.forEach(r=>{
+    const k = [r.entity?.type,r.entity?.name,r.entity?.province,r.period?.fiscalYear,r.period?.periodType,r.period?.periodValue].join("|");
+    if(!seen.has(k)) seen.set(k, []);
+    seen.get(k).push(r.id);
+  });
+  for(const [k,ids] of seen.entries()){
+    if(ids.length>1) issues.push({id: ids.join(","), type:"DUP_KEY", msg:`ข้อมูลซ้ำ key=${k} (พบ ${ids.length})`});
+  }
+
+  lastDQ = issues;
+  $("dqOut").innerHTML = issues.length
+    ? `พบประเด็น ${issues.length} รายการ <span class="pill warn">ต้องตรวจ</span><div class="tiny">ตัวอย่าง: ${issues.slice(0,5).map(x=>x.type).join(", ")}${issues.length>5?" ...":""}</div>`
+    : `ไม่พบประเด็น <span class="pill ok">ผ่าน</span>`;
+  show("ok","รันตรวจคุณภาพข้อมูลเรียบร้อย ✅");
+});
+
+$("btnFixSuggest").addEventListener("click", ()=>{
+  if(!lastDQ){ show("warn","ยังไม่รันตรวจคุณภาพข้อมูล"); return; }
+  if(lastDQ.length===0){ alert("ไม่พบประเด็น — ข้อมูลผ่าน"); return; }
+
+  const lines = lastDQ.slice(0,30).map((x,i)=>`${i+1}. [${x.type}] (${x.id}) ${x.msg}`).join("\n");
+  alert("ข้อเสนอแนะ/รายการที่ควรแก้ไข (แสดง 30 รายการแรก)\n\n" + lines + (lastDQ.length>30?`\n\n...และยังมีอีก ${lastDQ.length-30} รายการ`: ""));
+});
+</script>
+</body>
+</html>
